@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "deeptemplate-science"
+version = "0.1.0"
+description = "a template for a science motivated project, focus on ease of reproducablity"
+authors = ["voetberg <magpie127@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.dev-dependencies]
+showyourwork = "^0.4.2"
+pytest = "^7.3.2"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.2"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
