@@ -28,9 +28,13 @@ class InferenceModel:
         :param model_name: Name of the model
         :return: Loaded model object that can be used with the predict function
         """
+        print(path)
         with open(path + model_name + ".pkl", 'rb') as file:
             posterior = pickle.load(file)
         return posterior
+
+    def infer_sbi(self, posterior, n_samples, y_true):
+        return posterior.sample((n_samples,), x=y_true)
 
 
     def predict(input, model):
