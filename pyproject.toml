@@ -7,9 +7,10 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+jupyter = "^1.0.0"
+sbi = "^0.22.0"
 
 [tool.poetry.dev-dependencies]
-showyourwork = "^0.4.2"
 pytest = "^7.3.2"
 
 [tool.poetry.group.dev.dependencies]
