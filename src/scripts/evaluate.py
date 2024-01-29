@@ -57,7 +57,6 @@ class InferenceModel:
         """
         return 0
     
-    def simulator()
 
 
 class Display:
@@ -87,7 +86,7 @@ class Display:
             figsize=(5, 5)
         )
         axes[0, 1].plot([truth_list[1]], [truth_list[0]], marker="o", color="red")
-    def improved_corner_plot(self, posterior, params):
+    def improved_corner_plot(self, posterior):
         """
         Improved corner plot
         """
@@ -136,7 +135,11 @@ class Diagnose:
         )
         return thetas, ys, ranks, dap_samples
     
-    def sbc_statistics(ranks, thetas, dap_samples, num_posterior_samples):
+    def sbc_statistics(self,
+                       ranks,
+                       thetas,
+                       dap_samples,
+                       num_posterior_samples):
         '''
         The ks pvalues are vanishingly small here, so we can reject the null hypothesis (of the marginal rank distributions being equivalent to an uniform distribution). The inference clearly went wrong.
 
@@ -148,7 +151,8 @@ class Diagnose:
             ranks, thetas, dap_samples, num_posterior_samples=num_posterior_samples
         )
         return check_stats
-    def plot_1d_ranks(ranks,
+    def plot_1d_ranks(self,
+                      ranks,
                       num_posterior_samples,
                       labels_list,
                       colorlist,
@@ -185,7 +189,8 @@ class Diagnose:
         if save:
             plt.savefig(path+'sbc_ranks.pdf')
 
-    def plot_cdf_1d_ranks(ranks,
+    def plot_cdf_1d_ranks(self,
+                          ranks,
                           num_posterior_samples,
                           labels_list,
                           colorlist,
@@ -214,23 +219,25 @@ class Diagnose:
         if save:
             plt.savefig(path+'sbc_ranks_cdf.pdf')
 
-    def calculate_coverage_fraction(posterior,
-                                    truth_array,
-                                    x_observed,
+    def calculate_coverage_fraction(self,
+                                    posterior,
+                                    thetas,
+                                    ys,
                                     percentile_list,
-                                    samples_per_inference = 1000):
+                                    samples_per_inference=1_000):
         """
         posterior --> the trained posterior
-        x_observed --> the data used for inference
-        truth_array --> true parameter values
+        thetas --> true parameter values
+        ys --> the "observed" data used for inference
+        
         """
         # this holds all posterior samples for each inference run
-        all_samples = np.empty((len(x_observed), samples_per_inference, np.shape(truth_array)[1]))
+        all_samples = np.empty((len(ys), samples_per_inference, np.shape(thetas)[1]))
         count_array = []
         # make this for loop into a progress bar:
-        for i in tqdm(range(len(x_observed)), desc='Processing observations', unit='obs'):
+        for i in tqdm(range(len(ys)), desc='Processing observations', unit='obs'):
             # sample from the trained posterior n_sample times for each observation
-            samples = posterior.sample(sample_shape=(samples_per_inference,), x=x_observed[i]).cpu()
+            samples = posterior.sample(sample_shape=(samples_per_inference,), x=ys[i]).cpu()
 
             '''
             # plot posterior samples
@@ -258,17 +265,18 @@ class Diagnose:
                 # this is asking if the true parameter value is contained between the
                 # upper and lower confidence intervals
                 # checks separately for each side of the 50th percentile
-                count = np.logical_and(confidence_u - truth_array.T[:,i] > 0, truth_array.T[:,i] - confidence_l > 0)
+                count = np.logical_and(confidence_u - thetas.T[:,i] > 0, thetas.T[:,i] - confidence_l > 0)
                 count_vector.append(count)
             # each time the above is > 0, adds a count
             count_array.append(count_vector)
         count_sum_array = np.sum(count_array, axis=0)
         frac_lens_within_vol = np.array(count_sum_array)
-        return all_samples, np.array(frac_lens_within_vol)/len(x_observed)
+        return all_samples, np.array(frac_lens_within_vol)/len(ys)
 
 
     
-    def plot_coverage_fraction(posterior,
+    def plot_coverage_fraction(self,
+                               posterior,
                                thetas,
                                ys,
                                samples_per_inference,
@@ -337,7 +345,10 @@ class Diagnose:
                     colorlist,
                     num_sbc_runs=1_000,
                     num_posterior_samples=1_000,
-                    params):
+                    samples_per_inference=1_000,
+                    plot=True,
+                    save=False,
+                    path='../plots/'):
         """
         Runs and displays mackelab's SBC (simulation-based calibration)
 
@@ -351,23 +362,26 @@ class Diagnose:
                                                   num_sbc_runs,
                                                   num_posterior_samples)
 
-        stats = self.sbc_statistics(ranks, thetas, dap_samples, num_posterior_samples)
+        stats = self.sbc_statistics(ranks,
+                                    thetas,
+                                    dap_samples,
+                                    num_posterior_samples)
         print(stats)
         self.plot_1d_ranks(ranks,
                       num_posterior_samples,
                       labels_list,
                       colorlist,
-                      plot=False,
-                      save=True,
-                      path='../../plots/')
+                      plot=plot,
+                      save=save,
+                      path=path)
         
         self.plot_cdf_1d_ranks(ranks,
                       num_posterior_samples,
                       labels_list,
                       colorlist,
-                      plot=False,
-                      save=True,
-                      path='../../plots/')
+                      plot=plot,
+                      save=save,
+                      path=path)
         
         self.plot_coverage_fraction(posterior,
                                     thetas,
@@ -376,9 +390,9 @@ class Diagnose:
                                     labels_list,
                                     colorlist,
                                     n_percentile_steps=21,
-                                    plot=False,
-                                    save=True,
-                                    path='plots/')
+                                    plot=plot,
+                                    save=save,
+                                    path=path)
 
        
 
