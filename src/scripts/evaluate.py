@@ -235,9 +235,12 @@ class Diagnose:
         all_samples = np.empty((len(ys), samples_per_inference, np.shape(thetas)[1]))
         count_array = []
         # make this for loop into a progress bar:
-        for i in tqdm(range(len(ys)), desc='Processing observations', unit='obs'):
+        for i in tqdm(range(len(ys)), desc='Sampling from the posterior for each obs', unit='obs'):
+        #for i in range(len(ys)):
             # sample from the trained posterior n_sample times for each observation
-            samples = posterior.sample(sample_shape=(samples_per_inference,), x=ys[i]).cpu()
+            samples = posterior.sample(sample_shape=(samples_per_inference,),
+                                       x=ys[i],
+                                       show_progress_bars=False).cpu()
 
             '''
             # plot posterior samples
@@ -394,11 +397,7 @@ class Diagnose:
                                     save=save,
                                     path=path)
 
-       
-
-        
-        
-
+    def parameter_1_to_1_plots(samples,):
         '''
         We've already saved samples, let's compare the inferred (and associated error bar) parameters from each of the data points we used for the SBC analysis.
         '''
@@ -428,11 +427,11 @@ class Diagnose:
             yerr_minus[idx] = 0
             yerr_plus[idx] = 0
 
-        plt.errorbar(np.array(thetas[:,0]),
+        plt.errorbar(np.array(thetas[:,i]),
                     percentile_50_m,
                     yerr = [yerr_minus, yerr_plus],
                     linestyle = 'None',
-                    color = m_color,
+                    color = color_list[i],
                     capsize = 5)
         plt.scatter(np.array(thetas[:,0]), percentile_50_m, color = m_color)
         plt.plot(percentile_50_m, percentile_50_m, color = 'k')
