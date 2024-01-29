@@ -5,7 +5,7 @@ Simple stub functions to use in evaluating inference from a previously trained i
 
 import argparse
 import pickle
-from sbi.analysis import pairplot
+from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc, pairplot
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -119,23 +119,22 @@ class Diagnose:
         plt.show()
         return ys_sim
     
-    def sbc_mackelab(self, posterior, params):
-        """
-        Runs and displays mackelab's SBC (simulation-based calibration)
-
-        Simulation-based calibration is a set of tools built into Mackelab's sbi interface. It provides a way to compare the inferred posterior distribution to the true parameter values. It performs multiple instances of drawing parameter values from the prior, running these through the simulator, and comparing these values to those obtained from the run of inference. Importantly, this will not diagnose what's going on for one draw from the posterior (ie at one data point). Instead, it's meant to give an overall sense of the health of the posterior learned from SBI.
-
-        This technique is based on rank plots. Rank plots are produced from comparing each posterior parameter draw (from the prior) to the distribution of parameter values in the posterior. There should be a 1:1 ranking, aka these rank plots should be similar in shape to a uniform distribution.
-        """
-        num_sbc_runs = 1_000  # choose a number of sbc runs, should be ~100s or ideally 1000
+    def generate_sbc_samples(self,
+                             prior,
+                             posterior,
+                             simulator,
+                             num_sbc_runs=1_000,
+                             num_posterior_samples=1_000):
         # generate ground truth parameters and corresponding simulated observations for SBC.
         thetas = prior.sample((num_sbc_runs,))
         ys = simulator(thetas)
         # run SBC: for each inference we draw 1000 posterior samples.
-        num_posterior_samples = 1_000
         ranks, dap_samples = run_sbc(
             thetas, ys, posterior, num_posterior_samples=num_posterior_samples
         )
+        return thetas, ranks, dap_samples
+    
+    def sbc_statistics(ranks, thetas, dap_samples, num_posterior_samples):
         '''
         The ks pvalues are vanishingly small here, so we can reject the null hypothesis (of the marginal rank distributions being equivalent to an uniform distribution). The inference clearly went wrong.
 
@@ -146,8 +145,32 @@ class Diagnose:
         check_stats = check_sbc(
             ranks, thetas, dap_samples, num_posterior_samples=num_posterior_samples
         )
-        print(check_stats)
-        help(sbc_rank_plot)
+        return check_stats
+    
+    def run_all_sbc(self,
+                    prior,
+                    posterior,
+                    simulator,
+                    num_sbc_runs=1_000,
+                    num_posterior_samples=1_000,
+                    params):
+        """
+        Runs and displays mackelab's SBC (simulation-based calibration)
+
+        Simulation-based calibration is a set of tools built into Mackelab's sbi interface. It provides a way to compare the inferred posterior distribution to the true parameter values. It performs multiple instances of drawing parameter values from the prior, running these through the simulator, and comparing these values to those obtained from the run of inference. Importantly, this will not diagnose what's going on for one draw from the posterior (ie at one data point). Instead, it's meant to give an overall sense of the health of the posterior learned from SBI.
+
+        This technique is based on rank plots. Rank plots are produced from comparing each posterior parameter draw (from the prior) to the distribution of parameter values in the posterior. There should be a 1:1 ranking, aka these rank plots should be similar in shape to a uniform distribution.
+        """
+        thetas, ranks, dap_samples = self.generate_sbc_samples(prior,
+                                                  posterior,
+                                                  simulator,
+                                                  num_sbc_runs,
+                                                  num_posterior_samples)
+
+        stats = self.sbc_statistics(ranks, thetas, dap_samples, num_posterior_samples)
+        print(stats)
+
+        #help(sbc_rank_plot)
         _ = sbc_rank_plot(
             ranks=ranks,
             num_posterior_samples=num_posterior_samples,
