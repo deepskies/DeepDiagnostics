@@ -28,6 +28,4 @@ jobs:
       run: python -m poetry install
 
     - name: Test with pytest
-      run: pytest --cov
-
-#python3 -m poetry run  pytest --cov
+      run: python -m poetry run pytest --cov
