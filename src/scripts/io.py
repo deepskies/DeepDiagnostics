@@ -38,9 +38,13 @@ class ModelLoader:
         :return: Prediction
         """
         return 0
-    
+
+
 class DataLoader:
-    def save_df_pkl(self, path, data_name, data):
+    def save_data_pkl(self,
+                      data_name,
+                      data,
+                      path='../saveddata/'):
         """
         Save and load the pkl'ed training/test set
 
@@ -52,7 +56,9 @@ class DataLoader:
         with open(file_name, "wb") as file:
             pickle.dump(data, file)
 
-    def load_df_pkl(self, path, data_name):
+    def load_data_pkl(self,
+                      data_name,
+                      path='../saveddata/'):
         """
         Load the pkl'ed saved posterior model
 
