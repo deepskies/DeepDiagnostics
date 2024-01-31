@@ -1,12 +1,14 @@
 import sys
-
-sys.path.append("..")
-from src.scripts.evaluate import Diagnose, InferenceModel
 import pytest
 import torch
 import numpy as np
 import sbi
 import os
+
+# flake8: noqa
+sys.path.append("..")
+from src.scripts.evaluate import Diagnose, InferenceModel
+
 
 """
 """
@@ -93,9 +95,9 @@ def test_run_all_sbc(diagnose_instance, inference_instance):
     prior = sbi.utils.BoxUniform(low=low_bounds, high=high_bounds)
     posterior = inference_instance  # provide a mock posterior object
     simulator_test = simulator  # provide a mock simulator function
-    
+
     save_path = "plots/"
-    
+
     diagnose_instance.run_all_sbc(
         prior,
         posterior,
@@ -111,10 +113,10 @@ def test_run_all_sbc(diagnose_instance, inference_instance):
     )
     # Check if PDF files were saved
     assert os.path.exists(save_path), f"No 'plots' folder found at {save_path}"
-    
+
     # List all files in the directory
     files_in_directory = os.listdir(save_path)
-    
+
     # Check if at least one PDF file is present
     pdf_files = [file for file in files_in_directory if file.endswith(".pdf")]
     assert pdf_files, "No PDF files found in the 'plots' folder"
@@ -122,8 +124,9 @@ def test_run_all_sbc(diagnose_instance, inference_instance):
     # We expect the pdfs to exist in the directory
     expected_pdf_files = ["sbc_ranks.pdf", "sbc_ranks_cdf.pdf", "coverage.pdf"]
     for expected_file in expected_pdf_files:
-        assert expected_file in pdf_files, \
-            f"Expected PDF file '{expected_file}' not found"
+        assert (
+            expected_file in pdf_files
+        ), f"Expected PDF file '{expected_file}' not found"
 
 
 """
