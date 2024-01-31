@@ -7,7 +7,7 @@ import os
 
 # flake8: noqa
 #sys.path.append("..")
-from scripts.evaluate import Diagnose, InferenceModel
+from src.scripts.evaluate import Diagnose, InferenceModel
 #from src.scripts import evaluate
 
 
