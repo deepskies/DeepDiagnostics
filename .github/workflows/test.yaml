@@ -8,6 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache
+          ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - uses: actions/checkout@v2
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
@@ -27,5 +36,10 @@ jobs:
       shell: bash
       run: python -m poetry install
 
+    - name: Export Python path
+      run: echo "::set-env name=PYTHONPATH::$(pwd)"
+
     - name: Test with pytest
       run: python -m poetry run pytest --cov
+      env:
+        PYTHONPATH: ${{ env.PYTHONPATH }}
