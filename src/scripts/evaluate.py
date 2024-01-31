@@ -428,7 +428,7 @@ class Diagnose:
         samples_per_inference=1_000,
         plot=True,
         save=False,
-        path="../plots/",
+        path="plots/",
     ):
         """
         Runs and displays mackelab's SBC (simulation-based calibration)
