@@ -5,13 +5,15 @@ Simple stub functions to use in evaluating inference from a previously trained i
 
 import argparse
 import pickle
-from sbi.analysis import pairplot
-import matplotlib
-import matplotlib.pyplot as plt
+from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc, pairplot
 import numpy as np
 from tqdm import tqdm
 
+
 # plotting style things:
+import matplotlib
+import matplotlib.pyplot as plt
+from cycler import cycler
 # remove top and right axis from plots
 matplotlib.rcParams["axes.spines.right"] = False
 matplotlib.rcParams["axes.spines.top"] = False
@@ -55,7 +57,6 @@ class InferenceModel:
         """
         return 0
     
-    def simulator()
 
 
 class Display:
@@ -85,7 +86,7 @@ class Display:
             figsize=(5, 5)
         )
         axes[0, 1].plot([truth_list[1]], [truth_list[0]], marker="o", color="red")
-    def improved_corner_plot(self, posterior, params):
+    def improved_corner_plot(self, posterior):
         """
         Improved corner plot
         """
@@ -119,23 +120,26 @@ class Diagnose:
         plt.show()
         return ys_sim
     
-    def sbc_mackelab(self, posterior, params):
-        """
-        Runs and displays mackelab's SBC (simulation-based calibration)
-
-        Simulation-based calibration is a set of tools built into Mackelab's sbi interface. It provides a way to compare the inferred posterior distribution to the true parameter values. It performs multiple instances of drawing parameter values from the prior, running these through the simulator, and comparing these values to those obtained from the run of inference. Importantly, this will not diagnose what's going on for one draw from the posterior (ie at one data point). Instead, it's meant to give an overall sense of the health of the posterior learned from SBI.
-
-        This technique is based on rank plots. Rank plots are produced from comparing each posterior parameter draw (from the prior) to the distribution of parameter values in the posterior. There should be a 1:1 ranking, aka these rank plots should be similar in shape to a uniform distribution.
-        """
-        num_sbc_runs = 1_000  # choose a number of sbc runs, should be ~100s or ideally 1000
+    def generate_sbc_samples(self,
+                             prior,
+                             posterior,
+                             simulator,
+                             num_sbc_runs=1_000,
+                             num_posterior_samples=1_000):
         # generate ground truth parameters and corresponding simulated observations for SBC.
         thetas = prior.sample((num_sbc_runs,))
         ys = simulator(thetas)
         # run SBC: for each inference we draw 1000 posterior samples.
-        num_posterior_samples = 1_000
         ranks, dap_samples = run_sbc(
             thetas, ys, posterior, num_posterior_samples=num_posterior_samples
         )
+        return thetas, ys, ranks, dap_samples
+    
+    def sbc_statistics(self,
+                       ranks,
+                       thetas,
+                       dap_samples,
+                       num_posterior_samples):
         '''
         The ks pvalues are vanishingly small here, so we can reject the null hypothesis (of the marginal rank distributions being equivalent to an uniform distribution). The inference clearly went wrong.
 
@@ -146,41 +150,160 @@ class Diagnose:
         check_stats = check_sbc(
             ranks, thetas, dap_samples, num_posterior_samples=num_posterior_samples
         )
-        print(check_stats)
-        help(sbc_rank_plot)
-        _ = sbc_rank_plot(
-            ranks=ranks,
-            num_posterior_samples=num_posterior_samples,
-            plot_type="hist",
-            num_bins=None,
-            parameter_labels=['$m$', '$b$'],
-            colors=[m_color, b_color]
-        )
-        '''
+        return check_stats
+    def plot_1d_ranks(self,
+                      ranks,
+                      num_posterior_samples,
+                      labels_list,
+                      colorlist,
+                      plot=False,
+                      save=True,
+                      path='plots/'):
+        """
         If the rank plots are consistent with being uniform, the red bars should fall mostly within the grey area. The grey area is the 99% confidence interval for the uniform distribution, so if the rank histogram falls outside this for more than 1 in 100 bars, that means it is not consistent with an uniform distribution (which is what we want). 
 
         A central peaked rank plot could be indicative of a posterior that's too concentrated whereas one with wings is a posterior that is too dispersed. Conversely, if the distribution is shifted left or right that indicates that the parameters are biased.
 
         If it's choppy, it could be indicative of not doing enough sampling. A good rule of thumb is N / B ~ 20, where N is the number of samples and B is the number of bins.
-        '''
+        """
+         #help(sbc_rank_plot)
+        if colorlist:
+            _ = sbc_rank_plot(
+                ranks=ranks,
+                num_posterior_samples=num_posterior_samples,
+                plot_type="hist",
+                num_bins=None,
+                parameter_labels=labels_list,
+                colors=colorlist
+            )
+        else:
+            _ = sbc_rank_plot(
+                ranks=ranks,
+                num_posterior_samples=num_posterior_samples,
+                plot_type="hist",
+                num_bins=None,
+                parameter_labels=labels_list,
+            )
+        if plot:
+            plt.show()
+        if save:
+            plt.savefig(path+'sbc_ranks.pdf')
 
+    def plot_cdf_1d_ranks(self,
+                          ranks,
+                          num_posterior_samples,
+                          labels_list,
+                          colorlist,
+                          plot=False,
+                          save=True,
+                          path='plots/'):
+        """
+        This is a different way to visualize the same thing from the 1d rank plots.
+        Essentially, the grey is the 95% confidence interval for an uniform distribution.
+        The cdf for the posterior rank distributions (in color) should fall within this band.
+        """
         help(sbc_rank_plot)
-        f, ax = sbc_rank_plot(ranks, 1_000, plot_type="cdf", parameter_labels=["m","b"], colors = [m_color, b_color])
-        '''
-        This is a different way to visualize the same thing. Essentially, the grey is the 95% confidence interval for an uniform distribution. The cdf for the posterior rank distributions (in color) should fall within this band.
-        '''
-        percentile_array = np.linspace(0,100,21)
-        samples, frac_array = calculate_coverage_fraction(posterior,
-                                                        ys,
+        if colorlist:
+            f, ax = sbc_rank_plot(ranks,
+                              num_posterior_samples,
+                              plot_type="cdf",
+                              parameter_labels=labels_list,
+                              colors = colorlist)
+        else:
+            f, ax = sbc_rank_plot(ranks,
+                              num_posterior_samples,
+                              plot_type="cdf",
+                              parameter_labels=labels_list)
+        if plot:
+            plt.show()
+        if save:
+            plt.savefig(path+'sbc_ranks_cdf.pdf')
+
+    def calculate_coverage_fraction(self,
+                                    posterior,
+                                    thetas,
+                                    ys,
+                                    percentile_list,
+                                    samples_per_inference=1_000):
+        """
+        posterior --> the trained posterior
+        thetas --> true parameter values
+        ys --> the "observed" data used for inference
+        
+        """
+        # this holds all posterior samples for each inference run
+        all_samples = np.empty((len(ys), samples_per_inference, np.shape(thetas)[1]))
+        count_array = []
+        # make this for loop into a progress bar:
+        for i in tqdm(range(len(ys)), desc='Sampling from the posterior for each obs', unit='obs'):
+        #for i in range(len(ys)):
+            # sample from the trained posterior n_sample times for each observation
+            samples = posterior.sample(sample_shape=(samples_per_inference,),
+                                       x=ys[i],
+                                       show_progress_bars=False).cpu()
+
+            '''
+            # plot posterior samples
+            fig, axes = pairplot(
+                samples, 
+                labels = ['m', 'b'],
+                #limits = [[0,10],[-10,10],[0,10]],
+                truths = truth_array[i],
+                figsize=(5, 5)
+            )
+            axes[0, 1].plot([truth_array[i][1]], [truth_array[i][0]], marker="o", color="r")
+            '''
+            
+            all_samples[i] = samples
+            count_vector = []
+            # step through the percentile list
+            for ind, cov in enumerate(percentile_list):
+                percentile_l = 50.0 - cov/2
+                percentile_u = 50.0 + cov/2
+                # find the percentile for the posterior for this observation
+                # this is n_params dimensional
+                # the units are in parameter space
+                confidence_l = np.percentile(samples.cpu(), percentile_l, axis=0)
+                confidence_u = np.percentile(samples.cpu(), percentile_u, axis=0)
+                # this is asking if the true parameter value is contained between the
+                # upper and lower confidence intervals
+                # checks separately for each side of the 50th percentile
+                count = np.logical_and(confidence_u - thetas.T[:,i] > 0, thetas.T[:,i] - confidence_l > 0)
+                count_vector.append(count)
+            # each time the above is > 0, adds a count
+            count_array.append(count_vector)
+        count_sum_array = np.sum(count_array, axis=0)
+        frac_lens_within_vol = np.array(count_sum_array)
+        return all_samples, np.array(frac_lens_within_vol)/len(ys)
+
+
+    
+    def plot_coverage_fraction(self,
+                               posterior,
+                               thetas,
+                               ys,
+                               samples_per_inference,
+                               labels_list,
+                               colorlist,
+                               n_percentile_steps=21,
+                               plot=False,
+                               save=True,
+                               path='plots/'):
+        percentile_array = np.linspace(0,100,n_percentile_steps)
+        samples, frac_array = self.calculate_coverage_fraction(posterior,
                                                         np.array(thetas),
+                                                        ys,
                                                         percentile_array,
-                                                        samples_per_inference = 1000)
-        from cycler import cycler
+                                                        samples_per_inference=samples_per_inference)
+        
 
         percentile_array_norm = np.array(percentile_array)/100
 
         # Create a cycler with hexcode colors and linestyles
-        color_cycler = cycler(color=[m_color, b_color])
+        if colorlist:
+            color_cycler = cycler(color=colorlist)
+        else:
+            color_cycler = cycler(color='viridis')
         linestyle_cycler = cycler(linestyle=['-', '-.'])
 
         # Plotting
@@ -189,12 +312,17 @@ class Diagnose:
         # Use itertools.cycle to loop through colors and linestyles
         color_cycle = iter(color_cycler)
         linestyle_cycle = iter(linestyle_cycler)
-        label_list = ['m', 'b']
         # Iterate over the second dimension of frac_array
         for i in range(frac_array.shape[1]):
             color_style = next(color_cycle)['color']
             linestyle_style = next(linestyle_cycle)['linestyle']
-            ax.plot(percentile_array_norm, frac_array[:, i], alpha=1.0, lw=3, linestyle=linestyle_style, color=color_style, label=label_list[i])
+            ax.plot(percentile_array_norm,
+                    frac_array[:, i],
+                    alpha=1.0,
+                    lw=3,
+                    linestyle=linestyle_style,
+                    color=color_style,
+                    label=labels_list[i])
 
         ax.plot([0, 0.5, 1], [0, 0.5, 1], 'k--', lw=3, zorder=1000, label='Reference Line')
         ax.set_xlim([-0.05, 1.05])
@@ -206,8 +334,70 @@ class Diagnose:
         ax.set_ylabel('Fraction of Lenses within Posterior Volume')
         ax.set_title('NPE')
         plt.tight_layout()
-        plt.show()
+        if plot:
+            plt.show()
+        if save:
+            plt.savefig(path+'coverage.pdf')
+        
+    
+    def run_all_sbc(self,
+                    prior,
+                    posterior,
+                    simulator,
+                    labels_list,
+                    colorlist,
+                    num_sbc_runs=1_000,
+                    num_posterior_samples=1_000,
+                    samples_per_inference=1_000,
+                    plot=True,
+                    save=False,
+                    path='../plots/'):
+        """
+        Runs and displays mackelab's SBC (simulation-based calibration)
 
+        Simulation-based calibration is a set of tools built into Mackelab's sbi interface. It provides a way to compare the inferred posterior distribution to the true parameter values. It performs multiple instances of drawing parameter values from the prior, running these through the simulator, and comparing these values to those obtained from the run of inference. Importantly, this will not diagnose what's going on for one draw from the posterior (ie at one data point). Instead, it's meant to give an overall sense of the health of the posterior learned from SBI.
+
+        This technique is based on rank plots. Rank plots are produced from comparing each posterior parameter draw (from the prior) to the distribution of parameter values in the posterior. There should be a 1:1 ranking, aka these rank plots should be similar in shape to a uniform distribution.
+        """
+        thetas, ys, ranks, dap_samples = self.generate_sbc_samples(prior,
+                                                  posterior,
+                                                  simulator,
+                                                  num_sbc_runs,
+                                                  num_posterior_samples)
+
+        stats = self.sbc_statistics(ranks,
+                                    thetas,
+                                    dap_samples,
+                                    num_posterior_samples)
+        print(stats)
+        self.plot_1d_ranks(ranks,
+                      num_posterior_samples,
+                      labels_list,
+                      colorlist,
+                      plot=plot,
+                      save=save,
+                      path=path)
+        
+        self.plot_cdf_1d_ranks(ranks,
+                      num_posterior_samples,
+                      labels_list,
+                      colorlist,
+                      plot=plot,
+                      save=save,
+                      path=path)
+        
+        self.plot_coverage_fraction(posterior,
+                                    thetas,
+                                    ys,
+                                    samples_per_inference,
+                                    labels_list,
+                                    colorlist,
+                                    n_percentile_steps=21,
+                                    plot=plot,
+                                    save=save,
+                                    path=path)
+
+    def parameter_1_to_1_plots(samples,):
         '''
         We've already saved samples, let's compare the inferred (and associated error bar) parameters from each of the data points we used for the SBC analysis.
         '''
@@ -237,11 +427,11 @@ class Diagnose:
             yerr_minus[idx] = 0
             yerr_plus[idx] = 0
 
-        plt.errorbar(np.array(thetas[:,0]),
+        plt.errorbar(np.array(thetas[:,i]),
                     percentile_50_m,
                     yerr = [yerr_minus, yerr_plus],
                     linestyle = 'None',
-                    color = m_color,
+                    color = color_list[i],
                     capsize = 5)
         plt.scatter(np.array(thetas[:,0]), percentile_50_m, color = m_color)
         plt.plot(percentile_50_m, percentile_50_m, color = 'k')
@@ -274,54 +464,7 @@ class Diagnose:
 
     
 
-    def calculate_coverage_fraction(posterior, x_observed, truth_array, percentile_list, samples_per_inference = 1000):
-        """
-        posterior --> the trained posterior
-        x_observed --> the data used for inference
-        truth_array --> true parameter values
-        """
-        # this holds all posterior samples for each inference run
-        all_samples = np.empty((len(x_observed), samples_per_inference, np.shape(truth_array)[1]))
-        count_array = []
-        # make this for loop into a progress bar:
-        for i in tqdm(range(len(x_observed)), desc='Processing observations', unit='obs'):
-            # sample from the trained posterior n_sample times for each observation
-            samples = posterior.sample(sample_shape=(samples_per_inference,), x=x_observed[i]).cpu()
-
-            '''
-            # plot posterior samples
-            fig, axes = pairplot(
-                samples, 
-                labels = ['m', 'b'],
-                #limits = [[0,10],[-10,10],[0,10]],
-                truths = truth_array[i],
-                figsize=(5, 5)
-            )
-            axes[0, 1].plot([truth_array[i][1]], [truth_array[i][0]], marker="o", color="r")
-            '''
-            
-            all_samples[i] = samples
-            count_vector = []
-            # step through the percentile list
-            for ind, cov in enumerate(percentile_list):
-                percentile_l = 50.0 - cov/2
-                percentile_u = 50.0 + cov/2
-                # find the percentile for the posterior for this observation
-                # this is n_params dimensional
-                # the units are in parameter space
-                confidence_l = np.percentile(samples.cpu(), percentile_l, axis=0)
-                confidence_u = np.percentile(samples.cpu(), percentile_u, axis=0)
-                # this is asking if the true parameter value is contained between the
-                # upper and lower confidence intervals
-                # checks separately for each side of the 50th percentile
-                count = np.logical_and(confidence_u - truth_array.T[:,i] > 0, truth_array.T[:,i] - confidence_l > 0)
-                count_vector.append(count)
-            # each time the above is > 0, adds a count
-            count_array.append(count_vector)
-        count_sum_array = np.sum(count_array, axis=0)
-        frac_lens_within_vol = np.array(count_sum_array)
-        return all_samples, np.array(frac_lens_within_vol)/len(x_observed)
-
+    
 
 
 if __name__ == '__main__':
