@@ -5,6 +5,7 @@ from a previously trained inference model.
 Includes utilities for posterior diagnostics as well as some
 inference functions.
 """
+from src.scripts.io import ModelLoader
 
 import argparse
 from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc, pairplot
@@ -975,10 +976,8 @@ if __name__ == "__main__":
     parser.add_argument("--name", type=str, help="saved posterior name")
     args = parser.parse_args()
 
-    # Create an instance of InferenceModel
-    inference_model = InferenceModel()
+    # Create an instance of ModelLoader
+    modelloader = ModelLoader()
 
-    # Load the model
-    model = inference_model.load_model_pkl(args.path, args.name)
-
-    inference_obj = inference_model.predict(model)
+    # Load the posterior
+    posterior = modelloader.load_model_pkl(args.path, args.name)
