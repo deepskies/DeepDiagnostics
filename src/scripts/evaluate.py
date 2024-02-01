@@ -5,7 +5,7 @@ from a previously trained inference model.
 Includes utilities for posterior diagnostics as well as some
 inference functions.
 """
-from src.scripts.io import ModelLoader
+from scripts.io import ModelLoader
 
 import argparse
 from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc, pairplot
@@ -62,7 +62,7 @@ class Display:
         """
 
 
-class Diagnose_on_the_fly_data_generation:
+class Diagnose_generative:
     def posterior_predictive(self,
                              theta_true,
                              x_true,

@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "deeptemplate-science"
+name = "DeepDiagnostics" 
+packages = [{include = "*", from="src"}]
 version = "0.1.0"
-description = "a template for a science motivated project, focus on ease of reproducablity"
-authors = ["voetberg <magpie127@gmail.com>"]
+description = "a package for diagnosing posterior quality from inference methods"
+authors = ["Becky Nevin <rnevin@fnal.gov>"]
 license = "MIT"
 
 [tool.poetry.dependencies]

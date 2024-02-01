@@ -7,7 +7,9 @@ import os
 
 # flake8: noqa
 #sys.path.append("..")
-from src.scripts.evaluate import Diagnose, InferenceModel
+print(sys.path)
+from scripts.evaluate import Diagnose_static, Diagnose_generative
+from scripts.io import ModelLoader
 #from src.scripts import evaluate
 
 
@@ -21,16 +23,20 @@ Test the evaluate module
 
 
 @pytest.fixture
-def diagnose_instance():
-    return Diagnose()
+def diagnose_static_instance():
+    return Diagnose_static()
+
+@pytest.fixture
+def diagnose_generative_instance():
+    return Diagnose_generative()
 
 
 @pytest.fixture
 def inference_instance():
-    inference_model = InferenceModel()
+    modelloader = ModelLoader()
     path = "savedmodels/sbi/"
-    model_name = "sbi_linear"
-    posterior = inference_model.load_model_pkl(path, model_name)
+    model_name = "sbi_linear_from_data"
+    posterior = modelloader.load_model_pkl(path, model_name)
     return posterior
 
 
@@ -68,7 +74,7 @@ def simulator(thetas):  # , percent_errors):
     return torch.Tensor(y.T)
 
 
-def test_generate_sbc_samples(diagnose_instance, inference_instance):
+def test_generate_sbc_samples(diagnose_generative_instance, inference_instance):
     # Mock data
     low_bounds = torch.tensor([0, -10])
     high_bounds = torch.tensor([10, 10])
@@ -80,14 +86,14 @@ def test_generate_sbc_samples(diagnose_instance, inference_instance):
     num_posterior_samples = 1000
 
     # Generate SBC samples
-    thetas, ys, ranks, dap_samples = diagnose_instance.generate_sbc_samples(
+    thetas, ys, ranks, dap_samples = diagnose_generative_instance.generate_sbc_samples(
         prior, posterior, simulator_test, num_sbc_runs, num_posterior_samples
     )
 
     # Add assertions based on the expected behavior of the method
 
 
-def test_run_all_sbc(diagnose_instance, inference_instance):
+def test_run_all_sbc(diagnose_generative_instance, inference_instance):
     labels_list = ["$m$", "$b$"]
     colorlist = ["#9C92A3", "#0F5257"]
     low_bounds = torch.tensor([0, -10])
@@ -99,7 +105,7 @@ def test_run_all_sbc(diagnose_instance, inference_instance):
 
     save_path = "plots/"
 
-    diagnose_instance.run_all_sbc(
+    diagnose_generative_instance.run_all_sbc(
         prior,
         posterior,
         simulator_test,
