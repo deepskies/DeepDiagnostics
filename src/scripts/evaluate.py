@@ -151,7 +151,7 @@ class Diagnose_on_the_fly_data_generation:
         colorlist,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/generative/",
     ):
         """
         If the rank plots are consistent with being uniform,
@@ -201,7 +201,7 @@ class Diagnose_on_the_fly_data_generation:
         colorlist,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/generative/",
     ):
         """
         This is a different way to visualize the same thing
@@ -318,7 +318,7 @@ class Diagnose_on_the_fly_data_generation:
         n_percentile_steps=21,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/generative/",
     ):
         percentile_array = np.linspace(0, 100, n_percentile_steps)
         samples, frac_array = self.calculate_coverage_fraction(
@@ -388,7 +388,7 @@ class Diagnose_on_the_fly_data_generation:
         samples_per_inference=1_000,
         plot=True,
         save=False,
-        path="plots/",
+        path="plots/generative/",
     ):
         """
         Runs and displays mackelab's SBC (simulation-based calibration)
@@ -534,54 +534,16 @@ class Diagnose_on_the_fly_data_generation:
         plt.show()
 
 
-class Diagnose_pre_generated_data:
-    def posterior_predictive(self,
-                             theta_true,
-                             x_true,
-                             simulator,
-                             posterior_samples,
-                             true_sigma):
-        # not sure how or where to define the simulator
-        # could require that people input posterior predictive samples,
-        # already drawn from the simulator
-        posterior_predictive_samples = simulator(posterior_samples)
-        y_true = simulator(theta_true, x_true)
-        # also go through and plot one sigma interval
-        # plot the true values
-        plt.clf()
-        xs_sim = np.linspace(0, 100, 101)
-        ys_sim = np.array(posterior_predictive_samples)
-        plt.fill_between(
-            xs_sim,
-            np.mean(ys_sim, axis=0) - 1 * np.std(ys_sim, axis=0),
-            np.mean(ys_sim, axis=0) + 1 * np.std(ys_sim, axis=0),
-            color="#FF495C",
-            label="posterior predictive check with noise",
-        )
-        plt.plot(
-            xs_sim,
-            np.mean(ys_sim, axis=0) + true_sigma,
-            color="#25283D",
-            label="true input error",
-        )
-        plt.plot(xs_sim, np.mean(ys_sim, axis=0) - true_sigma, color="#25283D")
-        plt.scatter(xs_sim, np.array(y_true), color="black")
-        plt.legend()
-        plt.show()
-        return ys_sim
-
+class Diagnose_static:
     def generate_sbc_samples(
         self,
-        prior,
         posterior,
-        simulator,
-        num_sbc_runs=1_000,
+        thetas,
+        ys,
         num_posterior_samples=1_000,
     ):
         # generate ground truth parameters
         # and corresponding simulated observations for SBC.
-        thetas = prior.sample((num_sbc_runs,))
-        ys = simulator(thetas)
         # run SBC: for each inference we draw 1000 posterior samples.
         ranks, dap_samples = run_sbc(
             thetas, ys, posterior, num_posterior_samples=num_posterior_samples
@@ -624,7 +586,7 @@ class Diagnose_pre_generated_data:
         colorlist,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/static/",
     ):
         """
         If the rank plots are consistent with being uniform,
@@ -674,7 +636,7 @@ class Diagnose_pre_generated_data:
         colorlist,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/static/",
     ):
         """
         This is a different way to visualize the same thing
@@ -791,7 +753,7 @@ class Diagnose_pre_generated_data:
         n_percentile_steps=21,
         plot=False,
         save=True,
-        path="plots/",
+        path="plots/static/",
     ):
         percentile_array = np.linspace(0, 100, n_percentile_steps)
         samples, frac_array = self.calculate_coverage_fraction(
@@ -853,15 +815,15 @@ class Diagnose_pre_generated_data:
         self,
         prior,
         posterior,
-        simulator,
+        thetas,
+        ys,
         labels_list,
         colorlist,
-        num_sbc_runs=1_000,
         num_posterior_samples=1_000,
         samples_per_inference=1_000,
         plot=True,
         save=False,
-        path="plots/",
+        path="plots/static/",
     ):
         """
         Runs and displays mackelab's SBC (simulation-based calibration)
@@ -883,7 +845,7 @@ class Diagnose_pre_generated_data:
         be similar in shape to a uniform distribution.
         """
         thetas, ys, ranks, dap_samples = self.generate_sbc_samples(
-            prior, posterior, simulator, num_sbc_runs, num_posterior_samples
+            posterior, thetas, ys, num_posterior_samples
         )
 
         stats = self.sbc_statistics(ranks, thetas, dap_samples,
