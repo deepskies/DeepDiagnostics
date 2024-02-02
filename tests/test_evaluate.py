@@ -7,7 +7,9 @@ import os
 
 # flake8: noqa
 #sys.path.append("..")
-from src.scripts.evaluate import Diagnose, InferenceModel
+print(sys.path)
+from scripts.evaluate import Diagnose_static, Diagnose_generative
+from scripts.io import ModelLoader
 #from src.scripts import evaluate
 
 
@@ -21,18 +23,40 @@ Test the evaluate module
 
 
 @pytest.fixture
-def diagnose_instance():
-    return Diagnose()
+def diagnose_static_instance():
+    return Diagnose_static()
+
+@pytest.fixture
+def diagnose_generative_instance():
+    return Diagnose_generative()
 
 
 @pytest.fixture
-def inference_instance():
-    inference_model = InferenceModel()
-    path = "savedmodels/sbi/"
-    model_name = "sbi_linear"
-    posterior = inference_model.load_model_pkl(path, model_name)
-    return posterior
+def posterior_generative_sbi_model():
+    # create a temporary directory for the saved model
+    #dir = "savedmodels/sbi/"
+    #os.makedirs(dir)
 
+    # now save the model
+    low_bounds = torch.tensor([0, -10])
+    high_bounds = torch.tensor([10, 10])
+
+    prior = sbi.utils.BoxUniform(low = low_bounds, high = high_bounds)
+
+    posterior = sbi.inference.base.infer(simulator, prior, "SNPE", num_simulations=10000)
+
+    # Provide the posterior to the tests
+    yield prior, posterior
+
+    # Teardown: Remove the temporary directory and its contents
+    #shutil.rmtree(dataset_dir)
+
+@pytest.fixture
+def setup_plot_dir():
+    # create a temporary directory for the saved model
+    dir = "tests/plots/"
+    os.makedirs(dir)
+    yield dir
 
 def simulator(thetas):  # , percent_errors):
     # convert to numpy array (if tensor):
@@ -68,38 +92,39 @@ def simulator(thetas):  # , percent_errors):
     return torch.Tensor(y.T)
 
 
-def test_generate_sbc_samples(diagnose_instance, inference_instance):
+def test_generate_sbc_samples(diagnose_generative_instance,
+                              posterior_generative_sbi_model):
     # Mock data
-    low_bounds = torch.tensor([0, -10])
-    high_bounds = torch.tensor([10, 10])
+    #low_bounds = torch.tensor([0, -10])
+    #high_bounds = torch.tensor([10, 10])
 
-    prior = sbi.utils.BoxUniform(low=low_bounds, high=high_bounds)
-    posterior = inference_instance  # provide a mock posterior object
+    #prior = sbi.utils.BoxUniform(low=low_bounds, high=high_bounds)
+    prior, posterior = posterior_generative_sbi_model
+    #inference_instance  # provide a mock posterior object
     simulator_test = simulator  # provide a mock simulator function
     num_sbc_runs = 1000
     num_posterior_samples = 1000
 
     # Generate SBC samples
-    thetas, ys, ranks, dap_samples = diagnose_instance.generate_sbc_samples(
+    thetas, ys, ranks, dap_samples = diagnose_generative_instance.generate_sbc_samples(
         prior, posterior, simulator_test, num_sbc_runs, num_posterior_samples
     )
 
     # Add assertions based on the expected behavior of the method
 
 
-def test_run_all_sbc(diagnose_instance, inference_instance):
+def test_run_all_sbc(diagnose_generative_instance,
+                     posterior_generative_sbi_model,
+                     setup_plot_dir):
     labels_list = ["$m$", "$b$"]
     colorlist = ["#9C92A3", "#0F5257"]
-    low_bounds = torch.tensor([0, -10])
-    high_bounds = torch.tensor([10, 10])
-
-    prior = sbi.utils.BoxUniform(low=low_bounds, high=high_bounds)
-    posterior = inference_instance  # provide a mock posterior object
+    
+    prior, posterior = posterior_generative_sbi_model
     simulator_test = simulator  # provide a mock simulator function
 
-    save_path = "plots/"
+    save_path = setup_plot_dir
 
-    diagnose_instance.run_all_sbc(
+    diagnose_generative_instance.run_all_sbc(
         prior,
         posterior,
         simulator_test,
