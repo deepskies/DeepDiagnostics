@@ -32,14 +32,6 @@ def diagnose_generative_instance():
 
 
 @pytest.fixture
-def inference_instance():
-    modelloader = ModelLoader()
-    path = "savedmodels/sbi/"
-    model_name = "sbi_linear_from_data"
-    posterior = modelloader.load_model_pkl(path, model_name)
-    return posterior
-
-@pytest.fixture
 def posterior_generative_sbi_model():
     # create a temporary directory for the saved model
     #dir = "savedmodels/sbi/"
@@ -59,6 +51,12 @@ def posterior_generative_sbi_model():
     # Teardown: Remove the temporary directory and its contents
     #shutil.rmtree(dataset_dir)
 
+@pytest.fixture
+def setup_plot_dir():
+    # create a temporary directory for the saved model
+    dir = "tests/plots/"
+    os.makedirs(dir)
+    yield dir
 
 def simulator(thetas):  # , percent_errors):
     # convert to numpy array (if tensor):
@@ -116,14 +114,15 @@ def test_generate_sbc_samples(diagnose_generative_instance,
 
 
 def test_run_all_sbc(diagnose_generative_instance,
-                     posterior_generative_sbi_model):
+                     posterior_generative_sbi_model,
+                     setup_plot_dir):
     labels_list = ["$m$", "$b$"]
     colorlist = ["#9C92A3", "#0F5257"]
     
     prior, posterior = posterior_generative_sbi_model
     simulator_test = simulator  # provide a mock simulator function
 
-    save_path = "plots/"
+    save_path = setup_plot_dir
 
     diagnose_generative_instance.run_all_sbc(
         prior,
