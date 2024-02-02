@@ -17,7 +17,8 @@ class Display:
         posterior_samples,
         labels_list=None,
         limit_list=None,
-        truth_list=None
+        truth_list=None,
+        truth_color='red'
     ):
         """
         Uses existing pairplot from mackelab analysis
@@ -42,7 +43,9 @@ class Display:
         )
         axes[0, 1].plot([truth_list[1]], [truth_list[0]],
                         marker="o",
-                        color="red")
+                        color=truth_color)
+        axes[0, 0].axvline(x=truth_list[0], color=truth_color)
+        axes[1, 1].axvline(x=truth_list[1], color=truth_color)
 
     def improved_corner_plot(self, posterior):
         """
