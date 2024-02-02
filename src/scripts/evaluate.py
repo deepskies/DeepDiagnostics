@@ -150,10 +150,10 @@ class Diagnose_generative:
                 num_bins=None,
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks.pdf")
+        if plot:
+            plt.show()
 
     def plot_cdf_1d_ranks(
         self,
@@ -189,10 +189,10 @@ class Diagnose_generative:
                 plot_type="cdf",
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks_cdf.pdf")
+        if plot:
+            plt.show()
 
     def calculate_coverage_fraction(
         self,
@@ -333,10 +333,10 @@ class Diagnose_generative:
         ax.set_ylabel("Fraction of Lenses within Posterior Volume")
         ax.set_title("NPE")
         plt.tight_layout()
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "coverage.pdf")
+        if plot:
+            plt.show()
 
     def run_all_sbc(
         self,
@@ -585,10 +585,11 @@ class Diagnose_static:
                 num_bins=None,
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks.pdf")
+        if plot:
+            plt.show()
+
 
     def plot_cdf_1d_ranks(
         self,
@@ -624,10 +625,10 @@ class Diagnose_static:
                 plot_type="cdf",
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks_cdf.pdf")
+        if plot:
+            plt.show()
 
     def calculate_coverage_fraction(
         self,
@@ -768,10 +769,10 @@ class Diagnose_static:
         ax.set_ylabel("Fraction of Lenses within Posterior Volume")
         ax.set_title("NPE")
         plt.tight_layout()
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "coverage.pdf")
+        if plot:
+            plt.show()
 
     def run_all_sbc(
         self,

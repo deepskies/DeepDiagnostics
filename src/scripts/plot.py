@@ -18,7 +18,11 @@ class Display:
         labels_list=None,
         limit_list=None,
         truth_list=None,
-        truth_color='red'
+        truth_color='red',
+        plot=False,
+        save=True,
+        path='plots/',
+        
     ):
         """
         Uses existing pairplot from mackelab analysis
@@ -35,7 +39,7 @@ class Display:
         # if limit_list:
         fig, axes = pairplot(
             posterior_samples,
-            labels_list=labels_list,
+            labels=labels_list,
             limits=limit_list,
             # [[0,10],[-10,10],[0,10]],
             truths=truth_list,
@@ -46,6 +50,12 @@ class Display:
                         color=truth_color)
         axes[0, 0].axvline(x=truth_list[0], color=truth_color)
         axes[1, 1].axvline(x=truth_list[1], color=truth_color)
+
+        if save:
+            plt.savefig(path + "mackelab_pairplot.pdf")
+        if plot:
+            plt.show()
+        
 
     def improved_corner_plot(self, posterior):
         """
