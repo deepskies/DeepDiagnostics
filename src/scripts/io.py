@@ -1,5 +1,7 @@
 import pickle
 import h5py
+import numpy as np
+import torch
 
 class ModelLoader:
     def save_model_pkl(self, path, model_name, posterior):
@@ -82,13 +84,15 @@ class DataLoader:
         :param data_name: Name of the data
         :param data: Data to be saved
         """
+        data_arrays = {key: np.asarray(value) for key, value in data.items()}
+
         file_name = path + data_name + ".h5"
         with h5py.File(file_name, "w") as file:
-            file.create_dataset(data_name, data=data)
+            # Save each array as a dataset in the HDF5 file
+            for key, value in data_arrays.items():
+                file.create_dataset(key, data=value)
 
-    def load_data_h5(self,
-                     data_name,
-                     path='../saveddata/'):
+    def load_data_h5(self, data_name, path='../saveddata/'):
         """
         Load data from an h5 file.
 
@@ -97,6 +101,8 @@ class DataLoader:
         :return: Loaded data
         """
         file_name = path + data_name + ".h5"
+        loaded_data = {}
         with h5py.File(file_name, "r") as file:
-            data = file[data_name][...]
-        return data
+            for key in file.keys():
+                loaded_data[key] = torch.Tensor(file[key][...])
+        return loaded_data
