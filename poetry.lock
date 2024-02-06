@@ -911,6 +911,27 @@ ssh = ["paramiko"]
 tqdm = ["tqdm"]
 
 [[package]]
+name = "getdist"
+version = "1.4.7"
+description = "GetDist Monte Carlo sample analysis, plotting and GUI"
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "getdist-1.4.7.tar.gz", hash = "sha256:c54c1a2aad2d7111e03775d0e9a2e8446c85e595eb8970ce6df0f1a574cd9031"},
+]
+
+[package.dependencies]
+matplotlib = ">=2.2.0,<3.5.0 || >3.5.0"
+numpy = ">=1.17.0"
+packaging = "*"
+PyYAML = ">=5.1"
+scipy = ">=1.5"
+
+[package.extras]
+docs = ["sphinx", "sphinx_rtd_theme (>=1.0)", "sphinxcontrib-jquery"]
+gui = ["PySide6 (>=6.1)"]
+
+[[package]]
 name = "google-auth"
 version = "2.27.0"
 description = "Google Authentication Library"
@@ -3989,4 +4010,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "39359c6f2a315d1f18b3ec93d0ca21b7c55a776ec4c8e28eca536dc544f391a2"
+content-hash = "0e05d7166a1cd987614bc44402561c5fdf5497ee8ea083c61cff08410a5d68e2"

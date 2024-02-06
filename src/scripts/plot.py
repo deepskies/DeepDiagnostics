@@ -1,5 +1,5 @@
 from sbi.analysis import pairplot
-
+from getdist import plots, MCSamples
 
 # plotting style things:
 import matplotlib
@@ -53,6 +53,67 @@ class Display:
 
         if save:
             plt.savefig(path + "mackelab_pairplot.pdf")
+        if plot:
+            plt.show()
+
+    def getdist_corner_plot(
+        self,
+        posterior_samples,
+        labels_list=None,
+        limit_list=None,
+        truth_list=None,
+        truth_color='red',
+        plot=False,
+        save=True,
+        path='plots/',
+        
+    ):
+        """
+        Uses existing getdist
+        to produce a flexible corner plot.
+
+        :param posterior_samples: Samples drawn from the posterior,
+        conditional on data
+        :param labels_list: A list of the labels for the parameters
+        :param limit_list: A list of limits for each parameter plot
+        :return: Loaded model object that can be used with the predict function
+        """
+        
+        '''
+        # in getdist you have to add the names and labels
+        samples = MCSamples(samples=samps, names = names, labels = labels)
+        samples2 = MCSamples(samples=samps2, names = names, labels = labels, label='Second set')
+
+        g = plots.get_subplot_plotter()
+
+        if type(posterior_samples) == List:
+
+            g.triangle_plot([samples, samples2], filled=True)
+        else:
+            g.triangle_plot([samples, samples2], filled=True)
+        '''
+        # Assume 'posterior_samples' is a 2D numpy array or similar
+        samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list)
+
+        # Create a getdist Plotter
+        g = plots.get_subplot_plotter()
+
+        # Plot the triangle plot
+        g.triangle_plot(samples, filled=True)
+
+        # Add customizations based on your requirements
+        # For example, you may want to add truth markers
+        if truth_list is not None:
+            for i in range(len(truth_list)):
+                g.add_x_marker(truth_list[i], color=truth_color)
+                g.add_y_marker(truth_list[i], color=truth_color)
+
+        # Save or show the plot
+        if save:
+            if not os.path.exists(path):
+                os.makedirs(path)
+            plt.savefig(os.path.join(path, "getdist_cornerplot.pdf"))
+
         if plot:
             plt.show()
         
