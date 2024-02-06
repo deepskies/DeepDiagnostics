@@ -1,10 +1,13 @@
 from sbi.analysis import pairplot
 from getdist import plots, MCSamples
+import numpy as np
 
 # plotting style things:
 import matplotlib
 import matplotlib.pyplot as plt
 from cycler import cycler
+
+from typing import List, Union
 
 # remove top and right axis from plots
 matplotlib.rcParams["axes.spines.right"] = False
@@ -58,15 +61,14 @@ class Display:
 
     def getdist_corner_plot(
         self,
-        posterior_samples,
-        labels_list=None,
-        limit_list=None,
-        truth_list=None,
-        truth_color='red',
-        plot=False,
-        save=True,
-        path='plots/',
-        
+        posterior_samples: Union[List[np.ndarray], np.ndarray],
+        labels_list: List[str] = None,
+        limit_list: List[List[float]] = None,  # Each inner list contains [lower_limit, upper_limit]
+        truth_list: List[float] = None,
+        truth_color: str = 'red',
+        plot: bool = False,
+        save: bool = True,
+        path: str = 'plots/',
     ):
         """
         Uses existing getdist
@@ -76,43 +78,57 @@ class Display:
         conditional on data
         :param labels_list: A list of the labels for the parameters
         :param limit_list: A list of limits for each parameter plot
+                        Each inner list contains [lower_limit, upper_limit]
         :return: Loaded model object that can be used with the predict function
         """
-        
-        '''
-        # in getdist you have to add the names and labels
-        samples = MCSamples(samples=samps, names = names, labels = labels)
-        samples2 = MCSamples(samples=samps2, names = names, labels = labels, label='Second set')
 
-        g = plots.get_subplot_plotter()
+        # Check if 'posterior_samples' is a list
+        if isinstance(posterior_samples, list):
+            # Handle the case where 'posterior_samples' is a list of samples
+            # You may want to customize this part based on your requirements
+            samples_list = [
+                MCSamples(samples=samps, names=labels_list, labels=labels_list, ranges=limit_list)
+                for samps, limits in zip(posterior_samples, limit_list)
+            ]
 
-        if type(posterior_samples) == List:
+            # Create a getdist Plotter
+            g = plots.get_subplot_plotter()
 
-            g.triangle_plot([samples, samples2], filled=True)
+            # Plot the triangle plot for each set of samples in the list
+            g.triangle_plot(samples_list, filled=True)
+
+            # Add vertical truth line on the first subplot
+            if truth_list is not None:
+                for i in range(len(truth_list)):
+                    try:
+                        g.subplots[0, i].axvline(x=truth_list[i],
+                                                 color=truth_color)
+                        g.subplots[i, 0].axvline(x=truth_list[i],
+                                                 color=truth_color)
+                    except AttributeError:
+                        continue
         else:
-            g.triangle_plot([samples, samples2], filled=True)
-        '''
-        # Assume 'posterior_samples' is a 2D numpy array or similar
-        samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list)
+            # Assume 'posterior_samples' is a 2D numpy array or similar
+            samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list, ranges=limit_list)
 
-        # Create a getdist Plotter
-        g = plots.get_subplot_plotter()
+            # Create a getdist Plotter
+            g = plots.get_subplot_plotter()
 
-        # Plot the triangle plot
-        g.triangle_plot(samples, filled=True)
+            # Plot the triangle plot
+            g.triangle_plot(samples, filled=True)
 
-        # Add customizations based on your requirements
-        # For example, you may want to add truth markers
-        if truth_list is not None:
-            for i in range(len(truth_list)):
-                g.add_x_marker(truth_list[i], color=truth_color)
-                g.add_y_marker(truth_list[i], color=truth_color)
-
+            # Add vertical truth line on the first subplot
+            if truth_list is not None:
+                for i in range(len(truth_list)):
+                    try:
+                        g.subplots[0, i].axvline(x=truth_list[i], color=truth_color)
+                        g.subplots[i, 0].axvline(x=truth_list[i],
+                                                 color=truth_color)
+                    except AttributeError:
+                        continue
         # Save or show the plot
         if save:
-            if not os.path.exists(path):
-                os.makedirs(path)
-            plt.savefig(os.path.join(path, "getdist_cornerplot.pdf"))
+            plt.savefig(path + "getdist_cornerplot.pdf")
 
         if plot:
             plt.show()
