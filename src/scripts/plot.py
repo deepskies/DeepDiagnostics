@@ -5,7 +5,7 @@ import numpy as np
 # plotting style things:
 import matplotlib
 import matplotlib.pyplot as plt
-from cycler import cycler
+# from cycler import cycler
 
 from typing import List, Union
 
@@ -21,11 +21,10 @@ class Display:
         labels_list=None,
         limit_list=None,
         truth_list=None,
-        truth_color='red',
+        truth_color="red",
         plot=False,
         save=True,
-        path='plots/',
-        
+        path="plots/",
     ):
         """
         Uses existing pairplot from mackelab analysis
@@ -48,8 +47,7 @@ class Display:
             truths=truth_list,
             figsize=(5, 5),
         )
-        axes[0, 1].plot([truth_list[1]], [truth_list[0]],
-                        marker="o",
+        axes[0, 1].plot([truth_list[1]], [truth_list[0]], marker="o",
                         color=truth_color)
         axes[0, 0].axvline(x=truth_list[0], color=truth_color)
         axes[1, 1].axvline(x=truth_list[1], color=truth_color)
@@ -63,12 +61,14 @@ class Display:
         self,
         posterior_samples: Union[List[np.ndarray], np.ndarray],
         labels_list: List[str] = None,
-        limit_list: List[List[float]] = None,  # Each inner list contains [lower_limit, upper_limit]
+        limit_list: List[
+            List[float]
+        ] = None,  # Each inner list contains [lower_limit, upper_limit]
         truth_list: List[float] = None,
-        truth_color: str = 'orange',
+        truth_color: str = "orange",
         plot: bool = False,
         save: bool = True,
-        path: str = 'plots/',
+        path: str = "plots/",
     ):
         """
         Uses existing getdist
@@ -87,10 +87,12 @@ class Display:
             # Handle the case where 'posterior_samples' is a list of samples
             # You may want to customize this part based on your requirements
             samples_list = [
-                MCSamples(samples=samps,
-                          names=labels_list,
-                          labels=labels_list,
-                          ranges=limit_list)
+                MCSamples(
+                    samples=samps,
+                    names=labels_list,
+                    labels=labels_list,
+                    ranges=limit_list,
+                )
                 for samps in posterior_samples
             ]
 
@@ -101,7 +103,12 @@ class Display:
             g.triangle_plot(samples_list, filled=True)
         else:
             # Assume 'posterior_samples' is a 2D numpy array or similar
-            samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list, ranges=limit_list)
+            samples = MCSamples(
+                samples=posterior_samples,
+                names=labels_list,
+                labels=labels_list,
+                ranges=limit_list,
+            )
 
             # Create a getdist Plotter
             g = plots.get_subplot_plotter()
@@ -118,22 +125,22 @@ class Display:
                         # which is on the diagnoal
                         g.subplots[i, j].axvline(x=truth_list[i],
                                                  color=truth_color)
-                    
+
                     try:
                         # plot as a point for the posteriors
-                        g.subplots[int(1 + i), int(0 + j)].scatter(truth_list[0+i],
-                                                               truth_list[1+i],
-                                                               color=truth_color)
+                        g.subplots[int(1 + i), int(0 + j)].scatter(
+                            truth_list[0 + i], truth_list[1 + i],
+                            color=truth_color
+                        )
                     except IndexError:
                         continue
-        
+
         # Save or show the plot
         if save:
             plt.savefig(path + "getdist_cornerplot.pdf")
 
         if plot:
             plt.show()
-        
 
     def improved_corner_plot(self, posterior):
         """

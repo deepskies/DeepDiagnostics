@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 import torch
 
+
 class ModelLoader:
     def save_model_pkl(self, path, model_name, posterior):
         """
@@ -43,10 +44,7 @@ class ModelLoader:
 
 
 class DataLoader:
-    def save_data_pkl(self,
-                      data_name,
-                      data,
-                      path='../saveddata/'):
+    def save_data_pkl(self, data_name, data, path="../saveddata/"):
         """
         Save and load the pkl'ed training/test set
 
@@ -58,9 +56,7 @@ class DataLoader:
         with open(file_name, "wb") as file:
             pickle.dump(data, file)
 
-    def load_data_pkl(self,
-                      data_name,
-                      path='../saveddata/'):
+    def load_data_pkl(self, data_name, path="../saveddata/"):
         """
         Load the pkl'ed saved posterior model
 
@@ -73,10 +69,7 @@ class DataLoader:
             data = pickle.load(file)
         return data
 
-    def save_data_h5(self,
-                     data_name,
-                     data,
-                     path='../saveddata/'):
+    def save_data_h5(self, data_name, data, path="../saveddata/"):
         """
         Save data to an h5 file.
 
@@ -92,7 +85,7 @@ class DataLoader:
             for key, value in data_arrays.items():
                 file.create_dataset(key, data=value)
 
-    def load_data_h5(self, data_name, path='../saveddata/'):
+    def load_data_h5(self, data_name, path="../saveddata/"):
         """
         Load data from an h5 file.
 
