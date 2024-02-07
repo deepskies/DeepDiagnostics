@@ -7,6 +7,7 @@ DeepDiagnostics is a package for diagnosing the posterior from an inference meth
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/owner/repo/test-repo?label=test)
 
 ## Workflow
+![Workflow overview](images/deepd_overview.png)
 
 ## Installation 
 Information about install. 
