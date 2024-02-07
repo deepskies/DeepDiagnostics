@@ -1,11 +1,11 @@
 # DeepDiagnostics
 DeepDiagnostics is a package for diagnosing the posterior from an inference method. It is flexible, applicable for both simulation-based and likelihood-based inference.
 
-[![status](https://img.shields.io/badge/arXiv-000.000-red)](arxiv link if applicable)
+![status](https://img.shields.io/badge/arXiv-000.000-red)(arxiv link if applicable)
 
-[![status](https://img.shields.io/badge/PyPi-0.0.0.0-blue)](pypi link if applicable)
+![status](https://img.shields.io/badge/PyPi-0.0.0.0-blue)(pypi link if applicable)
 
-[![status](https://img.shields.io/badge/License-MIT-lightgrey)](MIT or Apache 2.0 or another requires link changed)
+![status](https://img.shields.io/badge/License-MIT-lightgrey)(MIT or Apache 2.0 or another requires link changed)
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/owner/repo/build-repo)
 
