@@ -5,10 +5,10 @@ from a previously trained inference model.
 Includes utilities for posterior diagnostics as well as some
 inference functions.
 """
-from scripts.io import ModelLoader
 
+from scripts.io import ModelLoader
 import argparse
-from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc, pairplot
+from sbi.analysis import run_sbc, sbc_rank_plot, check_sbc
 import numpy as np
 from tqdm import tqdm
 
@@ -23,52 +23,10 @@ matplotlib.rcParams["axes.spines.right"] = False
 matplotlib.rcParams["axes.spines.top"] = False
 
 
-class Display:
-    def mackelab_corner_plot(
-        self,
-        posterior_samples,
-        labels_list=None,
-        limit_list=None,
-        truth_list=None
-    ):
-        """
-        Uses existing pairplot from mackelab analysis
-        to produce a flexible corner plot.
-
-        :param posterior_samples: Samples drawn from the posterior,
-        conditional on data
-        :param labels_list: A list of the labels for the parameters
-        :param limit_list: A list of limits for each parameter plot
-        :return: Loaded model object that can be used with the predict function
-        """
-        # plot posterior samples
-        # if labels_list:
-        # if limit_list:
-        fig, axes = pairplot(
-            posterior_samples,
-            labels_list=labels_list,
-            limits=limit_list,
-            # [[0,10],[-10,10],[0,10]],
-            truths=truth_list,
-            figsize=(5, 5),
-        )
-        axes[0, 1].plot([truth_list[1]], [truth_list[0]],
-                        marker="o",
-                        color="red")
-
-    def improved_corner_plot(self, posterior):
-        """
-        Improved corner plot
-        """
-
-
 class Diagnose_generative:
-    def posterior_predictive(self,
-                             theta_true,
-                             x_true,
-                             simulator,
-                             posterior_samples,
-                             true_sigma):
+    def posterior_predictive(
+        self, theta_true, x_true, simulator, posterior_samples, true_sigma
+    ):
         # not sure how or where to define the simulator
         # could require that people input posterior predictive samples,
         # already drawn from the simulator
@@ -137,9 +95,7 @@ class Diagnose_generative:
         if these values are close to 0.5, dap is like the prior distribution.
         """
         check_stats = check_sbc(
-            ranks,
-            thetas,
-            dap_samples,
+            ranks, thetas, dap_samples,
             num_posterior_samples=num_posterior_samples
         )
         return check_stats
@@ -189,10 +145,10 @@ class Diagnose_generative:
                 num_bins=None,
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks.pdf")
+        if plot:
+            plt.show()
 
     def plot_cdf_1d_ranks(
         self,
@@ -228,17 +184,13 @@ class Diagnose_generative:
                 plot_type="cdf",
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks_cdf.pdf")
+        if plot:
+            plt.show()
 
     def calculate_coverage_fraction(
-        self,
-        posterior,
-        thetas,
-        ys,
-        percentile_list,
+        self, posterior, thetas, ys, percentile_list,
         samples_per_inference=1_000
     ):
         """
@@ -248,7 +200,8 @@ class Diagnose_generative:
 
         """
         # this holds all posterior samples for each inference run
-        all_samples = np.empty((len(ys), samples_per_inference,
+        all_samples = np.empty((len(ys),
+                                samples_per_inference,
                                 np.shape(thetas)[1]))
         count_array = []
         # make this for loop into a progress bar:
@@ -360,8 +313,8 @@ class Diagnose_generative:
             )
 
         ax.plot(
-            [0, 0.5, 1], [0, 0.5, 1],
-            "k--", lw=3, zorder=1000, label="Reference Line"
+            [0, 0.5, 1], [0, 0.5, 1], "k--", lw=3, zorder=1000,
+            label="Reference Line"
         )
         ax.set_xlim([-0.05, 1.05])
         ax.set_ylim([-0.05, 1.05])
@@ -372,10 +325,10 @@ class Diagnose_generative:
         ax.set_ylabel("Fraction of Lenses within Posterior Volume")
         ax.set_title("NPE")
         plt.tight_layout()
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "coverage.pdf")
+        if plot:
+            plt.show()
 
     def run_all_sbc(
         self,
@@ -551,10 +504,7 @@ class Diagnose_static:
         )
         return thetas, ys, ranks, dap_samples
 
-    def sbc_statistics(self,
-                       ranks,
-                       thetas,
-                       dap_samples,
+    def sbc_statistics(self, ranks, thetas, dap_samples,
                        num_posterior_samples):
         """
         The ks pvalues are vanishingly small here,
@@ -572,9 +522,7 @@ class Diagnose_static:
         if these values are close to 0.5, dap is like the prior distribution.
         """
         check_stats = check_sbc(
-            ranks,
-            thetas,
-            dap_samples,
+            ranks, thetas, dap_samples,
             num_posterior_samples=num_posterior_samples
         )
         return check_stats
@@ -624,10 +572,10 @@ class Diagnose_static:
                 num_bins=None,
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks.pdf")
+        if plot:
+            plt.show()
 
     def plot_cdf_1d_ranks(
         self,
@@ -663,17 +611,13 @@ class Diagnose_static:
                 plot_type="cdf",
                 parameter_labels=labels_list,
             )
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "sbc_ranks_cdf.pdf")
+        if plot:
+            plt.show()
 
     def calculate_coverage_fraction(
-        self,
-        posterior,
-        thetas,
-        ys,
-        percentile_list,
+        self, posterior, thetas, ys, percentile_list,
         samples_per_inference=1_000
     ):
         """
@@ -688,8 +632,7 @@ class Diagnose_static:
         count_array = []
         # make this for loop into a progress bar:
         for i in tqdm(
-            range(len(ys)),
-            desc="Sampling from the posterior for each obs",
+            range(len(ys)), desc="Sampling from the posterior for each obs",
             unit="obs"
         ):
             # for i in range(len(ys)):
@@ -722,11 +665,9 @@ class Diagnose_static:
                 # find the percentile for the posterior for this observation
                 # this is n_params dimensional
                 # the units are in parameter space
-                confidence_l = np.percentile(samples.cpu(),
-                                             percentile_l,
+                confidence_l = np.percentile(samples.cpu(), percentile_l,
                                              axis=0)
-                confidence_u = np.percentile(samples.cpu(),
-                                             percentile_u,
+                confidence_u = np.percentile(samples.cpu(), percentile_u,
                                              axis=0)
                 # this is asking if the true parameter value
                 # is contained between the
@@ -795,8 +736,8 @@ class Diagnose_static:
             )
 
         ax.plot(
-            [0, 0.5, 1], [0, 0.5, 1],
-            "k--", lw=3, zorder=1000, label="Reference Line"
+            [0, 0.5, 1], [0, 0.5, 1], "k--", lw=3, zorder=1000,
+            label="Reference Line"
         )
         ax.set_xlim([-0.05, 1.05])
         ax.set_ylim([-0.05, 1.05])
@@ -807,10 +748,10 @@ class Diagnose_static:
         ax.set_ylabel("Fraction of Lenses within Posterior Volume")
         ax.set_title("NPE")
         plt.tight_layout()
-        if plot:
-            plt.show()
         if save:
             plt.savefig(path + "coverage.pdf")
+        if plot:
+            plt.show()
 
     def run_all_sbc(
         self,
