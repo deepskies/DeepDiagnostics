@@ -65,7 +65,7 @@ class Display:
         labels_list: List[str] = None,
         limit_list: List[List[float]] = None,  # Each inner list contains [lower_limit, upper_limit]
         truth_list: List[float] = None,
-        truth_color: str = 'red',
+        truth_color: str = 'orange',
         plot: bool = False,
         save: bool = True,
         path: str = 'plots/',
@@ -97,16 +97,7 @@ class Display:
             # Plot the triangle plot for each set of samples in the list
             g.triangle_plot(samples_list, filled=True)
 
-            # Add vertical truth line on the first subplot
-            if truth_list is not None:
-                for i in range(len(truth_list)):
-                    try:
-                        g.subplots[0, i].axvline(x=truth_list[i],
-                                                 color=truth_color)
-                        g.subplots[i, 0].axvline(x=truth_list[i],
-                                                 color=truth_color)
-                    except AttributeError:
-                        continue
+            
         else:
             # Assume 'posterior_samples' is a 2D numpy array or similar
             samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list, ranges=limit_list)
@@ -117,15 +108,24 @@ class Display:
             # Plot the triangle plot
             g.triangle_plot(samples, filled=True)
 
-            # Add vertical truth line on the first subplot
-            if truth_list is not None:
-                for i in range(len(truth_list)):
-                    try:
-                        g.subplots[0, i].axvline(x=truth_list[i], color=truth_color)
-                        g.subplots[i, 0].axvline(x=truth_list[i],
+        # Add vertical truth line on the first subplot
+        if truth_list is not None:
+            for i in range(len(truth_list)):
+                for j in range(len(truth_list)):
+                    if i == j:
+                        # this is for the axvlines on the marginals
+                        # which is on the diagnoal
+                        g.subplots[i, j].axvline(x=truth_list[i],
                                                  color=truth_color)
-                    except AttributeError:
+                    
+                    try:
+                        # plot as a point for the posteriors
+                        g.subplots[int(1 + i), int(0 + j)].scatter(truth_list[0+i],
+                                                               truth_list[1+i],
+                                                               color=truth_color)
+                    except IndexError:
                         continue
+        
         # Save or show the plot
         if save:
             plt.savefig(path + "getdist_cornerplot.pdf")
