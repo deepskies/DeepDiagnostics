@@ -87,8 +87,11 @@ class Display:
             # Handle the case where 'posterior_samples' is a list of samples
             # You may want to customize this part based on your requirements
             samples_list = [
-                MCSamples(samples=samps, names=labels_list, labels=labels_list, ranges=limit_list)
-                for samps, limits in zip(posterior_samples, limit_list)
+                MCSamples(samples=samps,
+                          names=labels_list,
+                          labels=labels_list,
+                          ranges=limit_list)
+                for samps in posterior_samples
             ]
 
             # Create a getdist Plotter
@@ -96,8 +99,6 @@ class Display:
 
             # Plot the triangle plot for each set of samples in the list
             g.triangle_plot(samples_list, filled=True)
-
-            
         else:
             # Assume 'posterior_samples' is a 2D numpy array or similar
             samples = MCSamples(samples=posterior_samples, names=labels_list, labels=labels_list, ranges=limit_list)
