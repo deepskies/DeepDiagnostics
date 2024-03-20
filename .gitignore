@@ -1,6 +1,9 @@
 
 ## General pieces to ignore during git pushing, so you can use git add . without adding everything.
 
+*__pycache__
+*sbi-logs
+
 # Distribution / packaging
 .Python
 build/
