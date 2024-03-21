@@ -34,7 +34,6 @@ class Diagnose_generative:
         y_true = simulator(theta_true, x_true)
         # also go through and plot one sigma interval
         # plot the true values
-        plt.clf()
         xs_sim = np.linspace(0, 100, 101)
         ys_sim = np.array(posterior_predictive_samples)
         plt.fill_between(
