@@ -3,11 +3,13 @@ from typing import Any, Optional
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from src.data.data import Data
+from src.data import data
+from src.models import model
+
 from src.utils.config import get_item, get_section
 
 class Display: 
-    def __init__(self, data:Data, save:bool, show:bool, out_path:Optional[str]): 
+    def __init__(self, model:model, data:data, save:bool, show:bool, out_path:Optional[str]): 
         self.save = save
         self.show = show 
         self.out_path = out_path.rstrip("/")
@@ -17,6 +19,7 @@ class Display:
         if not os.path.exists(os.path.dirname(out_path)): 
             os.makedirs(os.path.dirname(out_path))
 
+        self.model = model
         self._data_setup(data)
         self._common_settings()
         self._plot_settings()
@@ -33,21 +36,22 @@ class Display:
         # TODO Pull fom a config for specific plots 
         raise NotImplementedError
     
-    def _plot(self, *args, **kwrgs):
+    def _plot(self, **kwrgs):
         # Make the plot object with plt.
         raise NotImplementedError 
     
     def _common_settings(self): 
-        # TODO Pull from a common config 
-        rcParams["axes.spines.right"] = False
-        rcParams["axes.spines.top"] = False 
+        plot_common = get_section("plot_common", raise_exception=False)
+        rcParams["axes.spines.right"] = bool(plot_common['axis_spines'])
+        rcParams["axes.spines.top"] = bool(plot_common['axis_spines'])
 
         # Style 
-        self.colorway = ""
-        tight_layout = ""
-
+        self.colorway = plot_common["colorway"]
+        tight_layout = bool(plot_common['tight_layout'])
         if tight_layout: 
             plt.tight_layout() 
+        plot_style = plot_common['plot_style']
+        plt.style.use(plot_style)
 
     def _finish(self):
         assert os.path.splitext(self.plot_name)[-1] != '', f"plot name, {self.plot_name}, is malformed. Please supply a name with an extension."
@@ -56,6 +60,6 @@ class Display:
         if self.plot:
             plt.show()
  
-    def __call__(self) -> None:
-        self._plot()
+    def __call__(self, **kwargs) -> None:
+        self._plot(**kwargs)
         self._finish()

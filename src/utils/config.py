@@ -3,28 +3,35 @@ from typing import Optional
 import os 
 import yaml 
 
+from src.utils.defaults import Defaults
 
-def get_item(section, item, raise_exception=True, default=None): 
-    return Config().get_item(section, item, raise_exception, default) 
+def get_item(section, item, raise_exception=True): 
+    return Config().get_item(section, item, raise_exception) 
 
-def get_section(section): 
-    return Config().get_section(section)
+def get_section(section, raise_exception=True): 
+    return Config().get_section(section, raise_exception)
 
 
 class Config: 
-    ENV_VAR = "DeepDiagnostics_Config"
+    ENV_VAR_PATH = "DeepDiagnostics_Config"
     def __init__(self, config_path:Optional[str]) -> None:
         if config_path is not None: 
             # Add it to the env vars in case we need to get it later. 
-            os.environ[self.ENV_VAR] = config_path
+            os.environ[self.ENV_VAR_PATH] = config_path
         else: 
             # Get it from the env vars 
             try: 
-                config_path =  os.environ[self.ENV_VAR]
+                config_path =  os.environ[self.ENV_VAR_PATH]
             except KeyError: 
                 assert False, "Cannot load config from enviroment. Hint: Have you set the config path by pasing a str path to Config?"
         
         self.config = self._read_config(config_path)
+        self._validate_config()
+
+    def _validate_config(self): 
+        # Validate common 
+        # TODO 
+        pass 
 
     def _read_config(self, path): 
         assert os.path.exist(path), f"Config path at {path} does not exist."
@@ -32,14 +39,20 @@ class Config:
             config = yaml.safe_load(f)
         return config
 
-    def get_item(self, section, item, raise_exception=True, default=None): 
+    def get_item(self, section, item, raise_exception=True): 
         try: 
             return self.config[section][item]
         except KeyError as e: 
             if raise_exception: 
                 raise KeyError(e)
             else: 
-                return default
+                return Defaults[section][item]
 
-    def get_section(self, section): 
-        return self.config[section]
+    def get_section(self, section, raise_exception=True): 
+        try: 
+            return self.config[section]
+        except KeyError as e: 
+            if raise_exception: 
+                raise KeyError(e)
+            else: 
+                return Defaults[section]
