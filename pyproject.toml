@@ -6,6 +6,9 @@ description = "a package for diagnosing posterior quality from inference methods
 authors = ["Becky Nevin <rnevin@fnal.gov>"]
 license = "MIT"
 
+[tool.poetry.scripts]
+diagnose = "client.client:main"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 sbi = "^0.22.0"

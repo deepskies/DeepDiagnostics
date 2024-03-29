@@ -3,7 +3,7 @@ from typing import Optional
 import os 
 import yaml 
 
-from src.utils.defaults import Defaults
+from utils.defaults import Defaults
 
 def get_item(section, item, raise_exception=True): 
     return Config().get_item(section, item, raise_exception) 
@@ -34,7 +34,7 @@ class Config:
         pass 
 
     def _read_config(self, path): 
-        assert os.path.exist(path), f"Config path at {path} does not exist."
+        assert os.path.exists(path), f"Config path at {path} does not exist."
         with open(path, 'r') as f:
             config = yaml.safe_load(f)
         return config
@@ -44,7 +44,7 @@ class Config:
             return self.config[section][item]
         except KeyError as e: 
             if raise_exception: 
-                raise KeyError(e)
+                raise KeyError(f"Configuration File missing parameter {e}")
             else: 
                 return Defaults[section][item]
 

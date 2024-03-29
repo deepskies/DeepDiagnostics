@@ -1,8 +1,7 @@
 import os
 import pickle
 
-from src.models.model import Model 
-from src.data import data
+from models.model import Model 
 
 class SBIModel(Model): 
     def __init__(self, model_path:str): 
@@ -16,10 +15,10 @@ class SBIModel(Model):
             posterior = pickle.load(file)
         self.posterior = posterior
 
-    def sample_posterior(self, n_samples:int, data:data) -> "": # TODO typing
+    def sample_posterior(self, n_samples:int, data): # TODO typing
         return self.posterior.sample((n_samples,), x=data.y_true)
 
     def predict_posterior(self, data): 
         posterior_samples = self.sample_posterior(data.y_true)
-        posterior_predictive_samples = data.simulator(posterior_samples)
+        posterior_predictive_samples = data.simulator(data.theta_true(), posterior_samples)
         return posterior_predictive_samples

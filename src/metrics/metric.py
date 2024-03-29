@@ -1,8 +1,9 @@
 from typing import Any, Optional
 import json 
+import os 
 
-from src.data import data 
-from src.models import model
+from data import data
+from models import model
 
 class Metric: 
     def __init__(self, model:model, data:data, out_dir:Optional[str]=None) -> None:
@@ -25,6 +26,9 @@ class Metric:
         assert self.output is not None, "Calculation has not been completed, have you run Metric.calculate?"
 
         if self.out_dir is not None: 
+            if not os.path.exists(os.path.dirname(self.out_dir)): 
+                os.makedirs(os.path.dirname(self.out_dir))
+
             with open(self.out_dir) as f: 
                 data = json.load(f)
                 data.update(self.output)
