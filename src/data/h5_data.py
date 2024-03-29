@@ -1,14 +1,14 @@
-from typing import Any
+from typing import Any, Callable
 import h5py
 import numpy as np
 import torch
 import os 
 
-from src.data.data import Data
+from data.data import Data
 
 class H5Data(Data): 
-    def __init__(self, path:str):
-       return super().__init__(path)
+    def __init__(self, path:str, simulator:Callable):
+        super().__init__(path, simulator)
 
     def _load(self, path): 
         assert path.split(".")[-1] == "h5", "File extension must be h5"

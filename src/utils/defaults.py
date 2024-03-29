@@ -1,6 +1,8 @@
 Defaults = {
     "common":{
-        "out_dir":"./DeepDiagonistics/results/", 
+        "out_dir":"./DeepDiagonisticsResources/results/", 
+        "temp_config": "./DeepDiagonisticsResources/temp/temp_config.yml", 
+        "sim_location": "DeepDiagonisticsResources_Simulators"
     }, 
     "model": {
         "model_engine": "SBIModel"
