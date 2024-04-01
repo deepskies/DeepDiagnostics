@@ -1,7 +1,0 @@
-version: 0.3.0
-
-overleaf: 
-  id: 62defbc43013ada57aa4c153
-  push: 
-      - src/tex/figures
-      - src/tex/output
