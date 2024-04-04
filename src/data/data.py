@@ -14,7 +14,7 @@ class Data:
         try: 
             simulator_path = os.environ[f"{Defaults['common']['sim_location']}:{name}"]
         except KeyError as e: 
-            raise RuntimeError(f"Simulator cannot be found using env var {e}. Hint: have you registed your simulation with utils.register_simulator?")
+            raise RuntimeError(f"Simulator cannot be found using env var {e}. Hint: have you registered your simulation with utils.register_simulator?")
 
         new_class = os.path.dirname(simulator_path)
         sys.path.insert(1, new_class)
