@@ -1,9 +1,9 @@
 import os
-from typing import Any, Optional
+from typing import Optional
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from utils.config import get_item, get_section
+from utils.config import get_section
 
 class Display: 
     def __init__(self, model, data, save:bool, show:bool, out_path:Optional[str]): 

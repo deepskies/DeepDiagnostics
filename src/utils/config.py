@@ -14,7 +14,7 @@ def get_section(section, raise_exception=True):
 
 class Config: 
     ENV_VAR_PATH = "DeepDiagnostics_Config"
-    def __init__(self, config_path:Optional[str]) -> None:
+    def __init__(self, config_path:Optional[str]=None) -> None:
         if config_path is not None: 
             # Add it to the env vars in case we need to get it later. 
             os.environ[self.ENV_VAR_PATH] = config_path
