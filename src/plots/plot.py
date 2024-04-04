@@ -3,22 +3,19 @@ from typing import Any, Optional
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from src.data import data
-from src.models import model
-
-from src.utils.config import get_item, get_section
+from utils.config import get_item, get_section
 
 class Display: 
-    def __init__(self, model:model, data:data, save:bool, show:bool, out_path:Optional[str]): 
+    def __init__(self, model, data, save:bool, show:bool, out_path:Optional[str]): 
         self.save = save
         self.show = show 
         self.out_path = out_path.rstrip("/")
         if self.save: 
             assert self.out_path is not None, "out_path required to save files." 
 
-        if not os.path.exists(os.path.dirname(out_path)): 
-            os.makedirs(os.path.dirname(out_path))
-
+            if not os.path.exists(os.path.dirname(out_path)): 
+                os.makedirs(os.path.dirname(out_path))
+                
         self.model = model
         self._data_setup(data)
         self._common_settings()
