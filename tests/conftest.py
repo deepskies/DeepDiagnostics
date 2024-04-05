@@ -14,11 +14,9 @@ class MockSimulator(Simulator):
 
     def __call__(self, thetas, samples): 
         thetas = np.atleast_2d(thetas)
-        # Check if the input has the correct shape
         if thetas.shape[1] != 2:
             raise ValueError("Input tensor must have shape (n, 2) where n is the number of parameter sets.")
 
-        # Unpack the parameters
         if thetas.shape[0] == 1:
             # If there's only one set of parameters, extract them directly
             m, b = thetas[0, 0], thetas[0, 1]
@@ -26,10 +24,7 @@ class MockSimulator(Simulator):
             # If there are multiple sets of parameters, extract them for each row
             m, b = thetas[:, 0], thetas[:, 1]
         x = np.linspace(0, 100, samples)
-        rs = np.random.RandomState()#2147483648)# 
-        # I'm thinking sigma could actually be a function of x
-        # if we want to get fancy down the road
-        # Generate random noise (epsilon) based on a normal distribution with mean 0 and standard deviation sigma
+        rs = np.random.RandomState()
         sigma = 1
         epsilon = rs.normal(loc=0, scale=sigma, size=(len(x), thetas.shape[0]))
         
@@ -77,7 +72,7 @@ def config_factory():
         plots=None, 
         metrics=None
 ):
-        config = { "common": {}, "model": {}, "data":{}, "plot_common": {}, "plots":{}, "metric_common": {},"metrics":{}}
+        config = { "common": {}, "model": {}, "data":{}, "plots_common": {}, "plots":{}, "metrics_common": {},"metrics":{}}
         
         # Single settings 
         if out_dir is not None: 
@@ -95,9 +90,11 @@ def config_factory():
 
         # Dict settings
         if plot_settings is not None: 
-            config['plots_common'] = plot_settings
+            for key, item in plot_settings.items(): 
+                config['plots_common'][key] = item
         if metrics_settings is not None: 
-            config['metrics_common'] = metrics_settings
+            for key, item in metrics_settings.items():
+                config['metrics_common'][key] = item
 
         if metrics is not None: 
             if isinstance(metrics, dict):

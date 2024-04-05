@@ -13,17 +13,22 @@ Defaults = {
     "plots_common": {
         "axis_spines": False, 
         "tight_layout": True,
-        "colorway": "virdids", 
-        "plot_style": "fast"
+        "default_colorway": "viridis", 
+        "plot_style": "fast", 
+        "parameter_labels" : ['$m$','$b$'], 
+        "parameter_colors": ['#9C92A3','#0F5257'], 
+        "line_style_cycle": ["-", "-."],
+        "figure_size": [6, 6]
     }, 
     "plots":{
-        "type_of_plot":{"specific_kwargs"}
+        "CDFRanks":{}, 
+        "Ranks":{"num_bins":None}, 
+        "CoverageFraction":{}
     }, 
     "metrics_common": {
         "use_progress_bar": False,
         "samples_per_inference":1000, 
         "percentiles":[75, 85, 95]
-
     },
     "metrics":{
         "AllSBC":{}, 
