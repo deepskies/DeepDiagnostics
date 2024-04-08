@@ -35,10 +35,10 @@ class Metric:
                 json.dump(data, f, ensure_ascii=True)
                 f.close()
     
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
+    def __call__(self,**kwds: Any) -> Any:
         self._collect_data_params()
         self._run_model_inference()
-        self.calculate()
+        self.calculate(kwds)
         self._finish()
 
     

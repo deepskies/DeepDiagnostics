@@ -1,7 +1,9 @@
 import pytest 
 import yaml 
+import numpy as np 
 
-from data import H5Data, Simulator
+from data import H5Data
+from data.simulator import Simulator
 from models import SBIModel
 from utils.register import register_simulator
 
@@ -9,8 +11,34 @@ from utils.register import register_simulator
 class MockSimulator(Simulator): 
     def __init__(self): 
         pass 
-    def __call__(self, thetas): 
-        return thetas
+
+    def __call__(self, thetas, samples): 
+        thetas = np.atleast_2d(thetas)
+        # Check if the input has the correct shape
+        if thetas.shape[1] != 2:
+            raise ValueError("Input tensor must have shape (n, 2) where n is the number of parameter sets.")
+
+        # Unpack the parameters
+        if thetas.shape[0] == 1:
+            # If there's only one set of parameters, extract them directly
+            m, b = thetas[0, 0], thetas[0, 1]
+        else:
+            # If there are multiple sets of parameters, extract them for each row
+            m, b = thetas[:, 0], thetas[:, 1]
+        x = np.linspace(0, 100, samples)
+        rs = np.random.RandomState()#2147483648)# 
+        # I'm thinking sigma could actually be a function of x
+        # if we want to get fancy down the road
+        # Generate random noise (epsilon) based on a normal distribution with mean 0 and standard deviation sigma
+        sigma = 1
+        epsilon = rs.normal(loc=0, scale=sigma, size=(len(x), thetas.shape[0]))
+        
+        # Initialize an empty array to store the results for each set of parameters
+        y = np.zeros((len(x), thetas.shape[0]))
+        for i in range(thetas.shape[0]):
+            m, b = thetas[i, 0], thetas[i, 1]
+            y[:, i] = m * x + b + epsilon[:, i]
+        return y.T
 
 
 @pytest.fixture
@@ -67,9 +95,9 @@ def config_factory():
 
         # Dict settings
         if plot_settings is not None: 
-            config['plot_common'] = plot_settings
+            config['plots_common'] = plot_settings
         if metrics_settings is not None: 
-            config['metric_common'] = metrics_settings
+            config['metrics_common'] = metrics_settings
 
         if metrics is not None: 
             if isinstance(metrics, dict):

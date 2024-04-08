@@ -98,7 +98,7 @@ class Diagnose_generative:
             num_posterior_samples=num_posterior_samples
         )
         return check_stats
-
+ 
     def plot_1d_ranks(
         self,
         ranks,

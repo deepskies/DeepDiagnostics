@@ -13,7 +13,7 @@ from typing import List, Union
 matplotlib.rcParams["axes.spines.right"] = False
 matplotlib.rcParams["axes.spines.top"] = False
 
-
+ 
 class Display:
     def mackelab_corner_plot(
         self,

@@ -15,8 +15,12 @@ class SBIModel(Model):
             posterior = pickle.load(file)
         self.posterior = posterior
 
-    def sample_posterior(self, n_samples:int, data): # TODO typing
-        return self.posterior.sample((n_samples,), x=data.y_true)
+    def sample_posterior(self, n_samples:int, y_true): # TODO typing
+        return self.posterior.sample(
+            (n_samples,),
+            x=y_true, 
+            show_progress_bars=False
+        ).cpu()
 
     def predict_posterior(self, data): 
         posterior_samples = self.sample_posterior(data.y_true)

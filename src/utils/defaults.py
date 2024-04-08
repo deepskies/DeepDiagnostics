@@ -10,7 +10,7 @@ Defaults = {
     "data":{
         "data_engine": "H5Data"
     },
-    "plot_common": {
+    "plots_common": {
         "axis_spines": False, 
         "tight_layout": True,
         "colorway": "virdids", 
@@ -19,10 +19,14 @@ Defaults = {
     "plots":{
         "type_of_plot":{"specific_kwargs"}
     }, 
-    "metric_common": {
+    "metrics_common": {
+        "use_progress_bar": False,
+        "samples_per_inference":1000, 
+        "percentiles":[75, 85, 95]
 
     },
     "metrics":{
-        "type_of_metrics":{"specific_kwargs"}
+        "AllSBC":{}, 
+        "CoverageFraction": {}, 
     }
 }

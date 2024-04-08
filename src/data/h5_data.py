@@ -28,3 +28,23 @@ class H5Data(Data):
             # Save each array as a dataset in the HDF5 file
             for key, value in data_arrays.items():
                 file.create_dataset(key, data=value)
+
+    def x_true(self): 
+        # From Data 
+        return self.data['xs']
+    
+    def y_true(self): 
+        return self.simulator(self.theta_true(), self.x_true())
+    
+    def prior(self): 
+        # From Data
+        raise NotImplementedError
+    
+    def theta_true(self):
+        return self.data['thetas']
+
+    def sigma_true(self): 
+        try: 
+            return super().sigma_true()
+        except (AssertionError, KeyError): 
+            return 1
