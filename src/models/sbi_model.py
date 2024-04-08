@@ -20,7 +20,7 @@ class SBIModel(Model):
             (n_samples,),
             x=y_true, 
             show_progress_bars=False
-        ).cpu()
+        ).cpu() # TODO Unbind from cpu 
 
     def predict_posterior(self, data): 
         posterior_samples = self.sample_posterior(data.y_true)

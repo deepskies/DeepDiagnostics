@@ -1,6 +1,7 @@
 import numpy as np 
-from typing import Any
+from torch import tensor
 from tqdm import tqdm
+from typing import Any
 
 from metrics.metric import Metric
 from utils.config import get_item
@@ -53,15 +54,19 @@ class CoverageFraction(Metric):
                 # find the percentile for the posterior for this observation
                 # this is n_params dimensional
                 # the units are in parameter space
-                confidence_lower = np.percentile(
-                    samples.cpu(),
-                    percentile_lower,
-                    axis=0
+                confidence_lower = tensor(
+                    np.percentile(
+                        samples.cpu(),
+                        percentile_lower,
+                        axis=0
+                     )
                 )
-                confidence_upper = np.percentile(
-                    samples.cpu(),
-                    percentile_upper,
-                    axis=0
+                confidence_upper = tensor(
+                    np.percentile(
+                        samples.cpu(),
+                        percentile_upper,
+                        axis=0
+                     )
                 )
                 
                 # this is asking if the true parameter value
