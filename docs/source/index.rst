@@ -1,0 +1,29 @@
+.. DeepDiagnostics documentation master file, created by
+   sphinx-quickstart on Mon Apr 15 11:14:20 2024.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to DeepDiagnostics's documentation!
+===========================================
+
+.. toctree::
+   :maxdepth: 2
+
+   quickstart
+   configuration
+   plots
+   metrics
+   API/client
+   API/utils 
+   API/data
+   API/models 
+   API/plots 
+   API/metrics
+   
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
