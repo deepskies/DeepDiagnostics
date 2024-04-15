@@ -4,7 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'DeepDiagnostics'
 copyright = '2024, Becky Nevin, M Voetberg, Brian Nord'

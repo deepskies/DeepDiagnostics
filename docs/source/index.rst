@@ -8,6 +8,7 @@ Welcome to DeepDiagnostics's documentation!
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
    quickstart
    configuration
@@ -19,7 +20,6 @@ Welcome to DeepDiagnostics's documentation!
    API/models 
    API/plots 
    API/metrics
-   
 
 Indices and tables
 ==================
