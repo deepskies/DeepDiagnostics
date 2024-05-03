@@ -7,7 +7,8 @@ from plots import (
     Plots, 
     CDFRanks, 
     Ranks, 
-    CoverageFraction
+    CoverageFraction, 
+    TARP
 )
 
 @pytest.fixture
@@ -15,7 +16,8 @@ def plot_config(config_factory):
     out_dir = "./temp_results/"
     metrics_settings={"use_progress_bar":False, "samples_per_inference":10, "percentiles":[95]}
     config = config_factory(out_dir=out_dir, metrics_settings=metrics_settings)
-    return config
+    Config(config)
+
 
 def test_all_plot_catalogued(): 
     '''Each metrics gets its own file, and each metric is included in the Metrics dictionary 
@@ -32,25 +34,25 @@ def test_all_defaults(plot_config, mock_model, mock_data):
     Ensures each metric has a default set of parameters and is included in the defaults list
     Ensures each test can initialize, regardless of the veracity of the output 
     """
-    Config(plot_config)
     for plot_name, plot_obj in Plots.items(): 
         assert plot_name in Defaults['plots']
         plot_obj(mock_model, mock_data,  save=True, show=False)
 
 def test_plot_cdf(plot_config, mock_model, mock_data): 
-    Config(plot_config)
     plot = CDFRanks(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "CDFRanks", raise_exception=False)) 
     assert os.path.exists(f"{plot.out_path}/{plot.plot_name}")
 
 def test_plot_ranks(plot_config, mock_model, mock_data): 
-    Config(plot_config)
     plot = Ranks(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "Ranks", raise_exception=False))
     assert os.path.exists(f"{plot.out_path}/{plot.plot_name}")
 
 def test_plot_coverage(plot_config, mock_model, mock_data): 
-    Config(plot_config)
     plot = CoverageFraction(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "CoverageFraction", raise_exception=False))
     assert os.path.exists(f"{plot.out_path}/{plot.plot_name}")
+
+def test_plot_tarp(plot_config, mock_model, mock_data): 
+    plot = TARP(mock_model, mock_data, save=True, show=False)
+    plot(**get_item("plots", "TARP", raise_exception=False))
