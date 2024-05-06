@@ -2,7 +2,8 @@ Defaults = {
     "common":{
         "out_dir":"./DeepDiagnosticsResources/results/", 
         "temp_config": "./DeepDiagnosticsResources/temp/temp_config.yml", 
-        "sim_location": "DeepDiagnosticsResources_Simulators"
+        "sim_location": "DeepDiagnosticsResources_Simulators",
+        "random_seed":42
     }, 
     "model": {
         "model_engine": "SBIModel"
@@ -23,12 +24,16 @@ Defaults = {
     "plots":{
         "CDFRanks":{}, 
         "Ranks":{"num_bins":None}, 
-        "CoverageFraction":{}
+        "CoverageFraction":{}, 
+        "TARP":{
+            "coverage_sigma":3 # How many sigma to show coverage over
+            }
     }, 
     "metrics_common": {
         "use_progress_bar": False,
         "samples_per_inference":1000, 
-        "percentiles":[75, 85, 95]
+        "percentiles":[75, 85, 95], 
+        "number_simulations": 50
     },
     "metrics":{
         "AllSBC":{}, 
