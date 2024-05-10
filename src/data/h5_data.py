@@ -7,8 +7,8 @@ import os
 from data.data import Data
 
 class H5Data(Data): 
-    def __init__(self, path:str, simulator:Callable):
-        super().__init__(path, simulator)
+    def __init__(self, path:str, simulator: str, prior: str = "normal", prior_kwargs:dict=None):
+        super().__init__(path, simulator, prior, prior_kwargs)
 
     def _load(self, path): 
         assert path.split(".")[-1] == "h5", "File extension must be h5"
@@ -35,10 +35,6 @@ class H5Data(Data):
     
     def y_true(self): 
         return self.simulator(self.theta_true(), self.x_true())
-    
-    def prior(self): 
-        # From Data
-        raise NotImplementedError
     
     def theta_true(self):
         return self.data['thetas']
