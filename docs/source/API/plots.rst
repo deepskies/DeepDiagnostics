@@ -1,6 +1,6 @@
 Plots 
 ========
 
-.. autoclass:: DeepDiagnostics.plots.plots.Plots
+.. autoclass:: plots.Plots
     :members:
 

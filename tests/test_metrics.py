@@ -15,6 +15,7 @@ def metric_config(config_factory):
     metrics_settings={"use_progress_bar":False, "samples_per_inference":10, "percentiles":[95]}
     config = config_factory(metrics_settings=metrics_settings)
     Config(config)
+    return config
 
 def test_all_metrics_catalogued(): 
     '''Each metrics gets its own file, and each metric is included in the Metrics dictionary 

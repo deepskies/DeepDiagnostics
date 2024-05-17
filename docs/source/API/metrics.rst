@@ -1,5 +1,5 @@
 Metrics 
 ===========
 
-.. autoclass:: DeepDiagnostics.metrics.metrics.Metrics
+.. autoclass:: metrics.metric.Metric
     :members:

@@ -1,5 +1,5 @@
 Client 
 ========
 
-.. autoclass:: DeepDiagnostics.Client
+.. automodule:: client
     :members:
