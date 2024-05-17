@@ -13,14 +13,14 @@ class Ranks(Display):
         return "ranks.png"
 
     def _data_setup(self):
-        thetas = tensor(self.data.theta_true())
-        y_true = tensor(self.data.x_true())
+        thetas = tensor(self.data.get_theta_true())
+        context = tensor(self.data.true_context())
         self.num_samples = get_item(
             "metrics_common", "samples_per_inference", raise_exception=False
         )
 
         ranks, _ = run_sbc(
-            thetas, y_true, self.model.posterior, num_posterior_samples=self.num_samples
+            thetas, context, self.model.posterior, num_posterior_samples=self.num_samples
         )
         self.ranks = ranks
 

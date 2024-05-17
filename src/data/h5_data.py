@@ -34,17 +34,14 @@ class H5Data(Data):
         # From Data
         return self.data["xs"]  # TODO change name
 
-    def true_simulator_outcome(self):
-        return self.simulator(self.theta_true(), self.x_true())
-
     def prior(self):
         # From Data
         raise NotImplementedError
 
-    def theta_true(self):
+    def get_theta_true(self):
         return self.data["thetas"]
 
-    def sigma_true(self):
+    def get_sigma_true(self):
         try:
             return super().sigma_true()
         except (AssertionError, KeyError):

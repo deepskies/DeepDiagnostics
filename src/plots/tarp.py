@@ -18,9 +18,8 @@ class TARP(Display):
         return "tarp.png"
 
     def _data_setup(self):
-        self.rng = np.random.default_rng(
-            get_item("common", "random_seed", raise_exception=False)
-        )
+        self.theta_true = self.data.get_theta_true()
+
         samples_per_inference = get_item(
             "metrics_common", "samples_per_inference", raise_exception=False
         )
@@ -28,16 +27,16 @@ class TARP(Display):
             "metrics_common", "number_simulations", raise_exception=False
         )
 
-        n_dims = self.data.theta_true().shape[1]
+        n_dims = self.theta_true.shape[1]
         self.posterior_samples = np.zeros(
             (num_simulations, samples_per_inference, n_dims)
         )
         self.thetas = np.zeros((num_simulations, n_dims))
         for n in range(num_simulations):
-            sample_index = self.rng.integers(0, len(self.data.theta_true()))
+            sample_index = self.data.rng.integers(0, len(self.theta_true))
 
-            theta = self.data.theta_true()[sample_index, :]
-            x = self.data.x_true()[sample_index, :]
+            theta = self.theta_true[sample_index, :]
+            x = self.data.true_context()[sample_index, :]
             self.posterior_samples[n] = self.model.sample_posterior(
                 samples_per_inference, x
             )
@@ -56,7 +55,7 @@ class TARP(Display):
                 "plots_common", "default_colorway", raise_exception=False
             )
 
-        cmap = plt.cm.get_cmap(colorway)
+        cmap = plt.get_cmap(colorway)
         hex_colors = []
         arr = np.linspace(0, 1, n_colors)
         for hit in arr:

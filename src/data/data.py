@@ -12,7 +12,7 @@ class Data:
         path: str,
         simulator_name: str,
         simulator_kwargs: dict = None,
-        prior: str = "data",
+        prior: str = None,
         prior_kwargs: dict = None,
     ):
         self.rng = np.random.default_rng(
@@ -21,9 +21,9 @@ class Data:
         self.data = self._load(path)
         self.simulator = self._load_simulator(simulator_name, simulator_kwargs)
         self.prior_dist = self.load_prior(prior, prior_kwargs)
-        self.n_dims = self.theta_true().shape[1]
+        self.n_dims = self.get_theta_true().shape[1]
 
-    def _load_simulator(self, name):
+    def _load_simulator(self, name, simulator_kwargs):
         try:
             sim_location = get_item("common", "sim_location", raise_exception=False)
             simulator_path = os.environ[f"{sim_location}:{name}"]
@@ -41,7 +41,7 @@ class Data:
 
         simulator = getattr(m, name)
 
-        simulator_kwargs = get_item("data", "simulator_kwargs", raise_exception=False)
+        simulator_kwargs = simulator_kwargs if simulator_kwargs is not None else get_item("data", "simulator_kwargs", raise_exception=False)
         simulator_kwargs = {} if simulator_kwargs is None else simulator_kwargs
         simulator_instance = simulator(**simulator_kwargs)
 
@@ -65,7 +65,7 @@ class Data:
         raise NotImplementedError
 
     def true_simulator_outcome(self):
-        return self.simulator(self.theta_true(), self.true_context())
+        return self.simulator(self.get_theta_true(), self.true_context())
 
     def sample_prior(self, n_samples: int):
         return self.prior_dist(size=(n_samples, self.n_dims))
@@ -83,17 +83,17 @@ class Data:
     def simulated_context(self, n_samples):
         return self.simulator.generate_context(n_samples)
 
-    def theta_true(self):
+    def get_theta_true(self):
         if hasattr(self, "theta_true"):
             return self.theta_true
         else:
-            return get_item("data", "theta_true")
+            return get_item("data", "theta_true", raise_exception=True)
 
-    def sigma_true(self):
+    def get_sigma_true(self):
         if hasattr(self, "sigma_true"):
             return self.sigma_true
         else:
-            return get_item("data", "sigma_true")
+            return get_item("data", "sigma_true", raise_exception=True)
 
     def save(self, data, path: str):
         raise NotImplementedError
@@ -102,6 +102,8 @@ class Data:
         raise NotImplementedError
 
     def load_prior(self, prior, prior_kwargs):
+        if prior is None: 
+            prior = get_item("data", "prior", raise_exception=False)
         try:
             prior = self.read_prior()
         except NotImplementedError:

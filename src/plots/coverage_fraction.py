@@ -18,6 +18,7 @@ class CoverageFraction(Display):
         parameter_labels=None,
         figure_size=None,
         line_styles=None,
+        parameter_colors=None
     ):
         super().__init__(model, data, save, show, out_dir)
 
@@ -25,6 +26,11 @@ class CoverageFraction(Display):
             parameter_labels
             if parameter_labels is not None
             else get_item("plots_common", "parameter_labels", raise_exception=False)
+        )
+        self.colors = (
+            parameter_colors
+            if parameter_colors is not None
+            else get_item("plots_common", "parameter_colors", raise_exception=False)
         )
         self.n_parameters = len(self.labels)
         self.figure_size = (
@@ -65,7 +71,7 @@ class CoverageFraction(Display):
     ):
         n_steps = self.coverage_fractions.shape[0]
         percentile_array = np.linspace(0, 1, n_steps)
-        color_cycler = iter(plt.cycler("color", cm.get_cmap(self.colorway).colors))
+        color_cycler = iter(plt.cycler("color", self.colors))
         line_style_cycler = iter(plt.cycler("line_style", self.line_cycle))
 
         # Plotting

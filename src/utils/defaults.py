@@ -6,7 +6,12 @@ Defaults = {
         "random_seed": 42,
     },
     "model": {"model_engine": "SBIModel"},
-    "data": {"data_engine": "H5Data"},
+    "data": {
+        "data_engine": "H5Data", 
+        "prior":"normal", 
+        "prior_kwargs": None,
+        "simulator_kwargs": None,
+    },
     "plots_common": {
         "axis_spines": False,
         "tight_layout": True,

@@ -24,13 +24,13 @@ class AllSBC(Metric):
             self.samples_per_inference = samples_per_inference
 
     def _collect_data_params(self):
-        self.thetas = tensor(self.data.theta_true())
-        self.y_true = tensor(self.data.x_true())
+        self.thetas = tensor(self.data.get_theta_true())
+        self.context = tensor(self.data.true_context())
 
     def calculate(self):
         ranks, dap_samples = run_sbc(
             self.thetas,
-            self.y_true,
+            self.context,
             self.model.posterior,
             num_posterior_samples=self.samples_per_inference,
         )

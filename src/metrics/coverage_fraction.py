@@ -41,8 +41,8 @@ class CoverageFraction(Metric):
         )
 
     def _collect_data_params(self):
-        self.thetas = self.data.theta_true()
-        self.y_true = self.data.x_true()
+        self.thetas = self.data.get_theta_true()
+        self.context = self.data.true_context()
 
     def _run_model_inference(self, samples_per_inference, y_inference):
         samples = self.model.sample_posterior(samples_per_inference, y_inference)
@@ -50,10 +50,10 @@ class CoverageFraction(Metric):
 
     def calculate(self):
         all_samples = np.empty(
-            (len(self.y_true), self.samples_per_inference, np.shape(self.thetas)[1])
+            (len(self.context), self.samples_per_inference, np.shape(self.thetas)[1])
         )
         count_array = []
-        iterator = enumerate(self.y_true)
+        iterator = enumerate(self.context)
         if self.progress_bar:
             iterator = tqdm(
                 iterator,
@@ -95,7 +95,7 @@ class CoverageFraction(Metric):
 
         count_sum_array = np.sum(count_array, axis=0)
         frac_lens_within_vol = np.array(count_sum_array)
-        coverage = frac_lens_within_vol / len(self.y_true)
+        coverage = frac_lens_within_vol / len(self.context)
 
         self.output = coverage
 
