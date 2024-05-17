@@ -6,6 +6,6 @@ from plots.tarp import TARP
 Plots = {
     CDFRanks.__name__: CDFRanks,
     CoverageFraction.__name__: CoverageFraction,
-    Ranks.__name__: Ranks, 
-    TARP.__name__: TARP
+    Ranks.__name__: Ranks,
+    TARP.__name__: TARP,
 }

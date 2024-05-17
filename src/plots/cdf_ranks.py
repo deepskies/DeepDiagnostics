@@ -1,31 +1,61 @@
 from sbi.analysis import sbc_rank_plot, run_sbc
-from torch import tensor 
+from torch import tensor
 
 from plots.plot import Display
 from utils.config import get_item
 
-class CDFRanks(Display): 
-    def __init__(self, model, data, save: bool, show: bool, out_dir: str | None = None):
+
+class CDFRanks(Display):
+    def __init__(
+        self,
+        model,
+        data,
+        save: bool,
+        show: bool,
+        out_dir: str | None = None,
+        samples_per_inference=None,
+        parameter_colors=None,
+        parameter_labels=None,
+    ):
         super().__init__(model, data, save, show, out_dir)
 
-    def _plot_name(self): 
+        self.num_samples = (
+            samples_per_inference
+            if samples_per_inference is not None
+            else get_item(
+                "metrics_common", "samples_per_inference", raise_exception=False
+            )
+        )
+        self.colors = (
+            parameter_colors
+            if parameter_colors is not None
+            else get_item("plots_common", "parameter_colors", raise_exception=False)
+        )
+        self.labels = (
+            parameter_labels
+            if parameter_labels is not None
+            else get_item("plots_common", "parameter_labels", raise_exception=False)
+        )
+
+    def _plot_name(self):
         return "cdf_ranks.png"
-    
+
     def _data_setup(self):
         thetas = tensor(self.data.theta_true())
         y_true = tensor(self.data.x_true())
-        self.num_samples = get_item("metrics_common", "samples_per_inference", raise_exception=False)
+        self.num_samples = get_item(
+            "metrics_common", "samples_per_inference", raise_exception=False
+        )
 
         ranks, _ = run_sbc(
             thetas, y_true, self.model.posterior, num_posterior_samples=self.num_samples
         )
         self.ranks = ranks
-    
-    def _plot_settings(self):
-        self.colors = get_item("plots_common", "parameter_colors", raise_exception=False)
-        self.labels = get_item("plots_common", "parameter_labels", raise_exception=False)
 
-    def _plot(self): 
+    def _plot_settings(self):
+        pass
+
+    def _plot(self):
         sbc_rank_plot(
             self.ranks,
             self.num_samples,
