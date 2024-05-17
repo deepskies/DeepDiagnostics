@@ -1,5 +1,6 @@
 Utils 
 =======
 
-.. autoclass:: DeepDiagnostics.utils.config.Config 
+.. autoclass:: utils.config.Config 
     :members:
+
