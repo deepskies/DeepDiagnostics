@@ -3,6 +3,7 @@
 
 *__pycache__
 *sbi-logs
+.DS_Store
 
 # Distribution / packaging
 .Python
