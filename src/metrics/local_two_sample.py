@@ -18,17 +18,31 @@ class LocalTwoSampleTest(Metric):
         samples_per_inference = get_item(
             "metrics_common", "samples_per_inference", raise_exception=False
         )
-        x_full = torch.tensor(self.data.x_true())
-        x_sample, x_eval = x_full[:int(len(x_full)/2)], x_full[int(len(x_full)/2):]
+        num_simulations = get_item(
+            "metrics_common", "number_simulations", raise_exception=False
+        )
 
         # P is the prior and x_P is generated via the simulator from the parameters P.
         self.p = self.data.prior(samples_per_inference)
+        self.q = np.zeros((num_simulations, samples_per_inference, self.data.n_dims))
+        x_sample = np.zeros((num_simulations, self.data.x_true().shape[-1]))
+        self.x_evaluation = np.zeros_like(x_sample)
 
-        # Q is the approximate posterior amortized in x. x_Q is a shuffled version of x_P, used to generate independent samples from Q | x.
-        self.q = self.model.sample_posterior(samples_per_inference, x_sample)
 
+        print(x_sample.shape)
+        x_true = self.data.x_true()
+        for index, p in enumerate(self.p): 
+            x_p = self.data.simulator(p, num_simulations)
+            print(x_p.shape)
+            # Q is the approximate posterior amortized in x
+            self.q[index] = self.model.sample_posterior(samples_per_inference, y_true=x_p)
+            x_sample[index] = x_p
+
+            self.x_evaluation[index] = x_true[self.data.rng.integers(0, len(x_true)),:]
+
+        # x_Q is a shuffled version of x_P, used to generate independent samples from Q | x.
         self.x_given_p = self.x_given_q = x_sample
-        self.x_evaluation = x_eval
+
 
     def train_linear_classifier(self, p, q, x_p, x_q, classifier:str, classifier_kwargs:dict={}): 
         classifier_map = {
@@ -65,13 +79,12 @@ class LocalTwoSampleTest(Metric):
         model_probabilities = []
         for model, model_args in zip(classifier, classifier_kwargs): 
             if cross_evaluate: 
-                model_probabilities.append(self._cross_eval_scores(p, q, x_p, x_q, model))
+                model_probabilities.append(self._cross_eval_score(p, q, x_p, x_q, model, model_args))
             else: 
                 trained_model = self.train_linear_classifier(p, q, x_p, x_q, model, model_args)
                 model_probabilities.append(self._eval_model(P=p, classifier=trained_model))
 
         return np.mean(model_probabilities, axis=0)
-
 
     def _cross_eval_score(self, p, q, x_p, x_q, classifier, classifier_kwargs, n_cross_folds=5): 
         kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42) # TODO get seed from config 
@@ -110,7 +123,7 @@ class LocalTwoSampleTest(Metric):
         return X_perm[:n_samples], X_perm[n_samples:]
 
     def calculate(self, 
-                  linear_classifier:Union[str, list[str]], 
+                  linear_classifier:Union[str, list[str]]='MLP', 
                   cross_evaluate:bool=True, 
                   n_null_hypothesis_trials=100, 
                   classifier_kwargs:Union[dict, list[dict]]=None):
@@ -128,7 +141,6 @@ class LocalTwoSampleTest(Metric):
             self.q, 
             self.x_given_p, 
             self.x_given_q, 
-            self.x_evaluation, 
             classifier=linear_classifier, 
             cross_evaluate=cross_evaluate, 
             classifier_kwargs=classifier_kwargs
@@ -151,12 +163,11 @@ class LocalTwoSampleTest(Metric):
                 q_null, 
                 p_given_x_null, 
                 q_given_x_null, 
-                self.x_evaluation, 
                 classifier=linear_classifier, 
                 cross_evaluate=cross_evaluate, 
                 classifier_kwargs=classifier_kwargs
-
             )
+
             null_hypothesis_probabilities.append(null_result)
         
         null =  np.array(null_hypothesis_probabilities)
@@ -165,3 +176,9 @@ class LocalTwoSampleTest(Metric):
             "lc2st_null_hypothesis_probabilities": null
         }
         return probabilities, null
+    
+
+    def __call__(self, **kwds: Any) -> Any:
+        self._collect_data_params()
+        self.calculate(**kwds)
+        self._finish()
