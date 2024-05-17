@@ -1,8 +1,8 @@
-import os
 from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np 
-from matplotlib import rcParams
+from matplotlib.colors import Normalize
+from matplotlib.patches import Rectangle
 
 from plots.plot import Display
 from metrics.local_two_sample import LocalTwoSampleTest as l2st
@@ -10,6 +10,9 @@ from utils.config import get_item
 from utils.plotting_utils import get_hex_colors
 
 class LocalTwoSampleTest(Display): 
+
+    # https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L133 
+
     def __init__(self, model, data, save:bool, show:bool, out_dir:Optional[str]=None): 
         super().__init__(model, data, save, show, out_dir)
  
@@ -19,7 +22,6 @@ class LocalTwoSampleTest(Display):
     def _data_setup(self): 
         self.percentiles = get_item("metrics_common", item='percentiles', raise_exception=False)
         self.region_colors = get_hex_colors(n_colors=len(self.percentiles))
-
         self.probability, self.null_hypothesis_probability = l2st.calculate()
 
     def _plot_settings(self): 

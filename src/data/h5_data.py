@@ -10,7 +10,8 @@ from data.data import Data
 class H5Data(Data):
     def __init__(self, path: str, simulator: Callable):
         super().__init__(path, simulator)
-
+        self.theta_true = self.get_theta_true()
+        
     def _load(self, path):
         assert path.split(".")[-1] == "h5", "File extension must be h5"
         loaded_data = {}
