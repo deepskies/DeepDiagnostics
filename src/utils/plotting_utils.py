@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib as mpl
 
 def get_hex_colors(n_colors:int, colorway:str): 
-    cmap = mpl.cm.get_cmap(colorway)
+    cmap = mpl.pyplot.get_cmap(colorway)
     hex_colors = []
     arr=np.linspace(0, 1, n_colors)
     for hit in arr: 

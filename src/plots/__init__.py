@@ -5,4 +5,4 @@ from plots.local_two_sample import LocalTwoSampleTest
 from plots.tarp import TARP
 
 _all = [CoverageFraction, CDFRanks, Ranks, LocalTwoSampleTest, TARP]
-Metrics = {m.__name__: m for m in _all}
+Plots = {m.__name__: m for m in _all}

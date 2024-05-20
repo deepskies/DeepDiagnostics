@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Optional, Union
 import numpy as np 
 
 from sklearn.model_selection import KFold
@@ -9,19 +9,18 @@ from metrics.metric import Metric
 from utils.config import get_item
 
 class LocalTwoSampleTest(Metric): 
-    def __init__(self, model: Any, data: Any, out_dir: str | None = None) -> None:
+    def __init__(self, model: Any, data: Any, out_dir: str | None = None, num_simulations: Optional[int] = None) -> None:
         super().__init__(model, data, out_dir)
-    
-    def _collect_data_params(self):
-        num_simulations = get_item(
+        self.num_simulations = num_simulations if num_simulations is not None else get_item(
             "metrics_common", "number_simulations", raise_exception=False
         )
+    def _collect_data_params(self):
 
         # P is the prior and x_P is generated via the simulator from the parameters P.
-        self.p = self.data.sample_prior(num_simulations)
+        self.p = self.data.sample_prior(self.num_simulations)
         self.q = np.zeros_like(self.p)
 
-        self.outcome_given_p = np.zeros((num_simulations, self.data.simulator.generate_context().shape[-1]))
+        self.outcome_given_p = np.zeros((self.num_simulations, self.data.simulator.generate_context().shape[-1]))
         self.outcome_given_q = np.zeros_like(self.outcome_given_p)
         self.evaluation_context = np.zeros_like(self.outcome_given_p)
 
@@ -33,7 +32,7 @@ class LocalTwoSampleTest(Metric):
             self.q[index] = q
             self.outcome_given_q[index] = self.data.simulator.simulate(q, context)
 
-        self.evaluation_context = np.array([self.data.simulator.generate_context() for _ in range(num_simulations)])
+        self.evaluation_context = np.array([self.data.simulator.generate_context() for _ in range(self.num_simulations)])
 
     def train_linear_classifier(self, p, q, x_p, x_q, classifier:str, classifier_kwargs:dict={}): 
         classifier_map = {
@@ -77,23 +76,25 @@ class LocalTwoSampleTest(Metric):
         return np.mean(model_probabilities, axis=0)
 
     def _cross_eval_score(self, p, q, x_p, x_q, classifier, classifier_kwargs, n_cross_folds=5): 
-        kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42) # TODO get seed from config 
+        kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42) # Getting the shape
         cv_splits = kf.split(p)
-
         # train classifiers over cv-folds
         probabilities = []
-        for train_index, val_index in cv_splits:
+        self.evaluation_data = np.zeros((n_cross_folds, len(next(cv_splits)[1]), self.evaluation_context.shape[-1]))
+        
+        kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42) 
+        cv_splits = kf.split(p)
+        for cross_trial, (train_index, val_index) in enumerate(cv_splits):
             # get train split
             p_train, x_p_train = p[train_index,:], x_p[train_index,:]
             q_train, x_q_train = q[train_index,:], x_q[train_index,:]
             trained_nth_classifier = self.train_linear_classifier(p_train, q_train, x_p_train, x_q_train, classifier, classifier_kwargs)
             p_evaluate = p[val_index]
-            evaluation_data = np.zeros((len(val_index), self.evaluation_context.shape[-1]))
             for index, p_validation in enumerate(p_evaluate): 
-                evaluation_data[index] = self.data.simulator.simulate(
+                self.evaluation_data[cross_trial][index] = self.data.simulator.simulate(
                     p_validation, self.evaluation_context[val_index][index]
                 )
-            probabilities.append(self._eval_model(p_evaluate, evaluation_data, trained_nth_classifier))
+            probabilities.append(self._eval_model(p_evaluate, self.evaluation_data[cross_trial], trained_nth_classifier))
         return probabilities
 
     def permute_data(self, P, Q):
@@ -107,7 +108,7 @@ class LocalTwoSampleTest(Metric):
         X = np.concatenate([P, Q], axis=0)
         X_perm = X[self.data.rng.permutation(np.arange(n_samples * 2))]
         return X_perm[:n_samples], X_perm[n_samples:]
-
+        
     def calculate(
             self, 
             linear_classifier:Union[str, list[str]]='MLP', 
@@ -165,6 +166,10 @@ class LocalTwoSampleTest(Metric):
         return probabilities, null
     
     def __call__(self, **kwds: Any) -> Any:
-        self._collect_data_params()
+        try: 
+            self._collect_data_params()
+        except NotImplementedError: 
+            pass 
+
         self.calculate(**kwds)
         self._finish()
