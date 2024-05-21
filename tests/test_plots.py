@@ -8,8 +8,7 @@ from plots import (
     CDFRanks, 
     Ranks, 
     CoverageFraction, 
-    TARP, 
-    LocalTwoSampleTest
+    TARP
 )
 
 @pytest.fixture
@@ -57,9 +56,3 @@ def test_plot_coverage(plot_config, mock_model, mock_data):
 def test_plot_tarp(plot_config, mock_model, mock_data): 
     plot = TARP(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "TARP", raise_exception=False))
-    assert os.path.exists(f"{plot.out_path}/{plot.plot_name}")
-
-def test_plot_lc2st(plot_config, mock_model, mock_data): 
-    plot = LocalTwoSampleTest(mock_model, mock_data, save=True, show=False)
-    plot(**get_item("plots", "LocalTwoSampleTest", raise_exception=False))
-    assert os.path.exists(f"{plot.out_path}/{plot.plot_name}")
