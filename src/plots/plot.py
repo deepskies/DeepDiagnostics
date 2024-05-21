@@ -27,7 +27,6 @@ class Display:
 
         self.model = model
         self._common_settings()
-        self._plot_settings()
         self.plot_name = self._plot_name()
 
     def _plot_name(self):
@@ -77,6 +76,14 @@ class Display:
         plt.cla()
 
     def __call__(self, **plot_args) -> None:
-        self._data_setup()
+        try: 
+            self._data_setup()
+        except NotImplementedError: 
+            pass 
+        try: 
+            self._plot_settings() 
+        except NotImplementedError: 
+            pass 
+        
         self._plot(**plot_args)
         self._finish()

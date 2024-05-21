@@ -6,7 +6,8 @@ from utils.config import Config
 from metrics import (
     Metrics, 
     CoverageFraction, 
-    AllSBC
+    AllSBC, 
+    LocalTwoSampleTest
 )
 
 @pytest.fixture
@@ -31,7 +32,6 @@ def test_all_defaults(metric_config, mock_model, mock_data):
     Ensures each metric has a default set of parameters and is included in the defaults list
     Ensures each test can initialize, regardless of the veracity of the output 
     """
-    Config(metric_config)
 
     for metric_name, metric_obj in Metrics.items(): 
         assert metric_name in Defaults['metrics']
@@ -39,7 +39,6 @@ def test_all_defaults(metric_config, mock_model, mock_data):
 
 
 def test_coverage_fraction(metric_config, mock_model, mock_data): 
-    Config(metric_config)
     coverage_fraction = CoverageFraction(mock_model, mock_data)
     _, coverage = coverage_fraction.calculate()
     assert coverage_fraction.output.all() is not None
@@ -48,7 +47,11 @@ def test_coverage_fraction(metric_config, mock_model, mock_data):
     assert coverage.shape 
     
 def test_all_sbc(metric_config, mock_model, mock_data): 
-    Config(metric_config)
     all_sbc = AllSBC(mock_model, mock_data)
     all_sbc()
     # TODO What is this supposed to be
+
+def test_lc2st(metric_config, mock_model, mock_data): 
+    lc2st = LocalTwoSampleTest(mock_model, mock_data)
+    lc2st()
+    assert lc2st.output is not None

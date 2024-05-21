@@ -9,8 +9,8 @@ from utils.register import register_simulator
 
 
 class MockSimulator(Simulator): 
-    def generate_context(self, n_samples: int) -> np.ndarray:
-        return np.linspace(0, 100, n_samples)
+    def generate_context(self, n_samples=None) -> np.ndarray:
+        return np.linspace(0, 100, 101)
     
     def simulate(self, theta: np.ndarray, context_samples: np.ndarray) -> np.ndarray:
         thetas = np.atleast_2d(theta)

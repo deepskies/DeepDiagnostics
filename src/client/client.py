@@ -97,9 +97,15 @@ def main():
     plots = config.get_section("plots", raise_exception=False)
 
     for metrics_name, metrics_args in metrics.items():
-        Metrics[metrics_name](model, data, **metrics_args)()
+        try: 
+            Metrics[metrics_name](model, data, **metrics_args)()
+        except (NotImplementedError, RuntimeError) as error: 
+            print(f"WARNING - skipping metric {metrics_name} due to error: {error}")
 
     for plot_name, plot_args in plots.items():
-        Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
-            **plot_args
-        )
+        try: 
+            Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
+                **plot_args
+            )
+        except (NotImplementedError, RuntimeError) as error: 
+            print(f"WARNING - skipping plot {plot_name} due to error: {error}")
