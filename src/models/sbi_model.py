@@ -24,8 +24,6 @@ class SBIModel(Model):
     def predict_posterior(self, data):
         posterior_samples = self.sample_posterior(data.y_true)
         posterior_predictive_samples = data.simulator(
-            data.get_theta_true(), posterior_samples
+            data.theta_true(), posterior_samples
         )
         return posterior_predictive_samples
-
-    

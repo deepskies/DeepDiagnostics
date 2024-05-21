@@ -10,10 +10,7 @@ Defaults = {
         "data_engine": "H5Data", 
         "prior":"normal", 
         "prior_kwargs": None,
-        "simulator_kwargs": None, 
-        "prior": "normal", 
-        "prior_kwargs":{}
-
+        "simulator_kwargs": None,
     },
     "plots_common": {
         "axis_spines": False,
@@ -29,7 +26,6 @@ Defaults = {
         "CDFRanks": {},
         "Ranks": {"num_bins": None},
         "CoverageFraction": {},
-        "LocalTwoSampleTest":{}, 
         "TARP": {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
@@ -43,9 +39,5 @@ Defaults = {
     "metrics": {
         "AllSBC": {},
         "CoverageFraction": {},
-        "LocalTwoSampleTest":{
-            "linear_classifier":"MLP", 
-            "classifier_kwargs":{"alpha":0, "max_iter":2500}
-        }
     },
 }
