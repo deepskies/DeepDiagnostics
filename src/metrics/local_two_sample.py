@@ -82,7 +82,7 @@ class LocalTwoSampleTest(Metric):
         probabilities = []
         self.evaluation_data = np.zeros((n_cross_folds, len(next(cv_splits)[1]), self.evaluation_context.shape[-1]))
         self.prior_evaluation = np.zeros_like(p)
-
+        
         kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42) 
         cv_splits = kf.split(p)
         for cross_trial, (train_index, val_index) in enumerate(cv_splits):

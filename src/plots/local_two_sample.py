@@ -127,7 +127,6 @@ class LocalTwoSampleTest(Display):
             colors = plt.get_cmap(self.colorway)
 
             weights = np.empty((n_bins, n_bins)) * np.nan
-            print(weights)
             for i in range(n_bins):
                 for j in range(n_bins):
                     local_and = np.logical_and(eval_bins_dim_1==i, eval_bins_dim_2==j)
@@ -151,7 +150,7 @@ class LocalTwoSampleTest(Display):
                         edgecolor="none",
                     )
                     subplot.add_patch(rect)
-        
+
             
     def _plot(self, 
             use_intensity_plot:bool=True, 
