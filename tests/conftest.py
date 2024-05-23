@@ -9,11 +9,11 @@ from utils.register import register_simulator
 
 
 class MockSimulator(Simulator): 
-    def __init__(self): 
-        pass 
-
-    def __call__(self, thetas, samples): 
-        thetas = np.atleast_2d(thetas)
+    def generate_context(self, n_samples=None) -> np.ndarray:
+        return np.linspace(0, 100, 101)
+    
+    def simulate(self, theta: np.ndarray, context_samples: np.ndarray) -> np.ndarray:
+        thetas = np.atleast_2d(theta)
         if thetas.shape[1] != 2:
             raise ValueError("Input tensor must have shape (n, 2) where n is the number of parameter sets.")
 
@@ -23,18 +23,16 @@ class MockSimulator(Simulator):
         else:
             # If there are multiple sets of parameters, extract them for each row
             m, b = thetas[:, 0], thetas[:, 1]
-        x = np.linspace(0, 100, samples)
         rs = np.random.RandomState()
         sigma = 1
-        epsilon = rs.normal(loc=0, scale=sigma, size=(len(x), thetas.shape[0]))
+        epsilon = rs.normal(loc=0, scale=sigma, size=(len(context_samples), thetas.shape[0]))
         
         # Initialize an empty array to store the results for each set of parameters
-        y = np.zeros((len(x), thetas.shape[0]))
+        y = np.zeros((len(context_samples), thetas.shape[0]))
         for i in range(thetas.shape[0]):
             m, b = thetas[i, 0], thetas[i, 1]
-            y[:, i] = m * x + b + epsilon[:, i]
+            y[:, i] = m * context_samples + b + epsilon[:, i]
         return y.T
-
 
 @pytest.fixture
 def model_path(): 
