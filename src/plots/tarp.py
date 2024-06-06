@@ -1,5 +1,4 @@
 from typing import Optional, Union
-from torch import tensor
 import numpy as np
 import tarp
 

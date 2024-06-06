@@ -20,7 +20,10 @@ class Ranks(Display):
         )
 
         ranks, _ = run_sbc(
-            thetas, context, self.model.posterior, num_posterior_samples=self.num_samples
+            thetas,
+            context,
+            self.model.posterior,
+            num_posterior_samples=self.num_samples,
         )
         self.ranks = ranks
 

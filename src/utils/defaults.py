@@ -7,8 +7,8 @@ Defaults = {
     },
     "model": {"model_engine": "SBIModel"},
     "data": {
-        "data_engine": "H5Data", 
-        "prior":"normal", 
+        "data_engine": "H5Data",
+        "prior": "normal",
         "prior_kwargs": None,
         "simulator_kwargs": None,
     },

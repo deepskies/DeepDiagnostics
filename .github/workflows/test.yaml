@@ -32,6 +32,9 @@ jobs:
     - name: View poetry --help
       run: poetry --help
 
+    - name: Update lockfile
+      run: python -m poetry lock
+
     - name: Install dependencies
       shell: bash
       run: python -m poetry install

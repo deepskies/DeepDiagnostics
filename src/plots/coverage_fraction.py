@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colormaps as cm
 
 from metrics.coverage_fraction import CoverageFraction as coverage_fraction_metric
 from plots.plot import Display
@@ -18,7 +17,7 @@ class CoverageFraction(Display):
         parameter_labels=None,
         figure_size=None,
         line_styles=None,
-        parameter_colors=None
+        parameter_colors=None,
     ):
         super().__init__(model, data, save, show, out_dir)
 

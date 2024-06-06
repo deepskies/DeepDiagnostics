@@ -41,7 +41,11 @@ class Data:
 
         simulator = getattr(m, name)
 
-        simulator_kwargs = simulator_kwargs if simulator_kwargs is not None else get_item("data", "simulator_kwargs", raise_exception=False)
+        simulator_kwargs = (
+            simulator_kwargs
+            if simulator_kwargs is not None
+            else get_item("data", "simulator_kwargs", raise_exception=False)
+        )
         simulator_kwargs = {} if simulator_kwargs is None else simulator_kwargs
         simulator_instance = simulator(**simulator_kwargs)
 
@@ -102,7 +106,7 @@ class Data:
         raise NotImplementedError
 
     def load_prior(self, prior, prior_kwargs):
-        if prior is None: 
+        if prior is None:
             prior = get_item("data", "prior", raise_exception=False)
         try:
             prior = self.read_prior()
