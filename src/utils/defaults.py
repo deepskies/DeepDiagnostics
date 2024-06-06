@@ -2,7 +2,7 @@ Defaults = {
     "common": {
         "out_dir": "./DeepDiagnosticsResources/results/",
         "temp_config": "./DeepDiagnosticsResources/temp/temp_config.yml",
-        "sim_location": "DeepDiagnosticsResources_Simulators",
+        "sim_location": "DeepDiagnosticsResources/simulators",
         "random_seed": 42,
     },
     "model": {"model_engine": "SBIModel"},
@@ -29,6 +29,7 @@ Defaults = {
         "TARP": {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
+        "LC2ST": {}
     },
     "metrics_common": {
         "use_progress_bar": False,
@@ -39,5 +40,6 @@ Defaults = {
     "metrics": {
         "AllSBC": {},
         "CoverageFraction": {},
+        "LC2ST":{}
     },
 }

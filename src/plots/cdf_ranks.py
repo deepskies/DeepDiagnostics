@@ -1,41 +1,28 @@
+from typing import Optional, Sequence
 from sbi.analysis import sbc_rank_plot, run_sbc
 from torch import tensor
 
 from plots.plot import Display
-from utils.config import get_item
 
 
 class CDFRanks(Display):
     def __init__(
-        self,
-        model,
-        data,
-        save: bool,
-        show: bool,
-        out_dir: str | None = None,
-        samples_per_inference=None,
-        parameter_colors=None,
-        parameter_labels=None,
+        self, 
+        model, 
+        data, 
+        save:bool, 
+        show:bool, 
+        out_dir:Optional[str]=None, 
+        percentiles: Optional[Sequence] = None, 
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        number_simulations: Optional[int] = None,
+        parameter_names: Optional[Sequence] = None, 
+        parameter_colors: Optional[Sequence]= None, 
+        colorway: Optional[str]=None
     ):
-        super().__init__(model, data, save, show, out_dir)
-
-        self.num_samples = (
-            samples_per_inference
-            if samples_per_inference is not None
-            else get_item(
-                "metrics_common", "samples_per_inference", raise_exception=False
-            )
-        )
-        self.colors = (
-            parameter_colors
-            if parameter_colors is not None
-            else get_item("plots_common", "parameter_colors", raise_exception=False)
-        )
-        self.labels = (
-            parameter_labels
-            if parameter_labels is not None
-            else get_item("plots_common", "parameter_labels", raise_exception=False)
-        )
+        
+        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
 
     def _plot_name(self):
         return "cdf_ranks.png"
@@ -45,7 +32,7 @@ class CDFRanks(Display):
         context = tensor(self.data.true_context())
 
         ranks, _ = run_sbc(
-            thetas, context, self.model.posterior, num_posterior_samples=self.num_samples
+            thetas, context, self.model.posterior, num_posterior_samples=self.samples_per_inference
         )
         self.ranks = ranks
 
@@ -55,8 +42,8 @@ class CDFRanks(Display):
     def _plot(self):
         sbc_rank_plot(
             self.ranks,
-            self.num_samples,
+            self.samples_per_inference,
             plot_type="cdf",
-            parameter_labels=self.labels,
-            colors=self.colors,
+            parameter_labels=self.parameter_names,
+            colors=self.parameter_colors,
         )

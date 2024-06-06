@@ -20,15 +20,19 @@ class Config:
         if config_path is not None:
             # Add it to the env vars in case we need to get it later.
             os.environ[self.ENV_VAR_PATH] = config_path
+            self.config = self._read_config(config_path)
+            self._validate_config()
+
         else:
             # Get it from the env vars
             try:
                 config_path = os.environ[self.ENV_VAR_PATH]
-            except KeyError:
-                assert False, "Cannot load config from enviroment. Hint: Have you set the config path by pasing a str path to Config?"
+                self.config = self._read_config(config_path)
+                self._validate_config()
 
-        self.config = self._read_config(config_path)
-        self._validate_config()
+            except KeyError:
+                print("Warning: Cannot load config from environment. Hint: Have you set the config path by passing a str path to Config?")
+                self.config = Defaults
 
     def _validate_config(self):
         # Validate common
