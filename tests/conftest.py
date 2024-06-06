@@ -1,12 +1,13 @@
 import pytest 
 import yaml 
 import numpy as np 
+import os 
 
 from data import H5Data
 from data.simulator import Simulator
 from models import SBIModel
 from utils.register import register_simulator
-
+from utils.config import get_item
 
 class MockSimulator(Simulator): 
     def generate_context(self, n_samples: int) -> np.ndarray:
@@ -34,6 +35,14 @@ class MockSimulator(Simulator):
             y[:, i] = m * context_samples + b + epsilon[:, i]
         return y.T
 
+@pytest.fixture(autouse=True)
+def setUp():
+    register_simulator("MockSimulator", MockSimulator)
+    yield 
+    simulator_config_path = get_item("common", "sim_location", raise_exception=False)
+    sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
+    os.remove(sim_paths)
+
 @pytest.fixture
 def model_path(): 
     return "resources/savedmodels/sbi/sbi_linear_from_data.pkl"
@@ -44,9 +53,7 @@ def data_path():
 
 @pytest.fixture 
 def simulator_name():
-    name = MockSimulator.__name__
-    register_simulator(name, MockSimulator)
-    return name
+    return MockSimulator.__name__
 
 @pytest.fixture 
 def mock_model(model_path): 

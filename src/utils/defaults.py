@@ -2,7 +2,7 @@ Defaults = {
     "common": {
         "out_dir": "./DeepDiagnosticsResources/results/",
         "temp_config": "./DeepDiagnosticsResources/temp/temp_config.yml",
-        "sim_location": "DeepDiagnosticsResources_Simulators",
+        "sim_location": "DeepDiagnosticsResources/simulators",
         "random_seed": 42,
     },
     "model": {"model_engine": "SBIModel"},
