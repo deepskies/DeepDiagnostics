@@ -1,6 +1,6 @@
+from typing import Optional, Sequence
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colormaps as cm
 
 from metrics.coverage_fraction import CoverageFraction as coverage_fraction_metric
 from plots.plot import Display
@@ -9,42 +9,25 @@ from utils.config import get_item
 
 class CoverageFraction(Display):
     def __init__(
-        self,
-        model,
-        data,
-        save: bool,
-        show: bool,
-        out_dir: str | None = None,
-        parameter_labels=None,
-        figure_size=None,
-        line_styles=None,
-        parameter_colors=None
+        self, 
+        model, 
+        data, 
+        save:bool, 
+        show:bool, 
+        out_dir:Optional[str]=None, 
+        percentiles: Optional[Sequence] = None, 
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        number_simulations: Optional[int] = None,
+        parameter_names: Optional[Sequence] = None, 
+        parameter_colors: Optional[Sequence]= None, 
+        colorway: Optional[str]=None
     ):
-        super().__init__(model, data, save, show, out_dir)
-
-        self.labels = (
-            parameter_labels
-            if parameter_labels is not None
-            else get_item("plots_common", "parameter_labels", raise_exception=False)
-        )
-        self.colors = (
-            parameter_colors
-            if parameter_colors is not None
-            else get_item("plots_common", "parameter_colors", raise_exception=False)
-        )
-        self.n_parameters = len(self.labels)
-        self.figure_size = (
-            figure_size
-            if figure_size is not None
-            else tuple(get_item("plots_common", "figure_size", raise_exception=False))
-        )
-        self.line_cycle = (
-            line_styles
-            if line_styles is not None
-            else tuple(
-                get_item("plots_common", "line_style_cycle", raise_exception=False)
-            )
-        )
+        
+        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+            
+        self.n_parameters = len(self.parameter_names)
+        self.line_cycle =  tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
 
     def _plot_name(self):
         return "coverage_fraction.png"
@@ -54,9 +37,6 @@ class CoverageFraction(Display):
             self.model, self.data, out_dir=None
         ).calculate()
         self.coverage_fractions = coverage
-
-    def _plot_settings(self):
-        pass
 
     def _plot(
         self,
@@ -71,7 +51,7 @@ class CoverageFraction(Display):
     ):
         n_steps = self.coverage_fractions.shape[0]
         percentile_array = np.linspace(0, 1, n_steps)
-        color_cycler = iter(plt.cycler("color", self.colors))
+        color_cycler = iter(plt.cycler("color", self.parameter_colors))
         line_style_cycler = iter(plt.cycler("line_style", self.line_cycle))
 
         # Plotting
@@ -89,7 +69,7 @@ class CoverageFraction(Display):
                 lw=line_width,
                 linestyle=line_style,
                 color=color,
-                label=self.labels[i],
+                label=self.parameter_names[i],
             )
 
         ax.plot(

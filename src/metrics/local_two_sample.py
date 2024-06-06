@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 import numpy as np 
 
 from sklearn.model_selection import KFold
@@ -6,33 +6,53 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.utils import shuffle
 
 from metrics.metric import Metric
-from utils.config import get_item
 
 class LocalTwoSampleTest(Metric): 
-    def __init__(self, model: Any, data: Any, out_dir: str | None = None, num_simulations: Optional[int] = None) -> None:
-        super().__init__(model, data, out_dir)
-        self.num_simulations = num_simulations if num_simulations is not None else get_item(
-            "metrics_common", "number_simulations", raise_exception=False
+    def __init__(
+            self, 
+            model: Any, 
+            data: Any, 
+            out_dir: Optional[str] = None,         
+            save: bool=True,
+            use_progress_bar: Optional[bool] = None,
+            samples_per_inference: Optional[int] = None,
+            percentiles: Optional[Sequence[int]] = None,
+            number_simulations: Optional[int] = None,
+    ) -> None:
+        
+        super().__init__(
+            model, 
+            data, 
+            out_dir,
+            save,
+            use_progress_bar,
+            samples_per_inference,
+            percentiles,
+            number_simulations
         )
+
     def _collect_data_params(self):
 
         # P is the prior and x_P is generated via the simulator from the parameters P.
-        self.p = self.data.sample_prior(self.num_simulations)
+        self.p = self.data.sample_prior(self.number_simulations)
         self.q = np.zeros_like(self.p)
 
-        self.outcome_given_p = np.zeros((self.num_simulations, self.data.simulator.generate_context().shape[-1]))
+        context_size = self.data.true_context().shape[-1]
+        self.outcome_given_p = np.zeros(
+            (self.number_simulations, context_size)
+        )
         self.outcome_given_q = np.zeros_like(self.outcome_given_p)
         self.evaluation_context = np.zeros_like(self.outcome_given_p)
 
         for index, p in enumerate(self.p): 
-            context = self.data.simulator.generate_context()
+            context = self.data.simulator.generate_context(context_size)
             self.outcome_given_p[index] = self.data.simulator.simulate(p, context)
             # Q is the approximate posterior amortized in x
             q =  self.model.sample_posterior(1, context).ravel()
             self.q[index] = q
             self.outcome_given_q[index] = self.data.simulator.simulate(q, context)
 
-        self.evaluation_context = np.array([self.data.simulator.generate_context() for _ in range(self.num_simulations)])
+        self.evaluation_context = np.array([self.data.simulator.generate_context(context_size) for _ in range(self.number_simulations)])
 
     def train_linear_classifier(self, p, q, x_p, x_q, classifier:str, classifier_kwargs:dict={}): 
         classifier_map = {
@@ -162,8 +182,8 @@ class LocalTwoSampleTest(Metric):
         
         null =  np.array(null_hypothesis_probabilities)
         self.output = {
-            "lc2st_probabilities": probabilities, 
-            "lc2st_null_hypothesis_probabilities": null
+            "lc2st_probabilities": probabilities.tolist(), 
+            "lc2st_null_hypothesis_probabilities": null.tolist()
         }
         return probabilities, null
     

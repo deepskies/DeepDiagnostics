@@ -9,7 +9,6 @@ def test_parser_args(model_path, data_path, simulator_name):
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 0 
-    print(process.stdout)
 
 def test_parser_config(config_factory, model_path, data_path, simulator_name): 
     config_path = config_factory(model_path=model_path, data_path=data_path, simulator=simulator_name)
@@ -17,7 +16,6 @@ def test_parser_config(config_factory, model_path, data_path, simulator_name):
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 0 
-    print(process.stdout)
 
 def test_main_no_methods(config_factory, model_path, data_path, simulator_name): 
     out_dir = "./test_out_dir/"
@@ -26,7 +24,6 @@ def test_main_no_methods(config_factory, model_path, data_path, simulator_name):
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 0 
-    print(process.stdout)
 
     # There should be nothing at the outpath
     assert os.listdir(out_dir) == []
@@ -37,11 +34,9 @@ def test_main_missing_config():
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 1
-    print(process.stdout)
     
 def test_main_missing_args(model_path): 
     command = ["diagnose", "--model_path", model_path]
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 1
-    print(process.stdout)

@@ -1,7 +1,7 @@
 import numpy as np
 from torch import tensor
 from tqdm import tqdm
-from typing import Any
+from typing import Any, Optional, Sequence
 
 from metrics.metric import Metric
 from utils.config import get_item
@@ -14,31 +14,21 @@ class CoverageFraction(Metric):
         self,
         model: Any,
         data: Any,
-        out_dir: str | None = None,
-        samples_per_inference=None,
-        percentiles=None,
-        progress_bar: bool = None,
+        out_dir: Optional[str] = None,
+        save: bool=True,
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        percentiles: Optional[Sequence[int]] = None,
+        number_simulations: Optional[int] = None,
     ) -> None:
-        super().__init__(model, data, out_dir)
+        
+        super().__init__(model, data, out_dir,
+            save,
+            use_progress_bar,
+            samples_per_inference,
+            percentiles,
+            number_simulations)
         self._collect_data_params()
-
-        self.samples_per_inference = (
-            samples_per_inference
-            if samples_per_inference is not None
-            else get_item(
-                "metrics_common", "samples_per_inference", raise_exception=False
-            )
-        )
-        self.percentiles = (
-            percentiles
-            if percentiles is not None
-            else get_item("metrics_common", "percentiles", raise_exception=False)
-        )
-        self.progress_bar = (
-            progress_bar
-            if progress_bar is not None
-            else get_item("metrics_common", "use_progress_bar", raise_exception=False)
-        )
 
     def _collect_data_params(self):
         self.thetas = self.data.get_theta_true()
@@ -54,11 +44,11 @@ class CoverageFraction(Metric):
         )
         count_array = []
         iterator = enumerate(self.context)
-        if self.progress_bar:
+        if self.use_progress_bar:
             iterator = tqdm(
                 iterator,
                 desc="Sampling from the posterior for each observation",
-                unit="observation",
+                unit=" observation",
             )
         for y_sample_index, y_sample in iterator:
             samples = self._run_model_inference(self.samples_per_inference, y_sample)

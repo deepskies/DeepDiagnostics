@@ -29,6 +29,7 @@ Defaults = {
         "TARP": {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
+        "LC2ST": {}
     },
     "metrics_common": {
         "use_progress_bar": False,
@@ -39,5 +40,6 @@ Defaults = {
     "metrics": {
         "AllSBC": {},
         "CoverageFraction": {},
+        "LC2ST":{}
     },
 }

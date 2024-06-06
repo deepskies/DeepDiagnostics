@@ -7,41 +7,31 @@ from matplotlib.patches import Rectangle
 
 from plots.plot import Display
 from metrics.local_two_sample import LocalTwoSampleTest as l2st
-from utils.config import get_item
 from utils.plotting_utils import get_hex_colors
 
 class LocalTwoSampleTest(Display): 
 
     # https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L133 
 
-    def __init__(self, 
-                 model, 
-                 data, 
-                 save:bool, 
-                 show:bool, 
-                 out_dir:Optional[str]=None, 
-                 percentiles: Optional[Sequence] = None, 
-                 parameter_names: Optional[Sequence] = None, 
-                 parameter_colors: Optional[Sequence]= None, 
-                 figure_size: Optional[Sequence] = None,  
-                 num_simulations: Optional[int] = None, 
-                 colorway: Optional[str]=None): 
-        super().__init__(model, data, save, show, out_dir)
-        self.percentiles = percentiles if percentiles is not None else get_item("metrics_common", item='percentiles', raise_exception=False)
-
-        self.param_names = parameter_names if parameter_names is not None else get_item("plots_common", item="parameter_labels", raise_exception=False)
-        self.param_colors =  parameter_colors if parameter_colors is not None else get_item("plots_common", item="parameter_colors", raise_exception=False)
-        self.figure_size =  figure_size if figure_size is not None else get_item("plots_common", item="figure_size", raise_exception=False)
-
-        colorway = colorway if colorway is not None else get_item(
-                "plots_common", "default_colorway", raise_exception=False
-            )
-        self.region_colors = get_hex_colors(n_colors=len(self.percentiles), colorway=colorway)
-
-        num_simulations = num_simulations if num_simulations is not None else get_item(
-            "metrics_common", "number_simulations", raise_exception=False
-        )
-        self.l2st = l2st(model, data, out_dir, num_simulations)
+    def __init__(
+        self, 
+        model, 
+        data, 
+        save:bool, 
+        show:bool, 
+        out_dir:Optional[str]=None, 
+        percentiles: Optional[Sequence] = None, 
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        number_simulations: Optional[int] = None,
+        parameter_names: Optional[Sequence] = None, 
+        parameter_colors: Optional[Sequence]= None, 
+        colorway: Optional[str]=None
+    ):
+        
+        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        self.region_colors = get_hex_colors(n_colors=len(self.percentiles), colorway=self.colorway)
+        self.l2st = l2st(model, data, out_dir, True, self.use_progress_bar, self.samples_per_inference, self.percentiles, self.number_simulations)
 
     def _plot_name(self): 
         return "local_C2ST.png"
@@ -76,7 +66,7 @@ class LocalTwoSampleTest(Display):
                 label=f"{percentile}% Conf. region",
             )
 
-        for prob, label, color in zip(self.probability, self.param_names, self.param_colors):
+        for prob, label, color in zip(self.probability, self.parameter_names, self.parameter_colors):
             pairplot_values = self._make_pairplot_values(prob)
             subplot.plot(self.cdf_alphas, pairplot_values, label=label, color=color)
 
@@ -94,7 +84,7 @@ class LocalTwoSampleTest(Display):
             int(features)
 
             _, bins, patches = subplot.hist(
-                evaluation_data[:,features], n_bins, weights=self.probability, density=True, color=self.param_colors[features])
+                evaluation_data[:,features], n_bins, weights=self.probability, density=True, color=self.parameter_colors[features])
 
             eval_bins = np.select(
                 [evaluation_data[:,features] <= i for i in bins[1:]], list(range(n_bins))
@@ -173,13 +163,14 @@ class LocalTwoSampleTest(Display):
         # pp_plot_lc2st: https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L49
         # eval_space_with_proba_intensity: https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L133 
   
-        self.l2st(**{
-            "linear_classifier":linear_classifier, 
-            "cross_evaluate": cross_evaluate, 
-            "n_null_hypothesis_trials": n_null_hypothesis_trials, 
-            "classifier_kwargs": classifier_kwargs})
+        self.l2st._collect_data_params()
+        self.probability, self.null_hypothesis_probability = self.l2st.calculate(
+            linear_classifier=linear_classifier, 
+            cross_evaluate=cross_evaluate, 
+            n_null_hypothesis_trials = n_null_hypothesis_trials,
+            classifier_kwargs = classifier_kwargs
+        )
         
-        self.probability, self.null_hypothesis_probability = self.l2st.output["lc2st_probabilities"], self.l2st.output["lc2st_null_hypothesis_probabilities"]
         
         fig, subplots = plt.subplots(1, 1, figsize=self.figure_size)
         self.cdf_alphas = np.linspace(0, 1, n_alpha_samples)
@@ -196,10 +187,10 @@ class LocalTwoSampleTest(Display):
 
         if use_intensity_plot: 
 
-            fig, subplots = plt.subplots(len(self.param_names), len(self.param_names), figsize=(self.figure_size[0]*1.2, self.figure_size[1]))
+            fig, subplots = plt.subplots(len(self.parameter_names), len(self.parameter_names), figsize=(self.figure_size[0]*1.2, self.figure_size[1]))
             combos_run = []
-            for x_index, x_param in enumerate(self.param_names): 
-                for y_index, y_param in enumerate(self.param_names): 
+            for x_index, x_param in enumerate(self.parameter_names): 
+                for y_index, y_param in enumerate(self.parameter_names): 
                     
                     if ({x_index, y_index} not in combos_run) and (x_index>=y_index): 
                         subplot = subplots[x_index][y_index]
@@ -220,17 +211,17 @@ class LocalTwoSampleTest(Display):
                         subplots[x_index][y_index].axes.get_xaxis().set_visible(False)
                         subplots[x_index][y_index].axes.get_yaxis().set_visible(False)
                     
-                    if x_index == len(self.param_names)-1: 
+                    if x_index == len(self.parameter_names)-1: 
                         subplots[x_index][y_index].set_xlabel(x_param)
 
                     if y_index == 0: 
                         subplots[x_index][y_index].set_ylabel(y_param)
 
-        for index, y_label in enumerate(self.param_names): 
+        for index, y_label in enumerate(self.parameter_names): 
             subplots[index][0].set_ylabel(y_label)
 
-        for index, x_label in enumerate(self.param_names): 
-            subplots[len(self.param_names)-1][-1*index].set_xlabel(x_label)
+        for index, x_label in enumerate(self.parameter_names): 
+            subplots[len(self.parameter_names)-1][-1*index].set_xlabel(x_label)
 
 
         fig.supylabel(intensity_plot_ylabel)
@@ -244,13 +235,4 @@ class LocalTwoSampleTest(Display):
         self._finish()
 
     def __call__(self, **plot_args) -> None:
-        try: 
-            self._data_setup()
-        except NotImplementedError: 
-            pass 
-        try: 
-            self._plot_settings() 
-        except NotImplementedError: 
-            pass 
-        
         self._plot(**plot_args)

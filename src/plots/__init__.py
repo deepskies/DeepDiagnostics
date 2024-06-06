@@ -3,6 +3,7 @@ from plots.coverage_fraction import CoverageFraction
 from plots.ranks import Ranks
 from plots.tarp import TARP
 from plots.local_two_sample import LocalTwoSampleTest
+
 Plots = {
     CDFRanks.__name__: CDFRanks,
     CoverageFraction.__name__: CoverageFraction,

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional, Sequence
 from torch import tensor
 from sbi.analysis import run_sbc, check_sbc
 
@@ -12,16 +12,19 @@ class AllSBC(Metric):
         model: Any,
         data: Any,
         out_dir: str | None = None,
-        samples_per_inference=None,
+        save: bool=True,
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        percentiles: Optional[Sequence[int]] = None,
+        number_simulations: Optional[int] = None,
     ) -> None:
-        super().__init__(model, data, out_dir)
-
-        if samples_per_inference is None:
-            self.samples_per_inference = get_item(
-                "metrics_common", "samples_per_inference", raise_exception=False
-            )
-        else:
-            self.samples_per_inference = samples_per_inference
+        
+        super().__init__(model, data, out_dir,
+            save,
+            use_progress_bar,
+            samples_per_inference,
+            percentiles,
+            number_simulations)
 
     def _collect_data_params(self):
         self.thetas = tensor(self.data.get_theta_true())
@@ -41,7 +44,7 @@ class AllSBC(Metric):
             dap_samples,
             num_posterior_samples=self.samples_per_inference,
         )
-        self.output = sbc_stats
+        self.output = {key: value.numpy().tolist() for key, value in sbc_stats.items()}
         return sbc_stats
 
     def __call__(self, **kwds: Any) -> Any:
