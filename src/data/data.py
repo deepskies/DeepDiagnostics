@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 from utils.config import get_item
-
+from utils.register import load_simulator
 
 class Data:
     def __init__(
@@ -19,47 +19,9 @@ class Data:
             get_item("common", "random_seed", raise_exception=False)
         )
         self.data = self._load(path)
-        self.simulator = self._load_simulator(simulator_name, simulator_kwargs)
+        self.simulator = load_simulator(simulator_name, simulator_kwargs)
         self.prior_dist = self.load_prior(prior, prior_kwargs)
         self.n_dims = self.get_theta_true().shape[1]
-
-    def _load_simulator(self, name, simulator_kwargs):
-        try:
-            sim_location = get_item("common", "sim_location", raise_exception=False)
-            simulator_path = os.environ[f"{sim_location}:{name}"]
-        except KeyError as e:
-            raise RuntimeError(
-                f"Simulator cannot be found using env var {e}. Hint: have you registered your simulation with utils.register_simulator?"
-            )
-
-        new_class = os.path.dirname(simulator_path)
-        sys.path.insert(1, new_class)
-
-        # TODO robust error checks
-        module_name = os.path.basename(simulator_path.rstrip(".py"))
-        m = importlib.import_module(module_name)
-
-        simulator = getattr(m, name)
-
-        simulator_kwargs = (
-            simulator_kwargs
-            if simulator_kwargs is not None
-            else get_item("data", "simulator_kwargs", raise_exception=False)
-        )
-        simulator_kwargs = {} if simulator_kwargs is None else simulator_kwargs
-        simulator_instance = simulator(**simulator_kwargs)
-
-        if not hasattr(simulator_instance, "generate_context"):
-            raise RuntimeError(
-                "Simulator improperly formed - requires a generate_context method."
-            )
-
-        if not hasattr(simulator_instance, "simulate"):
-            raise RuntimeError(
-                "Simulator improperly formed - requires a simulate method."
-            )
-
-        return simulator_instance
 
     def _load(self, path: str):
         raise NotImplementedError

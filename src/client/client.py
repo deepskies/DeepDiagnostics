@@ -38,7 +38,7 @@ def parser():
     # List of metrics (cannot supply specific kwargs)
     parser.add_argument(
         "--metrics",
-        nargs="+",
+        nargs="?",
         default=list(Defaults["metrics"].keys()),
         choices=Metrics.keys(),
     )
@@ -46,7 +46,7 @@ def parser():
     # List of plots
     parser.add_argument(
         "--plots",
-        nargs="+",
+        nargs="?",
         default=list(Defaults["plots"].keys()),
         choices=Plots.keys(),
     )

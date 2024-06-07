@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 import numpy as np
 import tarp
 
@@ -10,34 +10,42 @@ from utils.config import get_item
 
 
 class TARP(Display):
-    def __init__(self, model, data, save: bool, show: bool, out_dir: str | None = None):
-        super().__init__(model, data, save, show, out_dir)
-
+    def __init__(
+        self, 
+        model, 
+        data, 
+        save:bool, 
+        show:bool, 
+        out_dir:Optional[str]=None, 
+        percentiles: Optional[Sequence] = None, 
+        use_progress_bar: Optional[bool] = None,
+        samples_per_inference: Optional[int] = None,
+        number_simulations: Optional[int] = None,
+        parameter_names: Optional[Sequence] = None, 
+        parameter_colors: Optional[Sequence]= None, 
+        colorway: Optional[str]=None
+    ):
+        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        self.line_style = get_item(
+            "plots_common", "line_style_cycle", raise_exception=False
+        )
     def _plot_name(self):
         return "tarp.png"
 
     def _data_setup(self):
         self.theta_true = self.data.get_theta_true()
-
-        samples_per_inference = get_item(
-            "metrics_common", "samples_per_inference", raise_exception=False
-        )
-        num_simulations = get_item(
-            "metrics_common", "number_simulations", raise_exception=False
-        )
-
         n_dims = self.theta_true.shape[1]
         self.posterior_samples = np.zeros(
-            (num_simulations, samples_per_inference, n_dims)
+            (self.number_simulations, self.samples_per_inference, n_dims)
         )
-        self.thetas = np.zeros((num_simulations, n_dims))
-        for n in range(num_simulations):
+        self.thetas = np.zeros((self.number_simulations, n_dims))
+        for n in range(self.number_simulations):
             sample_index = self.data.rng.integers(0, len(self.theta_true))
 
             theta = self.theta_true[sample_index, :]
             x = self.data.true_context()[sample_index, :]
             self.posterior_samples[n] = self.model.sample_posterior(
-                samples_per_inference, x
+                self.samples_per_inference, x
             )
             self.thetas[n] = theta
 
@@ -48,13 +56,9 @@ class TARP(Display):
             "plots_common", "line_style_cycle", raise_exception=False
         )
 
-    def _get_hex_sigma_colors(self, n_colors, colorway=None):
-        if colorway is None:
-            colorway = get_item(
-                "plots_common", "default_colorway", raise_exception=False
-            )
+    def _get_hex_sigma_colors(self, n_colors):
 
-        cmap = plt.get_cmap(colorway)
+        cmap = plt.get_cmap(self.colorway)
         hex_colors = []
         arr = np.linspace(0, 1, n_colors)
         for hit in arr:
@@ -96,7 +100,7 @@ class TARP(Display):
         )
 
         k_sigma = range(1, coverage_sigma + 1)
-        colors = self._get_hex_sigma_colors(coverage_sigma, colorway=coverage_colorway)
+        colors = self._get_hex_sigma_colors(coverage_sigma)
         for sigma, color in zip(k_sigma, colors):
             ax.fill_between(
                 credibility,
