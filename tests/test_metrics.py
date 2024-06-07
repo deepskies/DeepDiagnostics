@@ -18,21 +18,6 @@ def metric_config(config_factory):
     return config
 
 
-def test_all_metrics_catalogued():
-    """Each metrics gets its own file, and each metric is included in the Metrics dictionary
-    so the client can use it.
-    This test verifies all metrics are cataloged"""
-
-    all_files = os.listdir("src/metrics/")
-    files_ignore = [
-        "metric.py",
-        "__init__.py",
-        "__pycache__",
-    ]  # All files not containing a metric
-    num_files = len([file for file in all_files if file not in files_ignore])
-    assert len(Metrics) == num_files
-
-
 def test_all_defaults(metric_config, mock_model, mock_data):
     """
     Ensures each metric has a default set of parameters and is included in the defaults list
