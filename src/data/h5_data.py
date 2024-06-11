@@ -43,6 +43,6 @@ class H5Data(Data):
 
     def get_sigma_true(self):
         try:
-            return super().sigma_true()
+            return super().get_sigma_true()
         except (AssertionError, KeyError):
             return 1

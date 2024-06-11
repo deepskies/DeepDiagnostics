@@ -57,7 +57,7 @@ class Data:
 
     def get_sigma_true(self):
         if hasattr(self, "sigma_true"):
-            return self.sigma_true
+            return self.sigma_true()
         else:
             return get_item("data", "sigma_true", raise_exception=True)
 
