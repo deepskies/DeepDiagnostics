@@ -32,6 +32,9 @@ jobs:
     - name: View poetry --help
       run: poetry --help
 
+    - name: Update lockfile
+      run: python -m poetry lock
+
     - name: Install dependencies
       shell: bash
       run: python -m poetry install
@@ -40,7 +43,7 @@ jobs:
       run: echo "PYTHONPATH=$(pwd):$(pwd)/src" >> ${{ runner.workspace }}/.env
     
     - name: Test with pytest
-      run: python -m poetry run pytest --cov
+      run: python -m poetry run pytest --cov=src/
       env:
         PYTHONPATH: ${{ env.PYTHONPATH }}
         ENV_FILE: ${{ runner.workspace }}/.env

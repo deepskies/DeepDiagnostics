@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append("../src")
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -6,16 +10,13 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'DeepDiagnostics'
-copyright = '2024, Becky Nevin, M Voetberg, Brian Nord'
-author = 'Becky Nevin, M Voetberg, Brian Nord'
-release = '0.1.0'
+project = "DeepDiagnostics"
+copyright = "2024, Becky Nevin, M Voetberg, Brian Nord"
+author = "Becky Nevin, M Voetberg, Brian Nord"
+release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
-import sys
-sys.path.append("../src")
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -34,5 +35,5 @@ templates_path = ["_templates"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
-html_static_path = ['_static']
+html_theme = "alabaster"
+html_static_path = ["_static"]

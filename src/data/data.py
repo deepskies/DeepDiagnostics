@@ -68,7 +68,7 @@ class Data:
         raise NotImplementedError
 
     def load_prior(self, prior, prior_kwargs):
-        if prior is None: 
+        if prior is None:
             prior = get_item("data", "prior", raise_exception=False)
         try:
             prior = self.read_prior()
