@@ -29,7 +29,10 @@ Defaults = {
         "TARP": {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
-        "LC2ST": {}
+        "LC2ST": {}, 
+        "PPC": {}, 
+        "PriorPC":{}
+
     },
     "metrics_common": {
         "use_progress_bar": False,
