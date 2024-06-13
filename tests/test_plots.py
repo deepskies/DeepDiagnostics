@@ -10,7 +10,9 @@ from plots import (
     Ranks, 
     CoverageFraction, 
     TARP, 
-    LocalTwoSampleTest
+    LocalTwoSampleTest, 
+    PPC
+)
 
 
 @pytest.fixture
@@ -63,3 +65,7 @@ def test_lc2st(plot_config, mock_model, mock_data):
     plot(**get_item("plots", "LC2ST", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
 
+def test_ppc(plot_config, mock_model, mock_data):
+    plot = PPC(mock_model, mock_data, save=True, show=False)
+    plot(**get_item("plots", "PPC", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
