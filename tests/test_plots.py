@@ -11,7 +11,8 @@ from plots import (
     CoverageFraction, 
     TARP, 
     LocalTwoSampleTest, 
-    PPC
+    PPC, 
+    Parity
 )
 
 
@@ -68,4 +69,28 @@ def test_lc2st(plot_config, mock_model, mock_data):
 def test_ppc(plot_config, mock_model, mock_data):
     plot = PPC(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "PPC", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+
+
+def test_parity(plot_config, mock_model, mock_data):
+    plot = Parity(mock_model, mock_data, save=True, show=False)
+
+    plot(include_difference= False, 
+        include_residual = False, 
+        include_percentage = False)
+
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+    os.remove(f"{plot.out_dir}/{plot.plot_name}")
+
+    plot(include_difference= True, 
+        include_residual = False, 
+        include_percentage = True)
+
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+    os.remove(f"{plot.out_dir}/{plot.plot_name}")
+
+    plot(include_difference= True, 
+        include_residual = True, 
+        include_percentage = True)
+
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
