@@ -80,7 +80,10 @@ def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output):
     plot = PPC(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "PPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d57556 (Update existing plots and metrics to work with 2d #72)
     plot = PPC(
         mock_model,
         mock_2d_data, save=True, show=False, 
