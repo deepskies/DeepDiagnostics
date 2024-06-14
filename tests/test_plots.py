@@ -12,11 +12,8 @@ from plots import (
     TARP, 
     LocalTwoSampleTest, 
     PPC, 
-<<<<<<< HEAD
-    PriorPC
-=======
+    PriorPC,
     Parity
->>>>>>> 6712b7d (Parity plots with difference, percentage, and residuals #29)
 )
 
 
@@ -99,6 +96,7 @@ def test_prior_pc(plot_config, mock_model, mock_data):
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
 
 def test_parity(plot_config, mock_model, mock_data):
+    Config(plot_config)
     plot = Parity(mock_model, mock_data, save=True, show=False)
 
     plot(include_difference= False, 
