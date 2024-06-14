@@ -11,6 +11,7 @@ Defaults = {
         "prior": "normal",
         "prior_kwargs": None,
         "simulator_kwargs": None,
+        "simulator_dimensions": 1,
     },
     "plots_common": {
         "axis_spines": False,
@@ -29,7 +30,8 @@ Defaults = {
         "TARP": {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
-        "LC2ST": {}
+        "LC2ST": {}, 
+        "PPC":{}
     },
     "metrics_common": {
         "use_progress_bar": False,
