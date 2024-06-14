@@ -1,13 +1,16 @@
+import os 
+import shutil
 import pytest
 import yaml
 import numpy as np
-import os
+from deepbench.astro_object import StarObject
 
 from data import H5Data
 from data.simulator import Simulator
 from models import SBIModel
-from utils.register import register_simulator
 from utils.config import get_item
+from utils.register import register_simulator
+
 
 class MockSimulator(Simulator):
     def generate_context(self, n_samples: int) -> np.ndarray:
@@ -39,13 +42,44 @@ class MockSimulator(Simulator):
             y[:, i] = m * context_samples + b + epsilon[:, i]
         return y.T
 
+class Mock2DSimulator(Simulator): 
+    def generate_context(self, n_samples: int) -> np.ndarray: 
+        return np.linspace(0, 28, n_samples)
+
+    def simulate(self, theta, context_samples: np.ndarray): 
+        generated_stars = []
+
+        if len(theta.shape) == 1: 
+            theta = [theta]
+            
+        for sample_index, t in enumerate(theta): 
+            star = StarObject(
+                image_dimensions = (28,28),
+                noise_level = 0.3,
+                radius = t[0].item(),
+                amplitude = t[1].item()
+            )
+            generated_stars.append(
+                star.create_object(
+                    context_samples[sample_index].item(), context_samples[sample_index].item()
+                )
+            )
+        return np.array(generated_stars)
+
 @pytest.fixture(autouse=True)
 def setUp():
     register_simulator("MockSimulator", MockSimulator)
+    register_simulator("Mock2DSimulator", Mock2DSimulator)
     yield 
+    
     simulator_config_path = get_item("common", "sim_location", raise_exception=False)
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
+
+    out_dir = get_item("common", "out_dir", raise_exception=False)
+    os.makedirs("resources/test_results/", exist_ok=True)
+    shutil.copytree(out_dir, "resources/test_results/",  dirs_exist_ok=True)
+    shutil.rmtree(out_dir)
 
 @pytest.fixture
 def model_path():
@@ -56,6 +90,9 @@ def model_path():
 def data_path():
     return "resources/saveddata/data_validation.h5"
 
+@pytest.fixture
+def result_output(): 
+    return "./temp_results/"
 
 @pytest.fixture
 def simulator_name():
@@ -71,15 +108,18 @@ def mock_model(model_path):
 def mock_data(data_path, simulator_name):
     return H5Data(data_path, simulator_name)
 
+@pytest.fixture
+def mock_2d_data(data_path): 
+    return H5Data(data_path, "Mock2DSimulator", simulation_dimensions=2)
 
 @pytest.fixture
-def config_factory():
+def config_factory(result_output):
     def factory(
-        out_dir=None,
         model_path=None,
         model_engine=None,
         data_path=None,
         data_engine=None,
+        plot_2d=False,
         simulator=None,
         plot_settings=None,
         metrics_settings=None,
@@ -97,8 +137,7 @@ def config_factory():
         }
 
         # Single settings
-        if out_dir is not None:
-            config["common"]["out_dir"] = out_dir
+        config["common"]["out_dir"] = result_output
         if model_path is not None:
             config["model"]["model_path"] = model_path
         if model_engine is not None:
@@ -109,6 +148,8 @@ def config_factory():
             config["data"]["data_engine"] = data_engine
         if simulator is not None:
             config["data"]["simulator"] = simulator
+        if plot_2d: 
+            config["data"]["simulator_dimensions"] = 2
 
         # Dict settings
         if plot_settings is not None:
