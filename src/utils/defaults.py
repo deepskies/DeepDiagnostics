@@ -28,12 +28,12 @@ Defaults = {
         "Ranks": {"num_bins": None},
         "CoverageFraction": {},
         "TARP": {
-            "coverage_sigma": 3  # How many sigma to show coverage over
+            "coverage_sigma": 3 
         },
         "LC2ST": {}, 
         "PPC": {}, 
-        "PriorPC":{}
-
+        "PriorPC":{},
+        "Parity":{}
     },
     "metrics_common": {
         "use_progress_bar": False,
