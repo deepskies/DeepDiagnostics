@@ -18,12 +18,14 @@ def register_simulator(simulator_name, simulator):
     if not os.path.exists(sim_paths):
         open(sim_paths, 'a').close()
 
-    with open(sim_paths, "w+") as f: 
+    with open(sim_paths, "r+") as f: 
         try: 
             existing_sims = json.load(f)
         except json.decoder.JSONDecodeError: 
             existing_sims = {}
-
+            
+    existing_sims[simulator_name] = simulator_location
+    with open(sim_paths, "w") as f: 
         existing_sims[simulator_name] = simulator_location
         json.dump(existing_sims, f)
 

@@ -1,11 +1,18 @@
 import pickle
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from data.data import Data
 
 
 class PickleData(Data):
-    def __init__(self, path: str, simulator: Callable):
-        super().__init__(path, simulator)
+    def __init__(self, 
+        path: str, 
+        simulator: Callable, 
+        simulator_kwargs: dict = None,
+        prior: str = None,
+        prior_kwargs: dict = None,
+        simulation_dimensions:Optional[int] = None,
+    ):
+        super().__init__(path, simulator, simulator_kwargs, prior, prior_kwargs, simulation_dimensions)
 
     def _load(self, path: str):
         assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"

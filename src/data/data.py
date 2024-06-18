@@ -1,6 +1,4 @@
-import importlib.util
-import sys
-import os
+from typing import Optional
 import numpy as np
 
 from utils.config import get_item
@@ -14,6 +12,7 @@ class Data:
         simulator_kwargs: dict = None,
         prior: str = None,
         prior_kwargs: dict = None,
+        simulation_dimensions:Optional[int] = None,
     ):
         self.rng = np.random.default_rng(
             get_item("common", "random_seed", raise_exception=False)
@@ -22,6 +21,12 @@ class Data:
         self.simulator = load_simulator(simulator_name, simulator_kwargs)
         self.prior_dist = self.load_prior(prior, prior_kwargs)
         self.n_dims = self.get_theta_true().shape[1]
+        self.simulator_dimensions = simulation_dimensions if simulation_dimensions is not None else get_item("data", "simulator_dimensions", raise_exception=False)
+
+    def get_simulator_output_shape(self): 
+        context_shape = self.true_context().shape
+        sim_out = self.simulator(theta=self.get_theta_true()[0:1, :], n_samples=context_shape[-1])
+        return sim_out.shape
 
     def _load(self, path: str):
         raise NotImplementedError

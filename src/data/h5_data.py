@@ -1,4 +1,4 @@
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 import h5py
 import numpy as np
 import torch
@@ -8,8 +8,15 @@ from data.data import Data
 
 
 class H5Data(Data):
-    def __init__(self, path: str, simulator: Callable):
-        super().__init__(path, simulator)
+    def __init__(self, 
+        path: str, 
+        simulator: Callable, 
+        simulator_kwargs: dict = None,
+        prior: str = None,
+        prior_kwargs: dict = None,
+        simulation_dimensions:Optional[int] = None,
+    ):
+        super().__init__(path, simulator, simulator_kwargs, prior, prior_kwargs, simulation_dimensions)
 
     def _load(self, path):
         assert path.split(".")[-1] == "h5", "File extension must be h5"

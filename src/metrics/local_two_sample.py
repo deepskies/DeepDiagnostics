@@ -37,29 +37,43 @@ class LocalTwoSampleTest(Metric):
         # P is the prior and x_P is generated via the simulator from the parameters P.
         self.p = self.data.sample_prior(self.number_simulations)
         self.q = np.zeros_like(self.p)
-
         context_size = self.data.true_context().shape[-1]
-        self.outcome_given_p = np.zeros(
-            (self.number_simulations, context_size)
+        remove_first_dim = False
 
-        )
+        if self.data.simulator_dimensions == 1: 
+            self.outcome_given_p = np.zeros((self.number_simulations, context_size))
+        elif self.data.simulator_dimensions == 2: 
+            sim_out_shape = self.data.get_simulator_output_shape()
+            if len(sim_out_shape) != 2: 
+                # TODO Debug log with a warning
+                sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
+                remove_first_dim = True
+   
+            sim_out_shape = np.product(sim_out_shape)
+            self.outcome_given_p = np.zeros((self.number_simulations, sim_out_shape))
+        else: 
+            raise NotImplementedError("LC2ST only implemented for 1 or two dimensions.")
+        
         self.outcome_given_q = np.zeros_like(self.outcome_given_p)
-        self.evaluation_context = np.zeros_like(self.outcome_given_p)
+        self.evaluation_context = np.zeros((self.number_simulations, context_size))
 
         for index, p in enumerate(self.p): 
             context = self.data.simulator.generate_context(context_size)
-            self.outcome_given_p[index] = self.data.simulator.simulate(p, context)
-            # Q is the approximate posterior amortized in x
             q = self.model.sample_posterior(1, context).ravel()
             self.q[index] = q
-            self.outcome_given_q[index] = self.data.simulator.simulate(q, context)
+            self.evaluation_context[index] = context
 
-        self.evaluation_context = np.array(
-            [
-                self.data.simulator.generate_context(context_size)
-                for _ in range(self.num_simulations)
-            ]
-        )
+            p_outcome = self.data.simulator.simulate(p, context)
+            q_outcome = self.data.simulator.simulate(q, context)
+
+            if remove_first_dim: 
+                p_outcome = p_outcome[0]
+                q_outcome = q_outcome[0]
+
+            self.outcome_given_p[index] = p_outcome.ravel()
+            self.outcome_given_q[index] = q_outcome.ravel() # Q is the approximate posterior amortized in x
+
+
 
     def train_linear_classifier(
         self, p, q, x_p, x_q, classifier: str, classifier_kwargs: dict = {}
@@ -127,9 +141,21 @@ class LocalTwoSampleTest(Metric):
         cv_splits = kf.split(p)
         # train classifiers over cv-folds
         probabilities = []
-        self.evaluation_data = np.zeros(
-            (n_cross_folds, len(next(cv_splits)[1]), self.evaluation_context.shape[-1])
-        )
+
+        remove_first_dim = False
+        if self.data.simulator_dimensions == 1: 
+            self.evaluation_data =  np.zeros((n_cross_folds, len(next(cv_splits)[1]), self.evaluation_context.shape[-1]))
+        
+        elif self.data.simulator_dimensions == 2: 
+            sim_out_shape = self.data.get_simulator_output_shape()
+            if len(sim_out_shape) != 2: 
+                # TODO Debug log with a warning
+                sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
+                remove_first_dim = True
+
+            sim_out_shape = np.product(sim_out_shape)
+            self.evaluation_data = np.zeros((n_cross_folds, len(next(cv_splits)[1]), sim_out_shape))
+        
         self.prior_evaluation = np.zeros_like(p)
 
         kf = KFold(n_splits=n_cross_folds, shuffle=True, random_state=42)
@@ -142,10 +168,16 @@ class LocalTwoSampleTest(Metric):
                 p_train, q_train, x_p_train, x_q_train, classifier, classifier_kwargs
             )
             p_evaluate = p[val_index]
+
             for index, p_validation in enumerate(p_evaluate):
-                self.evaluation_data[cross_trial][index] = self.data.simulator.simulate(
+                sim_output = self.data.simulator.simulate(
                     p_validation, self.evaluation_context[val_index][index]
                 )
+
+                if remove_first_dim: 
+                    sim_output = sim_output[0]
+                self.evaluation_data[cross_trial][index] = sim_output.ravel() 
+
             self.prior_evaluation[index] = p_validation
             probabilities.append(
                 self._eval_model(
