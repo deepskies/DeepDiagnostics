@@ -57,7 +57,7 @@ class LocalTwoSampleTest(Display):
         self.region_colors = get_hex_colors(n_colors=len(self.percentiles), colorway=self.colorway)
         self.l2st = l2st(model, data, out_dir, True, self.use_progress_bar, self.samples_per_inference, self.percentiles, self.number_simulations)
 
-    def _plot_name(self):
+    def plot_name(self):
         return "local_C2ST.png"
 
     def _make_pairplot_values(self, random_samples):
@@ -182,7 +182,7 @@ class LocalTwoSampleTest(Display):
                     )
                     subplot.add_patch(rect)
 
-    def _plot(
+    def plot(
         self,
         use_intensity_plot: bool = True,
         n_alpha_samples: int = 100,
@@ -291,4 +291,4 @@ class LocalTwoSampleTest(Display):
         self._finish()
 
     def __call__(self, **plot_args) -> None:
-        self._plot(**plot_args)
+        self.plot(**plot_args)

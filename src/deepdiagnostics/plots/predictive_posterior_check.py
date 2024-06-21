@@ -35,7 +35,7 @@ class PPC(Display):
     ):
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
 
-    def _plot_name(self):
+    def plot_name(self):
         return "predictive_posterior_check.png"
 
     def get_posterior_2d(self, n_simulator_draws): 
@@ -91,7 +91,7 @@ class PPC(Display):
                 theta=self.data.get_theta_true()[sample, :], context_samples=context_sample
             )
 
-    def _plot_1d(self, 
+    def plot_1d(self, 
         subplots: np.ndarray, 
         subplot_index: int,
         n_coverage_sigma: Optional[int] = 3, 
@@ -134,7 +134,7 @@ class PPC(Display):
             label='Theta True'
         )
 
-    def _plot_2d(self, subplots, subplot_index, include_axis_ticks): 
+    def plot_2d(self, subplots, subplot_index, include_axis_ticks): 
         subplots[1, subplot_index].imshow(self.posterior_predictive_samples[subplot_index])
         subplots[0, subplot_index].imshow(self.posterior_true_samples[subplot_index])
 
@@ -145,7 +145,7 @@ class PPC(Display):
             subplots[0, subplot_index].set_xticks([])
             subplots[0, subplot_index].set_yticks([])
 
-    def _plot(
+    def plot(
             self, 
             n_coverage_sigma: Optional[int] = 3, 
             true_sigma: Optional[float] = None, 

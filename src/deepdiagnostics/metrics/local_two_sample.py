@@ -9,6 +9,21 @@ from sklearn.utils import shuffle
 from deepdiagnostics.metrics.metric import Metric
 
 class LocalTwoSampleTest(Metric): 
+    """
+        Adapted from :cite:p:`linhart2023lc2st`. 
+        Train a classifier to verify the quality of the posterior via classifier accuracy. 
+        Produces an array of inference accuracies for the trained classier, representing the cases of either denying the null hypothesis 
+        (that the posterior output of the simulation is not significantly different from a given random sample.)
+
+        Code referenced from: 
+        `github.com/JuliaLinhart/lc2st/lc2st.py::train_lc2st <https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/lc2st.py#L25>`_. 
+
+        .. code-block:: python 
+
+            from deepdiagnostics.metrics import LC2ST 
+
+            true_probabilities, null_hypothesis_probabilities = LC2ST(model, data, save=False).calculate()
+    """
     def __init__(
             self, 
             model: Any, 
@@ -31,7 +46,6 @@ class LocalTwoSampleTest(Metric):
             percentiles,
             number_simulations
         )
-
 
     def _collect_data_params(self):
         # P is the prior and x_P is generated via the simulator from the parameters P.
@@ -72,7 +86,6 @@ class LocalTwoSampleTest(Metric):
 
             self.outcome_given_p[index] = p_outcome.ravel()
             self.outcome_given_q[index] = q_outcome.ravel() # Q is the approximate posterior amortized in x
-
 
 
     def train_linear_classifier(
@@ -188,7 +201,7 @@ class LocalTwoSampleTest(Metric):
             )
         return probabilities
 
-    def permute_data(self, P, Q):
+    def _permute_data(self, P, Q):
         """Permute the concatenated data [P,Q] to create null-hyp samples.
 
         Args:
@@ -206,7 +219,22 @@ class LocalTwoSampleTest(Metric):
         cross_evaluate: bool = True,
         n_null_hypothesis_trials=100,
         classifier_kwargs: Union[dict, list[dict]] = None,
-    ):
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Perform the calculation for the LC2ST. 
+        Adds the results to the lc2st.output (dict) under the parameters 
+        "lc2st_probabilities", "lc2st_null_hypothesis_probabilities" as lists. 
+
+        Args:
+            linear_classifier (Union[str, list[str]], optional): linear classifier to use for the test. Only MLP is implemented. Defaults to "MLP".
+            cross_evaluate (bool, optional): Use a k-fold'd dataset for evaluation. Defaults to True.
+            n_null_hypothesis_trials (int, optional): Number of times to draw and test the null hypothesis. Defaults to 100.
+            classifier_kwargs (Union[dict, list[dict]], optional): Additional kwargs for the linear classifier. Defaults to None.
+
+        Returns:
+            tuple[np.ndarray, np.ndarray]: arrays storing the true and null hypothesis probabilities given the linear classifier. 
+
+        """
         if isinstance(linear_classifier, str):
             linear_classifier = [linear_classifier]
 
@@ -228,7 +256,7 @@ class LocalTwoSampleTest(Metric):
         for _ in range(n_null_hypothesis_trials):
             joint_P_x = np.concatenate([self.p, self.outcome_given_p], axis=1)
             joint_Q_x = np.concatenate([self.q, self.outcome_given_q], axis=1)
-            joint_P_x_perm, joint_Q_x_perm = self.permute_data(
+            joint_P_x_perm, joint_Q_x_perm = self._permute_data(
                 joint_P_x,
                 joint_Q_x,
             )

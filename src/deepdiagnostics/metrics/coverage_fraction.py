@@ -6,7 +6,15 @@ from typing import Any, Optional, Sequence
 from deepdiagnostics.metrics.metric import Metric
 
 class CoverageFraction(Metric):
-    """ """
+    """
+    Calculate the coverage of a set number of inferences over different confidence regions. 
+
+    .. code-block:: python 
+
+        from deepdiagnostics.metrics import CoverageFraction 
+
+        samples, coverage = CoverageFraction(model, data, save=False).calculate()
+    """
 
     def __init__(
         self,
@@ -36,7 +44,13 @@ class CoverageFraction(Metric):
         samples = self.model.sample_posterior(samples_per_inference, y_inference)
         return samples
 
-    def calculate(self):
+    def calculate(self) -> tuple[Sequence, Sequence]:
+        """
+        Calculate the coverage fraction of the given model and data
+
+        Returns:
+            tuple[Sequence, Sequence]: A tuple of the samples tested (M samples, Samples per inference, N parameters) and the coverage over those samples. 
+        """
         all_samples = np.empty(
             (len(self.context), self.samples_per_inference, np.shape(self.thetas)[1])
         )

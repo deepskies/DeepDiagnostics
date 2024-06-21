@@ -37,7 +37,7 @@ class Ranks(Display):
     ):
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
             
-    def _plot_name(self):
+    def plot_name(self):
         return "ranks.png"
 
     def _data_setup(self):
@@ -48,7 +48,7 @@ class Ranks(Display):
         )
         self.ranks = ranks
 
-    def _plot(self, num_bins:int=20):
+    def plot(self, num_bins:int=20):
         """
         Args:
             num_bins (int): Number of histogram bins. Defaults to 20.

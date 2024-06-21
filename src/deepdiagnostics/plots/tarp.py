@@ -45,7 +45,7 @@ class TARP(Display):
         self.line_style = get_item(
             "plots_common", "line_style_cycle", raise_exception=False
         )
-    def _plot_name(self):
+    def plot_name(self):
         return "tarp.png"
 
     def _data_setup(self):
@@ -67,7 +67,7 @@ class TARP(Display):
 
         self.posterior_samples = np.swapaxes(self.posterior_samples, 0, 1)
 
-    def _plot_settings(self):
+    def plot_settings(self):
         self.line_style = get_item(
             "plots_common", "line_style_cycle", raise_exception=False
         )
@@ -82,7 +82,7 @@ class TARP(Display):
 
         return hex_colors
 
-    def _plot(
+    def plot(
         self,
         coverage_sigma: int = 3,
         reference_point: Union[str, np.ndarray] = "random",

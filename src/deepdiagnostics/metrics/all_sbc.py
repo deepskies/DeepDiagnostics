@@ -6,6 +6,18 @@ from deepdiagnostics.metrics.metric import Metric
 
 
 class AllSBC(Metric):
+    """
+        Calculate SBC diagnostics metrics and add them to the output. 
+        Adapted from :cite:p:`centero2020sbi`. 
+        More information about specific metrics can be found `here <https://sbi-dev.github.io/sbi/tutorial/13_diagnostics_simulation_based_calibration/#a-shifted-posterior-mean>`_.
+
+        .. code-block:: python 
+
+            from deepdiagnostics.metrics import AllSBC
+
+            metrics = AllSBC(model, data, save=False)()
+            metrics = metrics.output
+    """
     def __init__(
         self,
         model: Any,
@@ -29,7 +41,13 @@ class AllSBC(Metric):
         self.thetas = tensor(self.data.get_theta_true())
         self.context = tensor(self.data.true_context())
 
-    def calculate(self):
+    def calculate(self) -> dict[str, Sequence]:
+        """
+        Calculate all SBC diagnostic metrics 
+
+        Returns:
+            dict[str, Sequence]: Dictionary with all calculations, labeled by their name. 
+        """
         ranks, dap_samples = run_sbc(
             self.thetas,
             self.context,

@@ -37,7 +37,7 @@ class CDFRanks(Display):
         
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
 
-    def _plot_name(self):
+    def plot_name(self):
         return "cdf_ranks.png"
 
     def _data_setup(self):
@@ -49,10 +49,10 @@ class CDFRanks(Display):
         )
         self.ranks = ranks
 
-    def _plot_settings(self):
+    def plot_settings(self):
         pass
 
-    def _plot(self):
+    def plot(self):
         """
         """
         sbc_rank_plot(

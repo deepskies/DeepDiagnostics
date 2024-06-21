@@ -6,14 +6,15 @@ Metrics
 .. autoclass:: metrics.metric.Metric
     :members:
 
-.. autoclass:: plots.CDFRanks
-    :private-members: _plot
+.. autoclass:: metrics.AllSBC
+    :members: calculate
 
-.. autoclass:: plots.Ranks
-    :private-members: _plot
+.. autoclass:: metrics.LC2ST
 
-.. autoclass:: plots.CoverageFraction
-    :private-members: _plot
+.. autoclass:: metrics.local_two_sample.LocalTwoSampleTest
+    :members: calculate 
 
+.. autoclass:: metrics.CoverageFraction
+    :members: calculate
 
 .. bibliography:: 

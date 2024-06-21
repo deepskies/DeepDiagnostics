@@ -43,7 +43,7 @@ class CoverageFraction(Display):
         self.n_parameters = len(self.parameter_names)
         self.line_cycle =  tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
 
-    def _plot_name(self):
+    def plot_name(self):
         return "coverage_fraction.png"
 
     def _data_setup(self):
@@ -52,7 +52,7 @@ class CoverageFraction(Display):
         ).calculate()
         self.coverage_fractions = coverage
 
-    def _plot(
+    def plot(
         self,
         figure_alpha=1.0,
         line_width=3,

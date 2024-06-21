@@ -66,14 +66,14 @@ class Display:
         self._common_settings()
         self.plot_name = self._plot_name()
 
-    def _plot_name(self):
+    def plot_name(self):
         raise NotImplementedError
 
     def _data_setup(self):
         # Set all the vars used for the plot
         raise NotImplementedError
 
-    def _plot(self, **kwrgs):
+    def plot(self, **kwrgs):
         # Make the plot object with plt.
         raise NotImplementedError
 
@@ -113,5 +113,5 @@ class Display:
         except NotImplementedError: 
             pass 
         
-        self._plot(**plot_args)
+        self.plot(**plot_args)
         self._finish()
