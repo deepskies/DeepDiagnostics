@@ -1,3 +1,5 @@
+.. _data:
+
 Data 
 ======
 
@@ -9,3 +11,6 @@ Data
 
 .. autoclass:: data.PickleData
     :members:
+
+.. autoclass:: data.simulator.Simulator
+    :members: 

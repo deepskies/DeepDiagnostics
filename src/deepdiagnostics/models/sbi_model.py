@@ -5,7 +5,14 @@ from deepdiagnostics.models.model import Model
 
 
 class SBIModel(Model):
-    def __init__(self, model_path: str):
+    """
+    Load a trained model that was generated with Mackelab SBI :cite:p:`centero2020sbi`. 
+    `Read more about saving and loading requirements here <https://sbi-dev.github.io/sbi/faq/question_05/>`_. 
+
+    Args:
+        model_path (str): relative path to a model - must be a .pkl file. 
+    """
+    def __init__(self, model_path):
         super().__init__(model_path)
 
     def _load(self, path: str) -> None:
@@ -16,14 +23,34 @@ class SBIModel(Model):
             posterior = pickle.load(file)
         self.posterior = posterior
 
-    def sample_posterior(self, n_samples: int, y_true):  # TODO typing
+    def sample_posterior(self, n_samples: int, x_true):
+        """
+        Sample the posterior 
+
+        Args:
+            n_samples (int): Number of samples to draw
+            x_true (np.ndarray): Context samples. (must be dims=(n_samples, M))
+
+        Returns:
+            np.ndarray: Posterior samples
+        """
         return self.posterior.sample(
-            (n_samples,), x=y_true, show_progress_bars=False
+            (n_samples,), x=x_true, show_progress_bars=False
         ).cpu()  # TODO Unbind from cpu
 
-    def predict_posterior(self, data):
-        posterior_samples = self.sample_posterior(data.y_true)
+    def predict_posterior(self, data, context_samples):
+        """
+        Sample the posterior and then 
+
+        Args:
+            data (deepdiagnostics.data.Data): Data module with the loaded simulation
+            context_samples (np.ndarray): X values to test the posterior over. 
+
+        Returns:
+            np.ndarray: Simulator output 
+        """
+        posterior_samples = self.sample_posterior(context_samples)
         posterior_predictive_samples = data.simulator(
-            data.theta_true(), posterior_samples
+            posterior_samples, context_samples
         )
         return posterior_predictive_samples

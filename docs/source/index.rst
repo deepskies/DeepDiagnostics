@@ -14,10 +14,9 @@ Welcome to DeepDiagnostics's documentation!
    configuration
    plots
    metrics
-   API/client
-   API/utils 
-   API/data
-   API/models 
+   client
+   data
+   models 
 
 Indices and tables
 ==================

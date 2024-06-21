@@ -1,5 +1,0 @@
-Client 
-========
-
-.. automodule:: client
-    :members:

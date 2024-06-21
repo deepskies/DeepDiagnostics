@@ -4,7 +4,7 @@ Quickstart
 Notebook Example 
 -----------------
 
-`An example notebook can be found here for an interactive walkthrough. <https://github.com/deepskies/DeepDiagnostics/blob/main/notebooks/example.ipynb>`_. 
+`An example notebook can be found here for an interactive walkthrough <https://github.com/deepskies/DeepDiagnostics/blob/main/notebooks/example.ipynb>`_. 
 
 Installation 
 --------------
@@ -27,7 +27,7 @@ Installation
 Configuration 
 ----
 
-Description of the configuration file, including defaults, can be found in :ref:`configuration<configuration>`
+Description of the configuration file, including defaults, can be found in :ref:`configuration`.
 
 Pipeline 
 ---------
@@ -75,7 +75,7 @@ All plots and metrics can be found in :ref:`plots<plots>` and :ref:`metrics<metr
 
 
 Custom Simulations
----
+-------------------
 
 To use generative model diagnostics, a simulator has to be included. 
 This is done by `registering` your simulation with a name and a class associated. 

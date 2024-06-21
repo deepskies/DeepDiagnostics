@@ -8,13 +8,25 @@ from deepdiagnostics.data.data import Data
 
 
 class H5Data(Data):
+    """
+    Load data that has been saved in a h5 format. 
+
+    .. attribute:: Data Parameters  
+
+        :xs: [REQUIRED] The context, the x values. The data that was used to train a model on what conditions produce what posterior. 
+        :thetas: [REQUIRED] The theta, the parameters of the external model. The data used to train the model's posterior. 
+        :prior: Distribution used to initialize the posterior before training. 
+        :sigma: True standard deviation of the actual thetas, if known. 
+    
+    """
+
     def __init__(self, 
-        path: str, 
-        simulator: Callable, 
-        simulator_kwargs: dict = None,
-        prior: str = None,
-        prior_kwargs: dict = None,
-        simulation_dimensions:Optional[int] = None,
+        path, 
+        simulator, 
+        simulator_kwargs = None,
+        prior=None,
+        prior_kwargs = None,
+        simulation_dimensions = None,
     ):
         super().__init__(path, simulator, simulator_kwargs, prior, prior_kwargs, simulation_dimensions)
 
@@ -38,17 +50,50 @@ class H5Data(Data):
                 file.create_dataset(key, data=value)
 
     def true_context(self):
-        # From Data
-        return self.data["xs"]  # TODO change name
+        """
+        Try to get the `xs` field of the loaded data.
+
+        Raises:
+            NotImplementedError: The data does not have a `xs` field. 
+        """
+        try: 
+            return self.data["xs"]
+        except KeyError: 
+            raise NotImplementedError("Cannot find `xs` in data. Please supply it.")
 
     def prior(self):
-        # From Data
-        raise NotImplementedError
+        """
+        If the data has a supplied prior, return it. If not, the data module will default back to picking a prior from a random distribution. 
+
+        Raises:
+            NotImplementedError: The data does not have a `prior` field. 
+        """
+        try: 
+            return self.data['prior']
+        except KeyError: 
+            raise NotImplementedError("Data does not have a `prior` field.")
 
     def get_theta_true(self):
-        return self.data["thetas"]
+        """ Get stored theta used to train the model. 
+
+        Returns:
+            theta array 
+
+        Raise: 
+            NotImplementedError: Data does not have thetas. 
+        """
+        try: 
+            return self.data["thetas"]
+        except KeyError: 
+            raise NotImplementedError("Data does not have a `thetas` field.")
 
     def get_sigma_true(self):
+        """
+        Try to get the true standard deviation of the data. If it is not supplied, return 1. 
+
+        Returns:
+            Any: sigma. 
+        """
         try:
             return super().get_sigma_true()
         except (AssertionError, KeyError):

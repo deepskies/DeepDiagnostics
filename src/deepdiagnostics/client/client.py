@@ -12,28 +12,37 @@ from deepdiagnostics.plots import Plots
 
 def parser():
     parser = ArgumentParser()
-    parser.add_argument("--config", "-c", default=None)
+    parser.add_argument("--config", "-c", default=None, help=".yaml file with all arguments to run.")
 
     # Model
-    parser.add_argument("--model_path", "-m", default=None)
+    parser.add_argument("--model_path", "-m", default=None, help="String path to a model. Must be compatible with your model_engine choice.")
     parser.add_argument(
         "--model_engine",
         "-e",
         default=Defaults["model"]["model_engine"],
         choices=ModelModules.keys(),
+        help="Way to load your model. See each module's documentation page for requirements and specifications."
     )
 
     # Data
-    parser.add_argument("--data_path", "-d", default=None)
+    parser.add_argument("--data_path", "-d", default=None, help="String path to data. Must be compatible with data_engine choice.")
     parser.add_argument(
         "--data_engine",
         "-g",
         default=Defaults["data"]["data_engine"],
         choices=DataModules.keys(),
+        help="Way to load your data. See each module's documentation page for requirements and specifications."
     )
-    parser.add_argument("--simulator", "-s", default=None)
+    parser.add_argument(
+        "--simulator", "-s", 
+        default=None, 
+        help='String name of the simulator to use with generative metrics and plots. Must be pre-register with the `utils.register_simulator` method.')
     # Common
-    parser.add_argument("--out_dir", default=Defaults["common"]["out_dir"])
+    parser.add_argument(
+        "--out_dir", 
+        default=Defaults["common"]["out_dir"], 
+        help="Where the results will be saved. Path need not exist, it will be created."
+    )
 
     # List of metrics (cannot supply specific kwargs)
     parser.add_argument(
@@ -41,6 +50,7 @@ def parser():
         nargs="?",
         default=list(Defaults["metrics"].keys()),
         choices=Metrics.keys(),
+        help="List of metrics to run. To not run any, supply `--metrics `"
     )
 
     # List of plots
@@ -49,6 +59,8 @@ def parser():
         nargs="?",
         default=list(Defaults["plots"].keys()),
         choices=Plots.keys(),
+        help="List of plots to run. To not run any, supply `--plots `"
+
     )
 
     args = parser.parse_args()

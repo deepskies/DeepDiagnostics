@@ -14,8 +14,26 @@ class Simulator(ABC):
     def generate_context(self, n_samples: int) -> np.ndarray:
         """
         [ABSTRACT, MUST BE FILLED]
+
         Specify how the conditioning context is generated.
         Can come from data, or from a generic distribution.
+
+        Example: 
+
+        .. code-block:: python 
+
+            # Generate from a random distribution
+            class MySim(Simulator):
+                def generate_context(self, n_samples: int) -> np.ndarray:
+                    return np.random.uniform(0, 1)
+
+            # Draw from a sample
+            class MySim(Simulator): 
+                def __init__(self): 
+                    self.data_source = .....
+                
+                def generate_context(self, n_samples: int) -> np.ndarray:
+                    return self.data_source.sample(n_samples)
 
         Args:
             n_samples (int): Number of samples of context to pull
@@ -29,7 +47,20 @@ class Simulator(ABC):
     def simulate(self, theta: np.ndarray, context_samples: np.ndarray) -> np.ndarray:
         """
         [ABSTRACT, MUST BE FILLED]
+
         Specify a simulation S such that y_{theta} = S(context_samples|theta)
+
+         Example: 
+        .. code-block:: python 
+
+            # Generate from a random distribution
+            class MySim(Simulator):
+                def simulate(self, theta: np.ndarray, context_samples: np.ndarray) -> np.ndarray:                    
+                    simulation_results = np.zeros(theta.shape[0], 1)
+                    for index, context in enumerate(context_samples): 
+                        simulation_results[index] = theta[index][0]*context + theta[index][1]*context
+
+                    return simulation_results
 
         Args:
             theta (np.ndarray): Parameters of the simulation model

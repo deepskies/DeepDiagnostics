@@ -1,3 +1,5 @@
+.. _configuration:
+
 Configuration 
 ===============
 
@@ -23,7 +25,7 @@ but it can be specified to quickly access variables to avoid re-writing initiali
 
 .. code-block:: python 
 
-    from DeepDiagnostics.utils.configuration import Config 
+    from deepdiagnostics.utils.configuration import Config 
 
 
     Config("path/to/your/config.yaml")
@@ -54,7 +56,7 @@ Configuration Description
 
     :param model_path: Path to stored model. Required. 
 
-    :param model_engine: Loading method to use. Choose from methods listed in :ref:`plots<plots>`
+    :param model_engine: Loading method to use. Choose from methods listed in :ref:`models`.
 
 .. code-block:: yaml 
 
@@ -66,11 +68,11 @@ Configuration Description
 
     :param data_path: Path to stored data. Required.
 
-    :param data_engine: Loading method to use. Choose from methods listed in  :ref:`plots<plots>`
+    :param data_engine: Loading method to use. Choose from methods listed in :ref:`data`.
 
     :param simulator: String name of the simulator. Must be pre-registered .
 
-    :param prior: Prior distribution used in training. Used if "prior" is not included in the passed data. Choose from []
+    :param prior: Prior distribution used in training. Used if "prior" is not included in the passed data. 
     
     :param prior_kwargs: kwargs to use with the initialization of the prior
 
