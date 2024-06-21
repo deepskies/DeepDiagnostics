@@ -2473,6 +2473,25 @@ lint = ["flake8 (>=3.5.0)", "importlib_metadata", "mypy (==1.9.0)", "pytest (>=6
 test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=6.0)", "setuptools (>=67.0)"]
 
 [[package]]
+name = "sphinx-autodoc-typehints"
+version = "2.2.1"
+description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "sphinx_autodoc_typehints-2.2.1-py3-none-any.whl", hash = "sha256:ac37852861c58a5ca95be13d5a0f49f3661b5341eaf7de8531842135600aeb90"},
+    {file = "sphinx_autodoc_typehints-2.2.1.tar.gz", hash = "sha256:26a81e6444c9b82a952519a3b7c52e45f14a0f81c91cfc7063cfcf2ca109d161"},
+]
+
+[package.dependencies]
+sphinx = ">=7.3.5"
+
+[package.extras]
+docs = ["furo (>=2024.1.29)"]
+numpy = ["nptyping (>=2.5)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.4.4)", "defusedxml (>=0.7.1)", "diff-cover (>=9)", "pytest (>=8.1.1)", "pytest-cov (>=5)", "sphobjinv (>=2.3.1)", "typing-extensions (>=4.11)"]
+
+[[package]]
 name = "sphinxcontrib-applehelp"
 version = "1.0.8"
 description = "sphinxcontrib-applehelp is a Sphinx extension which outputs Apple help books"
@@ -2937,4 +2956,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "4fc3acc7cce491a9297e0d1600fd330a50a2eabecabe5468e5c293985be9db35"
+content-hash = "aa2cda22540612ead3f0392e01b20d6749ee5b480e7bc66629561a2bd26bb20d"

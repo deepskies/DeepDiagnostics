@@ -32,6 +32,7 @@ ruff = "^0.3.5"
 sphinx = "^7.2.6"
 deepbench = "^0.2.2"
 sphinxcontrib-bibtex = "^2.6.2"
+sphinx-autodoc-typehints = "^2.2.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
