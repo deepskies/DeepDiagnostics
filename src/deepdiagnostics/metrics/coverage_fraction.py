@@ -18,14 +18,14 @@ class CoverageFraction(Metric):
 
     def __init__(
         self,
-        model: Any,
-        data: Any,
-        out_dir: Optional[str] = None,
-        save: bool=True,
-        use_progress_bar: Optional[bool] = None,
-        samples_per_inference: Optional[int] = None,
-        percentiles: Optional[Sequence[int]] = None,
-        number_simulations: Optional[int] = None,
+        model,
+        data,
+        out_dir= None,
+        save=True,
+        use_progress_bar = None,
+        samples_per_inference = None,
+        percentiles = None,
+        number_simulations = None,
     ) -> None:
         
         super().__init__(model, data, out_dir,

@@ -41,17 +41,16 @@ class LocalTwoSampleTest(Display):
         self, 
         model, 
         data, 
-        save:bool, 
-        show:bool, 
-        out_dir:Optional[str]=None, 
-        percentiles: Optional[Sequence] = None, 
-        use_progress_bar: Optional[bool] = None,
-        samples_per_inference: Optional[int] = None,
-        number_simulations: Optional[int] = None,
-        parameter_names: Optional[Sequence] = None, 
-        parameter_colors: Optional[Sequence]= None, 
-        colorway: Optional[str]=None
-    ):
+        save, 
+        show, 
+        out_dir=None, 
+        percentiles = None, 
+        use_progress_bar= None,
+        samples_per_inference = None,
+        number_simulations= None,
+        parameter_names = None, 
+        parameter_colors = None, 
+        colorway =None):
         
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
         self.region_colors = get_hex_colors(n_colors=len(self.percentiles), colorway=self.colorway)
