@@ -1,16 +1,23 @@
 Quickstart 
 ============
 
+Notebook Example 
+-----------------
+
+`An example notebook can be found here for an interactive walkthrough. <https://github.com/deepskies/DeepDiagnostics/blob/main/notebooks/example.ipynb>`_. 
+
 Installation 
 --------------
 
 * From PyPi 
-.. code-block:: console 
-    pip install DeepDiagnostics
+.. code-block:: bash
+
+    pip install deepdiagnostics
 
 
 * From Source 
-.. code-block:: console 
+.. code-block:: bash
+    
     git clone https://github.com/deepskies/DeepDiagnostics/ 
     pip install poetry 
     poetry shell 
@@ -28,13 +35,15 @@ Pipeline
 `DeepDiagnostics` includes a CLI tool for analysis. 
 * To run the tool using a configuration file: 
 
-.. code-block:: console 
+.. code-block:: bash 
+
     diagnose --config {path to yaml}
 
 
 * To use defaults with specific models and data: 
 
-.. code-block:: console 
+.. code-block:: bash
+
     diagnose --model_path {model pkl} --data_path {data pkl} [--simulator {sim name}]
 
 
@@ -51,11 +60,11 @@ All plots and metrics can be found in :ref:`plots<plots>` and :ref:`metrics<metr
 
 .. code-block:: python 
 
-    from DeepDiagnostics.utils.configuration import Config 
-    from DeepDiagnostics.model import SBIModel 
-    from DeepDiagnostics.data import H5Data
+    from deepdiagnostics.utils.configuration import Config 
+    from deepdiagnostics.model import SBIModel 
+    from deepdiagnostics.data import H5Data
 
-    from DeepDiagnostics.plots import LocalTwoSampleTest, Ranks
+    from deepdiagnostics.plots import LocalTwoSampleTest, Ranks
 
     Config({configuration_path})
     model = SBIModel({model_path})
@@ -74,7 +83,8 @@ This is done by `registering` your simulation with a name and a class associated
 By doing this, the DeepDiagnostics can find your simulation at a later time and the simulation does not need to be loaded in memory at time of running the CLI pipeline or standalone modules.
 
 .. code-block:: python 
-    from DeepDiagnostics.utils.register import register_simulator
+
+    from deepdiagnostics.utils.register import register_simulator
 
     class MySimulation: 
         def __init__(...)
@@ -85,10 +95,11 @@ By doing this, the DeepDiagnostics can find your simulation at a later time and 
 
 
 Simulations also require two different methods - `generate_context` (Which is used to either load or generate the non-theta input parameter for the simulation, also called `x`) and `simulate`. 
-This is enforced by using the abstract class `DeepDiagnostics.data.Simulator` as a parent class. 
+This is enforced by using the abstract class `deepdiagnostics.data.Simulator` as a parent class. 
 
 .. code-block:: python 
-    from DeepDiagnostics.data import Simulator
+    
+    from deepdiagnostics.data import Simulator
 
     import numpy as np 
 

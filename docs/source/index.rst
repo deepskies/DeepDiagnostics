@@ -18,8 +18,6 @@ Welcome to DeepDiagnostics's documentation!
    API/utils 
    API/data
    API/models 
-   API/plots 
-   API/metrics
 
 Indices and tables
 ==================
