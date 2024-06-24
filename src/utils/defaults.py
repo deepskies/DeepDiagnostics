@@ -31,7 +31,9 @@ Defaults = {
             "coverage_sigma": 3  # How many sigma to show coverage over
         },
         "LC2ST": {}, 
-        "PPC":{}
+        "PPC": {}, 
+        "PriorPC":{}
+
     },
     "metrics_common": {
         "use_progress_bar": False,

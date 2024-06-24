@@ -11,7 +11,8 @@ from plots import (
     CoverageFraction, 
     TARP, 
     LocalTwoSampleTest, 
-    PPC
+    PPC, 
+    PriorPC
 )
 
 
@@ -85,4 +86,10 @@ def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output):
         out_dir=f"{result_output.strip('/')}/mock_2d/")
     assert type(plot.data.simulator).__name__ == "Mock2DSimulator"
     plot(**get_item("plots", "PPC", raise_exception=False))
+
+
+def test_prior_pc(plot_config, mock_model, mock_data):
+    Config(plot_config)
+    plot = PriorPC(mock_model, mock_data, save=True, show=False)
+    plot(**get_item("plots", "PriorPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
