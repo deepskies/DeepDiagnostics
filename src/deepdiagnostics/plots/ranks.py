@@ -1,4 +1,3 @@
-from typing import Optional, Sequence
 from sbi.analysis import sbc_rank_plot, run_sbc
 from torch import tensor
 

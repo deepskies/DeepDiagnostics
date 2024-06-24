@@ -1,7 +1,6 @@
-from typing import Optional, Sequence
+from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import KFold
 
 from deepdiagnostics.plots.plot import Display
 from deepdiagnostics.utils.plotting_utils import get_hex_colors

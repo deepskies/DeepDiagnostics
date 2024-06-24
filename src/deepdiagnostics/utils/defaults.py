@@ -34,7 +34,6 @@ Defaults = {
         "Parity":{},
         "PPC": {}, 
         "PriorPC":{}
-
     },
     "metrics_common": {
         "use_progress_bar": False,

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any
 import h5py
 import numpy as np
 import torch

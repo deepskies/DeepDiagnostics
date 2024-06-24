@@ -1,7 +1,7 @@
 import numpy as np
 from torch import tensor
 from tqdm import tqdm
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
 from deepdiagnostics.metrics.metric import Metric
 

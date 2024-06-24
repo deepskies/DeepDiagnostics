@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 from torch import tensor
 from sbi.analysis import run_sbc, check_sbc
 

@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Union
+from typing import Union
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import numpy as np

@@ -24,4 +24,10 @@ Plots
 .. autoclass:: plots.PPC
     :members: plot
 
+.. autoclass:: plots.PriorPC
+    :members: plot
+
+.. autoclass:: plots.Parity
+    :members: plot
+
 .. bibliography:: 
