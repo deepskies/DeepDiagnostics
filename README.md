@@ -1,81 +1,236 @@
+![status](https://img.shields.io/badge/PyPi-0.0.0.0-blue) ![status](https://img.shields.io/badge/License-MIT-lightgrey) [![test](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml/badge.svg)](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml) [![Documentation Status](https://readthedocs.org/projects/deepdiagnostics/badge/?version=latest)](https://deepdiagnostics.readthedocs.io/en/latest/?badge=latest)
+
 # DeepDiagnostics
 DeepDiagnostics is a package for diagnosing the posterior from an inference method. It is flexible, applicable for both simulation-based and likelihood-based inference.
 
-![status](https://img.shields.io/badge/arXiv-000.000-red)(arxiv link if applicable)
-
-![status](https://img.shields.io/badge/PyPi-0.0.0.0-blue)(pypi link if applicable)
-
-![status](https://img.shields.io/badge/License-MIT-lightgrey)(MIT or Apache 2.0 or another requires link changed)
-
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/owner/repo/build-repo)
-
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/owner/repo/test-repo?label=test)
-
-## Workflow
-![Workflow overview](images/deepd_overview.png)
-
-Getting a little more specific:
-
-![python module overview](images/workflow_overview.png)
+## Documentation
+### [readthedocs](https://deepdiagnostics.readthedocs.io/en/latest/)
 
 ## Installation 
+### From PyPi 
 
-### Clone this repo
-First, cd to where you'd like to put this repo and type:
-> git clone https://github.com/deepskies/DeepDiagnostics.git
+``` sh
+pip install deepdiagnostics
+```
+### From Source
 
-Then, cd into the repo:
-> cd DeepDiagnostics
-
-### Install and use poetry to set up the environment
-Poetry is our recommended method of handling a package environment as publishing and building is handled by a toml file that handles all possibly conflicting dependencies. 
-Full docs can be found [here](https://python-poetry.org/docs/basic-usage/).
-
-Install instructions: 
-
-Add poetry to your python install 
-> pip install poetry
-
-Then, from within the DeepDiagnostics repo, run the following:
-
-Install the pyproject file
-> poetry install 
-
-Begin the environment
-> poetry shell
-
-### Verify it is installed
-
-After following the installation instructions, verify installation is functional is all tests are passing by running the following in the root directory:
-> pytest
-
+``` sh
+git clone https://github.com/deepskies/DeepDiagnostics/ 
+pip install poetry 
+poetry shell 
+poetry install
+pytest
+```
 
 ## Quickstart
 
-**Fill this in is TBD**
+### Pipeline 
+`DeepDiagnostics` includes a CLI tool for analysis. 
+* To run the tool using a configuration file: 
 
-Description of the immediate steps to replicate your results, pointing to a script with cli execution. 
-You can also point to a notebook if your results are highly visual and showing plots in line with code is desired.
+``` sh
+    diagnose --config {path to yaml}
+```
 
-Example: 
+* To use defaults with specific models and data: 
 
-To run full model training: 
-> python3 train.py --data /path/to/data/folder
+``` sh
+    diagnose --model_path {model pkl} --data_path {data pkl} [--simulator {sim name}]
+```
 
-To evaluate a single ""data format of choice""
-> python3 eval.py --data /path/to/data
 
-## Documentation 
-Please include any further information needed to understand your work. 
-This can include an explanation of different notebooks, basic code diagrams, conceptual explanations, etc. 
-If you have a folder of documentation, summarize it here and point to it. 
+Additional arguments can be found using ``diagnose -h``
 
-## Citation 
-Include a link to your bibtex citation for others to use. 
+### Standalone 
+
+`DeepDiagnostics` comes with the option to run different plots and metrics independently. 
+
+Setting a configuration ahead of time ensures reproducibility with parameters and seeds. 
+It is encouraged, but not required. 
+
+
+``` py
+from DeepDiagnostics.utils.configuration import Config 
+from DeepDiagnostics.model import SBIModel 
+from DeepDiagnostics.data import H5Data
+
+from DeepDiagnostics.plots import LocalTwoSampleTest, Ranks
+
+Config({configuration_path})
+model = SBIModel({model_path})
+data = H5Data({data_path}, simulator={simulator name})
+
+LocalTwoSampleTest(data=data, model=model, show=True)(use_intensity_plot=False, n_alpha_samples=200)
+Ranks(data=data, model=model, show=True)(num_bins=3)
+```
+
+## Contributing 
+
+[Please view the Deep Skies Lab contributing guidelines before opening a pull request.](https://github.com/deepskies/.github/blob/main/CONTRIBUTING.md)
+
+`DeepDiagnostics` is structured so that any new metric or plot can be added by adding a class that is a child of `metrics.Metric` or `plots.Display`. 
+
+These child classes need a few methods. A minimal example of both a metric and a display is below. 
+
+It is strongly encouraged to provide typing for all inputs of the `plot` and `calculate` methods so they can be automatically documented. 
+
+### Metric
+``` py
+from deepdiagnostics.metrics import Metric 
+
+class NewMetric(Metric): 
+    """
+    {What the metric is, any resources or credits.}
+
+    .. code-block:: python 
+
+        {a basic example on how to run the metric}
+    """
+    def __init__(self, model, data,out_dir= None, save = True, use_progress_bar = None, samples_per_inference = None, percentiles = None, number_simulations = None,
+    ) -> None:
+        
+        # Initialize the parent Metric
+        super().__init__(model, data, out_dir, save, use_progress_bar, samples_per_inference, percentiles, number_simulations)
+
+        # Any other calculations that need to be done ahead of time 
+
+    def _collect_data_params(self): 
+        # Compute anything that needs to be done each time the metric is calculated. 
+        return None
+
+    def calculate(self, metric_kwargs:dict[str, int]) -> Sequence[int]: 
+        """
+        Description of the calculations
+
+        Kwargs: 
+            metric_kwargs (Required, dict[str, int]): dictionary of the metrics to return, under the name "metric". 
+
+        Returns:
+            Sequence[int]: list of the number in metrics_kwargs
+        """
+        # Where the main calculation takes place, used by the metric __call__. 
+        self.output = {'The Result of the calculation'=[metric_kwargs["metric"]]} # Update 'self.output' so the results are saved to the results.json. 
+
+        return [0] # Return the result so the metric can be used standalone. 
+```
+
+### Display
+``` py
+import matplotlib.pyplot as plt 
+
+from deepdiagnostics.plots.plot import Display
+
+
+class NewPlot(Display):
+    def __init__(
+        self, 
+        model, 
+        data, 
+        save, 
+        show, 
+        out_dir=None, 
+        percentiles = None, 
+        use_progress_bar= None,
+        samples_per_inference = None,
+        number_simulations= None,
+        parameter_names = None, 
+        parameter_colors = None, 
+        colorway =None):
+
+        """
+        {Description of the plot}
+        .. code-block:: python
+        
+            {How to run the plot}
+        """
+
+        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+
+    def plot_name(self):
+        # The name of the plot (the filename, to be saved in out_dir/{file_name})
+        # When you run the plot for the first time, it will yell at you if you haven't made this a png path. 
+        return "new_plot.png"
+
+    def _data_setup(self):
+        # When data needs to be run for the plot to work, model inference etc. 
+        pass
+
+    def plot_settings(self):
+        # If there additional settings to pull from the config
+        pass
+
+    def plot(self, plot_kwarg:float):
+        """
+        Args:
+            plot_kwarg (float, required): Some kwarg
+        """
+        plt.plot([0,1], [plot_kwarg, plot_kwarg])
+```
+
+#### Adding to the package 
+If you wish to add the addition to the package to run using the CLI package, a few things need to be done. 
+
+1. Add the name and mapping to the submodule `__init__.py`. 
+
+##### `src/deepdiagonstics/metrics/__init__.py`
+
+``` py
+...
+from deepdiagnostics.metrics.{your metric file} import NewMetric
+
+Metrics = {
+    ...
+    "NewMetric": NewMetric
+}
 
 ```
+
+
+2. Add the name and defaults to the `Defaults.py`
+
+##### `src/deepdiagonstics/utils/Defaults.py`
+
+``` py
+Defaults = {
+    "common": {...}, 
+    ..., 
+    "metrics": {
+        ...
+        "NewMetric": {"default_kwarg": "default overwriting the metric_default in the function definition."}
+    }
+}
+```
+
+3. Add a test to the repository, ensure it passes. 
+
+##### `tests/test_metrics.py`
+
+``` py
+from deepdaigonstics.metrics import NewMetric 
+
+...
+
+def test_newmetric(metric_config, mock_model, mock_data): 
+    Config(metric_config)
+    new_metric = NewMetric(mock_model, mock_data, save=True)
+    expected_results = {what you should get out}
+    real_results = new_metric.calculate("kwargs that produce the expected results")
+    assert expected_results.all() == real_results.all()
+
+    new_metric()
+    assert new_metric.output is not None
+    assert os.path.exists(f"{new_metric.out_dir}/diagnostic_metrics.json")
+```
+
+``` console
+python3 -m pytest tests/test_metrics.py::test_newmetric
+
+```
+
+## Citation 
+```
 @article{key , 
-    author = {You :D}, 
+    author = {Me :D}, 
     title = {title}, 
     journal = {journal}, 
     volume = {v}, 
@@ -87,4 +242,4 @@ Include a link to your bibtex citation for others to use.
 ```
 
 ## Acknowledgement 
-Include any acknowledgements for research groups, important collaborators not listed as a contributor, institutions, etc. 
+This software has been authored by an employee or employees of Fermi Research Alliance, LLC (FRA), operator of the Fermi National Accelerator Laboratory (Fermilab) under Contract No. DE-AC02-07CH11359 with the U.S. Department of Energy.
