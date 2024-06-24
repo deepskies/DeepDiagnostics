@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("../src")
+sys.path.append("../src/deepdiagnostics")
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -10,7 +10,7 @@ sys.path.append("../src")
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "DeepDiagnostics"
+project = "deepdiagnostics"
 copyright = "2024, Becky Nevin, M Voetberg, Brian Nord"
 author = "Becky Nevin, M Voetberg, Brian Nord"
 release = "0.1.0"
@@ -23,17 +23,19 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    'sphinxcontrib.bibtex'
 ]
+bibtex_bibfiles = ['ref.bib']
 napoleon_use_param = True
 autodoc_default_options = {
     "members": True,
 }
 autodoc_typehints = "description"
-
+autoclass_content = "class"
 templates_path = ["_templates"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
+html_theme = "pyramid"
 html_static_path = ["_static"]
