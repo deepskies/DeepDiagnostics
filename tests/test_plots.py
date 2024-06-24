@@ -11,7 +11,7 @@ from plots import (
     CoverageFraction, 
     TARP, 
     LocalTwoSampleTest, 
-    PPC, 
+    PPC,
     PriorPC,
     Parity
 )
@@ -80,10 +80,7 @@ def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output):
     plot = PPC(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "PPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
-<<<<<<< HEAD
 
-=======
->>>>>>> 9d57556 (Update existing plots and metrics to work with 2d #72)
     plot = PPC(
         mock_model,
         mock_2d_data, save=True, show=False, 
@@ -96,6 +93,20 @@ def test_prior_pc(plot_config, mock_model, mock_data):
     Config(plot_config)
     plot = PriorPC(mock_model, mock_data, save=True, show=False)
     plot(**get_item("plots", "PriorPC", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+
+
+def test_prior_pc(plot_config, mock_model, mock_2d_data, mock_data, result_output):
+    Config(plot_config)
+    plot = PriorPC(mock_model, mock_data, save=True, show=False)
+    plot(**get_item("plots", "PriorPC", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+    plot = PPC(
+        mock_model,
+        mock_2d_data, save=True, show=False, 
+        out_dir=f"{result_output.strip('/')}/mock_2d/")
+    assert type(plot.data.simulator).__name__ == "Mock2DSimulator"
+    plot(**get_item("plots", "PPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
 
 def test_parity(plot_config, mock_model, mock_data):

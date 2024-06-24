@@ -31,9 +31,10 @@ Defaults = {
             "coverage_sigma": 3 
         },
         "LC2ST": {}, 
+        "Parity":{},
         "PPC": {}, 
-        "PriorPC":{},
-        "Parity":{}
+        "PriorPC":{}
+
     },
     "metrics_common": {
         "use_progress_bar": False,
