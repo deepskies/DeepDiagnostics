@@ -3,8 +3,8 @@
 Models 
 ========
 
-.. autoclass:: models.model.Model
+.. autoclass:: deepdiagnostics.models.model.Model
     :members:
 
-.. autoclass:: models.SBIModel
+.. autoclass:: deepdiagnostics.models.SBIModel
     :members:
