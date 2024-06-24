@@ -1,28 +1,43 @@
-from typing import Optional, Sequence
+from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
 from deepdiagnostics.plots.plot import Display
 
 class PriorPC(Display):
+    """
+    Plot random samples of the simulator's output from samples drawn from the prior
+
+    .. code-block:: python 
+    
+        from deepdiagnostics.plots import PriorPC
+
+        PriorPC(model, data, show=True, save=False)(
+            n_rows = 2, 
+            n_columns = 6, # Make 2x6 = 12 different samples 
+            row_parameter_index = 0,
+            column_parameter_index = 1, # Include labels for theta parameters 0 and 1 from the prior
+            round_parameters = True,
+        )
+    """
     def __init__(
         self, 
         model, 
         data, 
-        save:bool, 
-        show:bool, 
-        out_dir:Optional[str]=None, 
-        percentiles: Optional[Sequence] = None, 
-        use_progress_bar: Optional[bool] = None,
-        samples_per_inference: Optional[int] = None,
-        number_simulations: Optional[int] = None,
-        parameter_names: Optional[Sequence] = None, 
-        parameter_colors: Optional[Sequence]= None, 
-        colorway: Optional[str]=None
-    ):
+        save, 
+        show, 
+        out_dir=None, 
+        percentiles = None, 
+        use_progress_bar= None,
+        samples_per_inference = None,
+        number_simulations= None,
+        parameter_names = None, 
+        parameter_colors = None, 
+        colorway =None):
+
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
 
-    def _plot_name(self):
+    def plot_name(self):
         return "predictive_prior_check.png"
 
     def get_prior_samples(self, n_columns, n_rows):
@@ -70,7 +85,7 @@ class PriorPC(Display):
             raise ValueError(f"Cannot use {label_samples} to assign labels. Choose from 'both', 'rows', 'columns'.")
 
 
-    def _plot(
+    def plot(
             self, 
             n_rows: Optional[int] = 3,
             n_columns: Optional[int] = 3,
@@ -83,7 +98,21 @@ class PriorPC(Display):
             title:Optional[str]="Simulated output from prior", 
             y_label:Optional[str]=None, 
             x_label:str=None): 
-        
+        """
+
+        Args:
+            n_rows (Optional[int], optional): Number of unique rows to make for priors. Defaults to 3.
+            n_columns (Optional[int], optional): Number of unique columns for viewing prior predictions. Defaults to 3.
+            row_parameter_index (Optional[int], optional): Index of the theta parameter to display as labels on rows. Defaults to 0.
+            column_parameter_index (Optional[int], optional): Index of the theta parameter to display as labels on columns. Defaults to 1.
+            round_parameters (Optional[bool], optional): In labels, round the theta parameters (recommended when thetas are float values). Defaults to True.
+            sort_rows (bool, optional): Sort the plots by the theta row value. Defaults to True.
+            sort_columns (bool, optional): Sort the plots by theta column value. Defaults to True.
+            label_samples (Optional[str], optional): Label the prior values as a text box in each label. Row means using row_parameter_index as the title value. Choose from "rows", "columns", "both". Defaults to 'both'.
+            title (Optional[str], optional): Title of the whole plot. Defaults to "Simulated output from prior".
+            y_label (Optional[str], optional): Column label, when None, label = `theta_{column_index} = parameter_name`. Defaults to None.
+            x_label (str, optional): Row label, when None, label = `theta_{row_index} = parameter_name`. Defaults to None.
+        """
 
         self.get_prior_samples(n_rows, n_columns)
         figure, subplots = plt.subplots(
