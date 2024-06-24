@@ -37,7 +37,7 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: python -m poetry install
+      run: python -m poetry install --with dev
 
     - name: Create Environment File
       run: echo "PYTHONPATH=$(pwd):$(pwd)/src" >> ${{ runner.workspace }}/.env
