@@ -8,6 +8,7 @@ from deepdiagnostics.plots.parity import Parity
 from deepdiagnostics.plots.predictive_prior_check import PriorPC
 
 Plots = {
+    "": lambda **kwargs: None, 
     CDFRanks.__name__: CDFRanks,
     CoverageFraction.__name__: CoverageFraction,
     Ranks.__name__: Ranks,

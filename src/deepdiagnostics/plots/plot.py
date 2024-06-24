@@ -64,7 +64,7 @@ class Display:
 
         self.model = model
         self._common_settings()
-        self.plot_name = self._plot_name()
+        self.plot_name = self.plot_name()
 
     def plot_name(self):
         raise NotImplementedError

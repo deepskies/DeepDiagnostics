@@ -190,10 +190,10 @@ class PPC(Display):
 
         for plot_index in range(n_unique_plots): 
             if self.data.simulator_dimensions == 1: 
-                self._plot_1d(subplots, plot_index, n_coverage_sigma, theta_true_marker)
+                self.plot_1d(subplots, plot_index, n_coverage_sigma, theta_true_marker)
 
             else: 
-                self._plot_2d(subplots, plot_index, include_axis_ticks)
+                self.plot_2d(subplots, plot_index, include_axis_ticks)
 
 
         subplots[1, 0].set_ylabel("True Parameters")

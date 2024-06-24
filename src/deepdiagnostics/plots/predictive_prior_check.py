@@ -33,9 +33,16 @@ class PriorPC(Display):
         number_simulations= None,
         parameter_names = None, 
         parameter_colors = None, 
-        colorway =None):
+        colorway = None):
 
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        
+        if self.data.simulator_dimensions == 1: 
+            self.plot_image = False
+
+        elif self.data.simulator_dimensions == 2: 
+            self.plot_image = True
+
 
     def plot_name(self):
         return "predictive_prior_check.png"
@@ -43,8 +50,18 @@ class PriorPC(Display):
     def get_prior_samples(self, n_columns, n_rows):
 
         context_shape = self.data.true_context().shape
-        
-        self.prior_predictive_samples = np.zeros((n_rows, n_columns, context_shape[-1]))
+        remove_first_dim = False
+
+        if self.plot_image: 
+            sim_out_shape = self.data.get_simulator_output_shape()
+            if len(sim_out_shape) != 2: 
+                # TODO Debug log with a warning
+                sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
+                remove_first_dim = True
+            self.prior_predictive_samples = np.zeros((n_rows, n_columns, *sim_out_shape))
+
+        else: 
+            self.prior_predictive_samples = np.zeros((n_rows, n_columns, context_shape[-1]))
         self.prior_sample = np.zeros((n_rows, n_columns, self.data.n_dims))
         self.context = np.zeros((n_rows, n_columns, context_shape[-1]))
         random_context_indices = self.data.rng.integers(0, context_shape[0], (n_rows, n_columns))
@@ -57,9 +74,13 @@ class PriorPC(Display):
 
                 prior_sample = self.data.sample_prior(1)[0]
                 # get the posterior samples for that context 
-                self.prior_predictive_samples[row_index, column_index] = self.data.simulator.simulate(
+                simulation_sample = self.data.simulator.simulate(
                     theta=prior_sample, context_samples = context_sample
                 )
+                if remove_first_dim: 
+                    simulation_sample = simulation_sample[0]
+
+                self.prior_predictive_samples[row_index, column_index] = simulation_sample
                 self.prior_sample[row_index, column_index] = prior_sample
                 self.context[row_index, column_index] = context_sample
 
@@ -152,10 +173,16 @@ class PriorPC(Display):
                 )
                 
                 subplots[plot_row_index, plot_column_index].title.set_text(text)
-                subplots[plot_row_index, plot_column_index].plot(
-                    self.context[column_index, row_index],
-                    self.prior_predictive_samples[column_index, row_index]
-                )
+                if self.plot_image: 
+                    subplots[plot_row_index, plot_column_index].imshow(self.prior_predictive_samples[column_index, row_index])
+                    subplots[plot_row_index, plot_column_index].set_xticks([])
+                    subplots[plot_row_index, plot_column_index].set_yticks([])
+
+                else: 
+                    subplots[plot_row_index, plot_column_index].plot(
+                        self.context[column_index, row_index],
+                        self.prior_predictive_samples[column_index, row_index]
+                    )
 
             figure.supylabel(y_label)
             figure.supxlabel(x_label)
