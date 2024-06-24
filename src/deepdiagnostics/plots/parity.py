@@ -1,28 +1,40 @@
-from typing import Optional, Sequence
 import matplotlib.pyplot as plt
 import numpy as np
 
 from deepdiagnostics.plots.plot import Display
 
 class Parity(Display):
+    """
+        Show plots directly comparing the posterior vs. true theta values. Make a plot that is (number of selected metrics) X dimensions of theta. 
+        Includes the option to show differences, residual, and percent residual as plots under the main parity plot. 
+
+    .. code-block:: python 
+    
+        from deepdiagnostics.plots import Parity
+
+        Parity(model, data, show=True, save=False)(
+            n_samples=200 # 200 samples of the posterior
+            include_residual = True # Add a plot showing the residual
+        )
+    """
     def __init__(
         self, 
         model, 
         data, 
-        save:bool, 
-        show:bool, 
-        out_dir:Optional[str]=None, 
-        percentiles: Optional[Sequence] = None, 
-        use_progress_bar: Optional[bool] = None,
-        samples_per_inference: Optional[int] = None,
-        number_simulations: Optional[int] = None,
-        parameter_names: Optional[Sequence] = None, 
-        parameter_colors: Optional[Sequence]= None, 
-        colorway: Optional[str]=None
-    ):
+        save, 
+        show, 
+        out_dir=None, 
+        percentiles = None, 
+        use_progress_bar= None,
+        samples_per_inference = None,
+        number_simulations= None,
+        parameter_names = None, 
+        parameter_colors = None, 
+        colorway =None):
+
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
 
-    def _plot_name(self):
+    def plot_name(self):
         return "parity.png"
 
     def get_posterior(self, n_samples): 
@@ -40,8 +52,7 @@ class Parity(Display):
 
             self.true_samples[index] = self.data.get_theta_true()[sample, :]
 
-
-    def _plot(
+    def plot(
         self, 
         n_samples: int = 80,
         include_difference: bool = False, 
@@ -53,6 +64,18 @@ class Parity(Display):
         y_label:str=r"$\theta_{predicted}$", 
         x_label:str=r"$\theta_{true}$"
     ): 
+        """
+        Args:
+            n_samples (int, optional): Samples to draw from the posterior for the plot. Defaults to 80.
+            include_difference (bool, optional): Include a plot that shows the difference between the posterior and true. Defaults to False.
+            include_residual (bool, optional): Include a plot that shows the residual between posterior and true. Defaults to False.
+            include_percentage (bool, optional): Include a plot that shows the residual as a percent between posterior and true. Defaults to False.
+            show_ideal (bool, optional): Include a line showing where posterior=true. Defaults to True.
+            errorbar_color (str, optional): _description_. Defaults to 'black'.
+            title (str, optional): Title of the plot. Defaults to "Parity".
+            y_label (str, optional): y axis label. Defaults to r"$\theta_{predicted}$".
+            x_label (str, optional): x axis label. Defaults to r"$\theta_{true}$".
+        """
         self.get_posterior(n_samples)
 
         # parity - predicted vs true
