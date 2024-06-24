@@ -3,14 +3,14 @@
 Data 
 ======
 
-.. autoclass:: data.data.Data
+.. autoclass:: deepdiagnostics.data.data.Data
     :members:
 
-.. autoclass:: data.H5Data
+.. autoclass:: deepdiagnostics.data.H5Data
     :members:
 
-.. autoclass:: data.PickleData
+.. autoclass:: deepdiagnostics.data.PickleData
     :members:
 
-.. autoclass:: data.simulator.Simulator
+.. autoclass:: deepdiagnostics.data.simulator.Simulator
     :members: 

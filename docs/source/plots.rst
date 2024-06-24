@@ -3,31 +3,31 @@
 Plots 
 =======
 
-.. autoclass:: plots.plot.Display
+.. autoclass:: deepdiagnostics.plots.plot.Display
 
-.. autoclass:: plots.CDFRanks
+.. autoclass:: deepdiagnostics.plots.CDFRanks
     :members: plot
 
-.. autoclass:: plots.Ranks
+.. autoclass:: deepdiagnostics.plots.Ranks
     :members: plot
 
-.. autoclass:: plots.CoverageFraction
+.. autoclass:: deepdiagnostics.plots.CoverageFraction
     :members: plot
 
-.. autoclass:: plots.TARP
+.. autoclass:: deepdiagnostics.plots.TARP
     :members: plot
 
-.. autoclass:: plots.LC2ST
-.. autoclass:: plots.local_two_sample.LocalTwoSampleTest
+.. autoclass:: deepdiagnostics.plots.LC2ST
+.. autoclass:: deepdiagnostics.plots.local_two_sample.LocalTwoSampleTest
     :members: plot
 
-.. autoclass:: plots.PPC
+.. autoclass:: deepdiagnostics.plots.PPC
     :members: plot
 
-.. autoclass:: plots.PriorPC
+.. autoclass:: deepdiagnostics.plots.PriorPC
     :members: plot
 
-.. autoclass:: plots.Parity
+.. autoclass:: deepdiagnostics.plots.Parity
     :members: plot
 
 .. bibliography:: 

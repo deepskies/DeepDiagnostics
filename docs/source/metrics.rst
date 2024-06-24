@@ -3,18 +3,18 @@
 Metrics
 =========
 
-.. autoclass:: metrics.metric.Metric
+.. autoclass:: deepdiagnostics.metrics.metric.Metric
     :members:
 
-.. autoclass:: metrics.AllSBC
+.. autoclass:: deepdiagnostics.metrics.AllSBC
     :members: calculate
 
-.. autoclass:: metrics.LC2ST
+.. autoclass:: deepdiagnostics.metrics.LC2ST
 
-.. autoclass:: metrics.local_two_sample.LocalTwoSampleTest
+.. autoclass:: deepdiagnostics.metrics.local_two_sample.LocalTwoSampleTest
     :members: calculate 
 
-.. autoclass:: metrics.CoverageFraction
+.. autoclass:: deepdiagnostics.metrics.CoverageFraction
     :members: calculate
 
 .. bibliography:: 
