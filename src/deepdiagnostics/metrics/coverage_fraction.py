@@ -1,5 +1,4 @@
 import numpy as np
-from torch import tensor
 from tqdm import tqdm
 from typing import Any, Sequence
 
@@ -42,7 +41,7 @@ class CoverageFraction(Metric):
 
     def _run_model_inference(self, samples_per_inference, y_inference):
         samples = self.model.sample_posterior(samples_per_inference, y_inference)
-        return samples
+        return samples.numpy()
 
     def calculate(self) -> tuple[Sequence, Sequence]:
         """
@@ -52,19 +51,21 @@ class CoverageFraction(Metric):
             tuple[Sequence, Sequence]: A tuple of the samples tested (M samples, Samples per inference, N parameters) and the coverage over those samples. 
         """
         all_samples = np.empty(
-            (len(self.context), self.samples_per_inference, np.shape(self.thetas)[1])
+            (self.number_simulations, self.samples_per_inference, np.shape(self.thetas)[1])
         )
         count_array = []
-        iterator = enumerate(self.context)
+        iterator = range(self.number_simulations)
         if self.use_progress_bar:
             iterator = tqdm(
                 iterator,
                 desc="Sampling from the posterior for each observation",
                 unit=" observation",
             )
-        for y_sample_index, y_sample in iterator:
-            samples = self._run_model_inference(self.samples_per_inference, y_sample)
-            all_samples[y_sample_index] = samples
+        for sample_index in iterator:
+            context_sample = self.context[self.data.rng.integers(0, len(self.context))]
+            samples = self._run_model_inference(self.samples_per_inference, context_sample)
+
+            all_samples[sample_index] = samples
 
             count_vector = []
             # step through the percentile list
@@ -75,12 +76,10 @@ class CoverageFraction(Metric):
                 # find the percentile for the posterior for this observation
                 # this is n_params dimensional
                 # the units are in parameter space
-                confidence_lower = tensor(
-                    np.percentile(samples.cpu(), percentile_lower, axis=0)
-                )
-                confidence_upper = tensor(
-                    np.percentile(samples.cpu(), percentile_upper, axis=0)
-                )
+                confidence_lower = np.percentile(samples, percentile_lower, axis=0)
+                
+                confidence_upper = np.percentile(samples, percentile_upper, axis=0)
+                
 
                 # this is asking if the true parameter value
                 # is contained between the
@@ -88,10 +87,11 @@ class CoverageFraction(Metric):
                 # checks separately for each side of the 50th percentile
 
                 count = np.logical_and(
-                    confidence_upper - self.thetas[y_sample_index, :] > 0,
-                    self.thetas[y_sample_index, :] - confidence_lower > 0,
+                    confidence_upper - self.thetas[sample_index, :].numpy() > 0,
+                    self.thetas[sample_index, :].numpy() - confidence_lower > 0,
                 )
                 count_vector.append(count)
+
             # each time the above is > 0, adds a count
             count_array.append(count_vector)
 

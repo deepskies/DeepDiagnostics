@@ -5,11 +5,11 @@ import yaml
 import numpy as np
 from deepbench.astro_object import StarObject
 
-from data import H5Data
-from data.simulator import Simulator
-from models import SBIModel
-from utils.config import get_item
-from utils.register import register_simulator
+from deepdiagnostics.data import H5Data
+from deepdiagnostics.data.simulator import Simulator
+from deepdiagnostics.models import SBIModel
+from deepdiagnostics.utils.config import get_item
+from deepdiagnostics.utils.register import register_simulator
 
 
 class MockSimulator(Simulator):
@@ -67,7 +67,7 @@ class Mock2DSimulator(Simulator):
         return np.array(generated_stars)
 
 @pytest.fixture(autouse=True)
-def setUp():
+def setUp(result_output):
     register_simulator("MockSimulator", MockSimulator)
     register_simulator("Mock2DSimulator", Mock2DSimulator)
     yield 
@@ -76,10 +76,9 @@ def setUp():
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
 
-    out_dir = get_item("common", "out_dir", raise_exception=False)
     os.makedirs("resources/test_results/", exist_ok=True)
-    shutil.copytree(out_dir, "resources/test_results/",  dirs_exist_ok=True)
-    shutil.rmtree(out_dir)
+    shutil.copytree(result_output, "resources/test_results/",  dirs_exist_ok=True)
+    shutil.rmtree(result_output)
 
 @pytest.fixture
 def model_path():
@@ -92,7 +91,10 @@ def data_path():
 
 @pytest.fixture
 def result_output(): 
-    return "./temp_results/"
+    path = "./temp_results/"
+    if not os.path.exists(path): 
+        os.makedirs(path)
+    return path
 
 @pytest.fixture
 def simulator_name():
