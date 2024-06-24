@@ -9,5 +9,6 @@ build:
   commands:
       - pip install poetry
       - poetry install --with dev
-      - cd docs
-      - poetry run make html
+
+sphinx:  
+  configuration: docs/source/conf.py
