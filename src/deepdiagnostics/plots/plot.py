@@ -55,10 +55,9 @@ class Display:
                 "plots_common", "default_colorway", raise_exception=False
             )
         
-        if save: 
-            self.out_dir = out_dir if out_dir is not None else get_item("common", "out_dir", raise_exception=False)
+        self.out_dir = out_dir if out_dir is not None else get_item("common", "out_dir", raise_exception=False)
 
-        if self.out_dir is not None:
+        if self.out_dir is not None and self.save:
             if not os.path.exists(os.path.dirname(self.out_dir)):
                 os.makedirs(os.path.dirname(self.out_dir))
 
