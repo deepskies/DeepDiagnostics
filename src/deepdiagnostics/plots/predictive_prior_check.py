@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from deepdiagnostics.plots.plot import Display
+from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class PriorPC(Display):
     """
@@ -36,7 +37,9 @@ class PriorPC(Display):
         colorway = None):
 
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
-        
+        if not hasattr(self.data, "simulator"): 
+            raise SimulatorMissingError("Missing a simulator to run PriorPC.")
+    
         if self.data.simulator_dimensions == 1: 
             self.plot_image = False
 

@@ -2,7 +2,7 @@ from typing import Any, Optional, Sequence, Union
 import numpy as np
 
 from deepdiagnostics.utils.config import get_item
-from deepdiagnostics.utils.register import load_simulator
+from deepdiagnostics.utils.simulator_utils import load_simulator
 
 class Data:
     """
@@ -35,7 +35,11 @@ class Data:
             get_item("common", "random_seed", raise_exception=False)
         )
         self.data = self._load(path)
-        self.simulator = load_simulator(simulator_name, simulator_kwargs)
+        try: 
+            self.simulator = load_simulator(simulator_name, simulator_kwargs)
+        except RuntimeError: 
+            print("Warning: Simulator not loaded. Can only run non-generative metrics.")
+            
         self.prior_dist = self.load_prior(prior, prior_kwargs)
         self.n_dims = self.get_theta_true().shape[1]
         self.simulator_dimensions = simulation_dimensions if simulation_dimensions is not None else get_item("data", "simulator_dimensions", raise_exception=False)

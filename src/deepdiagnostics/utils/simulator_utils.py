@@ -72,3 +72,7 @@ def load_simulator(name, simulator_kwargs):
         )
 
     return simulator_instance
+
+
+class SimulatorMissingError(Exception): 
+    pass

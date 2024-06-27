@@ -7,9 +7,8 @@ def void(*args, **kwargs):
         return None
     return void2
 
-
 Metrics = {
-    "": void,
+    "": void, 
     CoverageFraction.__name__: CoverageFraction, 
     AllSBC.__name__: AllSBC, 
     "LC2ST": LC2ST

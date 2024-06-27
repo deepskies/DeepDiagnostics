@@ -62,3 +62,25 @@ def test_main_missing_args(model_path):
     process = subprocess.run(command)
     exit_code = process.returncode
     assert exit_code == 1
+
+
+def test_missing_simulator(model_path, data_path): 
+    command = [
+        "diagnose",
+        "--model_path",
+        model_path,
+        "--data_path",
+        data_path,
+        "--simulator",
+        "Not_A_Registered_Name",
+        "--plots", 
+        "PPC",
+        "--metrics", 
+        ""
+    ]
+    process = subprocess.run(command, capture_output=True)
+    exit_code = process.returncode
+    stdout = process.stdout.decode("utf-8") 
+    assert exit_code == 0
+    plot_name = "PPC"
+    assert f"Cannot run {plot_name} - simulator missing." in stdout
