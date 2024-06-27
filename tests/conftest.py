@@ -9,7 +9,7 @@ from deepdiagnostics.data import H5Data
 from deepdiagnostics.data.simulator import Simulator
 from deepdiagnostics.models import SBIModel
 from deepdiagnostics.utils.config import get_item
-from deepdiagnostics.utils.register import register_simulator
+from deepdiagnostics.utils.simulator_utils import register_simulator
 
 
 class MockSimulator(Simulator):

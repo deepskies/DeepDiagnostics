@@ -7,6 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.utils import shuffle
 
 from deepdiagnostics.metrics.metric import Metric
+from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class LocalTwoSampleTest(Metric): 
     """
@@ -46,6 +47,8 @@ class LocalTwoSampleTest(Metric):
             percentiles,
             number_simulations
         )
+        if not hasattr(self.data, "simulator"): 
+            raise SimulatorMissingError("Missing a simulator to run LC2ST.")
 
     def _collect_data_params(self):
         # P is the prior and x_P is generated via the simulator from the parameters P.

@@ -4,6 +4,7 @@ import numpy as np
 
 from deepdiagnostics.plots.plot import Display
 from deepdiagnostics.utils.plotting_utils import get_hex_colors
+from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class PPC(Display):
     """
@@ -33,6 +34,8 @@ class PPC(Display):
         colorway =None):
         
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        if not hasattr(self.data, "simulator"): 
+            raise SimulatorMissingError("Missing a simulator to run PPC.")
 
     def plot_name(self):
         return "predictive_posterior_check.png"

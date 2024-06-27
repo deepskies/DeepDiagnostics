@@ -8,6 +8,7 @@ from deepdiagnostics.data import DataModules
 from deepdiagnostics.models import ModelModules
 from deepdiagnostics.metrics import Metrics
 from deepdiagnostics.plots import Plots
+from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 
 def parser():
@@ -47,19 +48,19 @@ def parser():
     # List of metrics (cannot supply specific kwargs)
     parser.add_argument(
         "--metrics",
-        nargs="?",
-        default=list(Defaults["metrics"].keys()),
+        nargs="+",
+        default=[],
         choices=Metrics.keys(),
-        help="List of metrics to run. To not run any, supply `--metrics `"
+        help="List of metrics to run."
     )
 
     # List of plots
     parser.add_argument(
         "--plots",
-        nargs="?",
-        default=list(Defaults["plots"].keys()),
+        nargs="+",
+        default=[],
         choices=Plots.keys(),
-        help="List of plots to run. To not run any, supply `--plots `"
+        help="List of plots to run."
 
     )
 
@@ -109,9 +110,15 @@ def main():
     plots = config.get_section("plots", raise_exception=False)
 
     for metrics_name, metrics_args in metrics.items():
-        Metrics[metrics_name](model, data, **metrics_args)()
+        try: 
+            Metrics[metrics_name](model, data, save=True)(**metrics_args)
+        except SimulatorMissingError: 
+            print(f"Cannot run {metrics_name} - simulator missing.")
 
     for plot_name, plot_args in plots.items():
-        Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
-            **plot_args
-        )
+        try: 
+            Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
+                **plot_args
+            )
+        except SimulatorMissingError: 
+            print(f"Cannot run {plot_name} - simulator missing.")
