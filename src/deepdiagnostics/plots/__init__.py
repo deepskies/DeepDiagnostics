@@ -7,8 +7,14 @@ from deepdiagnostics.plots.predictive_posterior_check import PPC
 from deepdiagnostics.plots.parity import Parity
 from deepdiagnostics.plots.predictive_prior_check import PriorPC
 
+def void(*args, **kwargs): 
+    def void2(*args, **kwargs):
+        return None
+    return void2
+
+
 Plots = {
-    "": lambda **kwargs: None, 
+    "": void,
     CDFRanks.__name__: CDFRanks,
     CoverageFraction.__name__: CoverageFraction,
     Ranks.__name__: Ranks,
