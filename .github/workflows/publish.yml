@@ -1,4 +1,4 @@
-name: publish-bench
+name: publish
 on:
   release:
     types:  [published]

@@ -1,4 +1,5 @@
-![status](https://img.shields.io/badge/PyPi-0.0.0.0-blue) ![status](https://img.shields.io/badge/License-MIT-lightgrey) [![test](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml/badge.svg)](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml) [![Documentation Status](https://readthedocs.org/projects/deepdiagnostics/badge/?version=latest)](https://deepdiagnostics.readthedocs.io/en/latest/?badge=latest)
+[![PyPI - Version](https://img.shields.io/pypi/v/DeepDiagnostics?style=flat&logo=pypi&labelColor=grey&color=blue)](https://pypi.org/project/DeepDiagnostics/)
+ ![status](https://img.shields.io/badge/License-MIT-lightgrey) [![test](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml) [![Documentation Status](https://readthedocs.org/projects/deepdiagnostics/badge/?version=latest)](https://deepdiagnostics.readthedocs.io/en/latest/?badge=latest)
 
 # DeepDiagnostics
 DeepDiagnostics is a package for diagnosing the posterior from an inference method. It is flexible, applicable for both simulation-based and likelihood-based inference.
