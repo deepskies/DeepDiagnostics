@@ -47,19 +47,19 @@ def parser():
     # List of metrics (cannot supply specific kwargs)
     parser.add_argument(
         "--metrics",
-        nargs="?",
-        default=list(Defaults["metrics"].keys()),
+        nargs="+",
+        default=[],
         choices=Metrics.keys(),
-        help="List of metrics to run. To not run any, supply `--metrics `"
+        help="List of metrics to run."
     )
 
     # List of plots
     parser.add_argument(
         "--plots",
-        nargs="?",
-        default=list(Defaults["plots"].keys()),
+        nargs="+",
+        default=[],
         choices=Plots.keys(),
-        help="List of plots to run. To not run any, supply `--plots `"
+        help="List of plots to run."
 
     )
 
@@ -109,7 +109,7 @@ def main():
     plots = config.get_section("plots", raise_exception=False)
 
     for metrics_name, metrics_args in metrics.items():
-        Metrics[metrics_name](model, data, **metrics_args)()
+        Metrics[metrics_name](model, data, save=True)(**metrics_args)
 
     for plot_name, plot_args in plots.items():
         Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
