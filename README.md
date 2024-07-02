@@ -25,6 +25,8 @@ pytest
 
 ## Quickstart
 
+[View the template yaml here for a minimially working example with our supplied sample data to get started.](https://github.com/deepskies/DeepDiagnostics/blob/main/config.yml.template)
+
 ### Pipeline 
 `DeepDiagnostics` includes a CLI tool for analysis. 
 * To run the tool using a configuration file: 
@@ -170,6 +172,8 @@ class NewPlot(Display):
 
 #### Adding to the package 
 If you wish to add the addition to the package to run using the CLI package, a few things need to be done. 
+For this example, we will add a new metric, but an identicial workflow takes place for plots, just modifying the `plots` submodule instead of `metrics`. 
+ 
 
 1. Add the name and mapping to the submodule `__init__.py`. 
 
@@ -227,6 +231,36 @@ def test_newmetric(metric_config, mock_model, mock_data):
 python3 -m pytest tests/test_metrics.py::test_newmetric
 
 ```
+
+4. Add documentation
+   
+##### `docs/source/metrics.rst`
+
+``` rst
+from deepdaigonstics.metrics import NewMetric 
+
+.. _metrics:
+
+Metrics
+=========
+
+.. autoclass:: deepdiagnostics.metrics.metric.Metric
+    :members:
+...
+
+.. autoclass:: deepdiagonstics.metrics.newmetric.NewMetric
+     :members: calculate
+
+.. bibliography:: 
+```
+
+### Building documentation: 
+* Documentation automatically updates after any push to the `main` branch according to [`readthedocs.yml`](https://github.com/deepskies/DeepDiagnostics/blob/main/.readthedocs.yml). Verify the documentation built by checking the readthedocs badge. 
+
+### Publishing a release: 
+* Releases to pypi are built automatically off the main branch whenever a github release is made.
+* Update the version number to match with the release you are going to make before publishing in the `pyproject.toml`
+* Create a new github release and monitor the [`publish.yml` action](https://github.com/deepskies/DeepDiagnostics/actions/workflows/publish.yml) to verify the new release is built properly. 
 
 ## Citation 
 ```
