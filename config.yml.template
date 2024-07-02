@@ -1,0 +1,44 @@
+common:
+    out_dir: "./DeepDiagnosticsResources/results/"
+    sim_location: "DeepDiagnosticsResources/simulators"
+    random_seed: 42
+model:
+    model_path: ./resources/savedmodels/sbi/sbi_linear_from_data.pkl
+    model_engine: "SBIModel"
+data:
+    data_path: ./resources/saveddata/data_validation.h5
+    data_engine: H5Data
+    prior: normal
+    simulator: 
+    simulator_dimensions: 1
+plots_common:
+    axis_spines: False
+    tight_layout: True
+    default_colorway: viridis
+    plot_style: fast
+    parameter_labels: 
+      - $m$
+      - $b$
+    parameter_colors: 
+      - "#9C92A3"
+      - "#0F5257"
+    line_style_cycle: 
+        - "-" 
+        - "-."
+    figure_size: 
+        - 6
+        - 6
+metrics_common:
+    use_progress_bar: True
+    samples_per_inference: 1000
+    percentiles: 
+        - 75
+        - 85 
+        - 95
+    number_simulations: 50
+plots: 
+    TARP: {}
+    Parity: {}
+    PPC: {}
+metrics:
+    {}
