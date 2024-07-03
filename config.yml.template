@@ -1,0 +1,27 @@
+common:
+    out_dir: ./DeepDiagnosticsResources/results/
+model:
+    model_path: ./resources/savedmodels/sbi/sbi_linear_from_data.pkl
+    model_engine: SBIModel
+data:
+    data_path: ./resources/saveddata/data_validation.h5
+    data_engine: H5Data
+    simulator: 
+plots_common:
+    default_colorway: viridis
+    parameter_labels: 
+      - $m$
+      - $b$
+metrics_common:
+    samples_per_inference: 1000
+    percentiles: 
+        - 75
+        - 85 
+        - 95
+    number_simulations: 50
+plots: 
+    TARP: {}
+    Parity: {}
+    PPC: {}
+metrics:
+    {}
