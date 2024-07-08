@@ -3,7 +3,6 @@ import shutil
 import pytest
 import yaml
 import numpy as np
-from deepbench.astro_object import StarObject
 
 from deepdiagnostics.data import H5Data
 from deepdiagnostics.data.simulator import Simulator
@@ -43,12 +42,17 @@ class MockSimulator(Simulator):
         return y.T
 
 class Mock2DSimulator(Simulator): 
+    def __init__(self) -> None:
+        import subprocess
+        subprocess.check_call(["python3", "-m", "pip", "install", "deepbench"])
+
     def generate_context(self, n_samples: int) -> np.ndarray: 
         return np.linspace(0, 28, n_samples)
 
     def simulate(self, theta, context_samples: np.ndarray): 
-        generated_stars = []
+        from deepbench.astro_object import StarObject
 
+        generated_stars = []
         if len(theta.shape) == 1: 
             theta = [theta]
             

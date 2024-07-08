@@ -53,6 +53,7 @@ class CDFRanks(Display):
 
     def plot(self):
         """
+            Make the CDF Ranks plot
         """
         sbc_rank_plot(
             self.ranks,

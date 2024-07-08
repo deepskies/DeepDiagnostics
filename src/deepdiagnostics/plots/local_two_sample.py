@@ -27,15 +27,10 @@ class LocalTwoSampleTest(Display):
     .. code-block:: python 
 
         from deepdiagnostics.plots import LC2ST 
-        
 
+        LC2ST(model, data, save=False, show=True).plot(use_intensity_plot=True, n_alpha_samples=100, linear_classifier="MLP", n_null_hypothesis_trials=20)
     """
 
-            # Plots to make -
-        # pp_plot_lc2st: https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L49
-        # eval_space_with_proba_intensity: https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L133 
-
-    # https://github.com/JuliaLinhart/lc2st/blob/e221cc326480cb0daadfd2ba50df4eefd374793b/lc2st/graphical_diagnostics.py#L133 
 
     def __init__(
         self, 
@@ -92,7 +87,6 @@ class LocalTwoSampleTest(Display):
                 alpha=confidence_region_alpha,
                 label=f"{percentile}% Conf. region",
             )
-
 
         for prob, label, color in zip(self.probability, self.parameter_names, self.parameter_colors):
             pairplot_values = self._make_pairplot_values(prob)
@@ -239,7 +233,6 @@ class LocalTwoSampleTest(Display):
 
         self.plot_name = "local_c2st_pp_plot.png"
         self._finish()
-
 
         if use_intensity_plot: 
 
