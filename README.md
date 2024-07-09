@@ -25,7 +25,7 @@ pytest
 
 ## Quickstart
 
-[View the template yaml here for a minimially working example with our supplied sample data to get started.](https://github.com/deepskies/DeepDiagnostics/blob/main/config.yml.template)
+[View the template yaml here for a minimally working example with our supplied sample data to get started.](https://github.com/deepskies/DeepDiagnostics/blob/main/config.yml.template)
 
 ### Pipeline 
 `DeepDiagnostics` includes a CLI tool for analysis. 
@@ -53,11 +53,11 @@ It is encouraged, but not required.
 
 
 ``` py
-from DeepDiagnostics.utils.configuration import Config 
-from DeepDiagnostics.model import SBIModel 
-from DeepDiagnostics.data import H5Data
+from deepdiagnostics.utils.configuration import Config 
+from deepdiagnostics.model import SBIModel 
+from deepdiagnostics.data import H5Data
 
-from DeepDiagnostics.plots import LocalTwoSampleTest, Ranks
+from deepdiagnostics.plots import LocalTwoSampleTest, Ranks
 
 Config({configuration_path})
 model = SBIModel({model_path})
@@ -177,7 +177,7 @@ For this example, we will add a new metric, but an identicial workflow takes pla
 
 1. Add the name and mapping to the submodule `__init__.py`. 
 
-##### `src/deepdiagonstics/metrics/__init__.py`
+##### `src/deepdiagnostics/metrics/__init__.py`
 
 ``` py
 ...
@@ -193,7 +193,7 @@ Metrics = {
 
 2. Add the name and defaults to the `Defaults.py`
 
-##### `src/deepdiagonstics/utils/Defaults.py`
+##### `src/deepdiagnostics/utils/Defaults.py`
 
 ``` py
 Defaults = {
@@ -211,7 +211,7 @@ Defaults = {
 ##### `tests/test_metrics.py`
 
 ``` py
-from deepdaigonstics.metrics import NewMetric 
+from deepdiagnostics.metrics import NewMetric 
 
 ...
 
@@ -237,7 +237,7 @@ python3 -m pytest tests/test_metrics.py::test_newmetric
 ##### `docs/source/metrics.rst`
 
 ``` rst
-from deepdaigonstics.metrics import NewMetric 
+from deepdiagnostics.metrics import NewMetric 
 
 .. _metrics:
 
@@ -248,7 +248,7 @@ Metrics
     :members:
 ...
 
-.. autoclass:: deepdiagonstics.metrics.newmetric.NewMetric
+.. autoclass:: deepdiagnostics.metrics.newmetric.NewMetric
      :members: calculate
 
 .. bibliography:: 
