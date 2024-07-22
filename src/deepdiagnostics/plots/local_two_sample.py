@@ -11,6 +11,10 @@ from deepdiagnostics.utils.plotting_utils import get_hex_colors
 
 class LocalTwoSampleTest(Display): 
     """
+
+    .. note:: 
+        A simulator is required to run this plot.
+        
     Produce plots showing the local evaluation of a posterior estimator for a given observation. 
     Adapted fom Linhart et. al. :cite:p:`linhart2023lc2st`.
 
