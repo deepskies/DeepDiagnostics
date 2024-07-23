@@ -7,6 +7,10 @@ from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class PriorPC(Display):
     """
+
+    .. note:: 
+        A simulator is required to run this plot.
+
     Plot random samples of the simulator's output from samples drawn from the prior
 
     .. code-block:: python 

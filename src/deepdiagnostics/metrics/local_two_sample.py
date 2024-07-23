@@ -11,6 +11,10 @@ from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class LocalTwoSampleTest(Metric): 
     """
+
+        .. note:: 
+            A simulator is required to run this metric.
+
         Adapted from :cite:p:`linhart2023lc2st`. 
         Train a classifier to verify the quality of the posterior via classifier accuracy. 
         Produces an array of inference accuracies for the trained classier, representing the cases of either denying the null hypothesis 

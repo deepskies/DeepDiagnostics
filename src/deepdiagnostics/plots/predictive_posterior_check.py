@@ -8,6 +8,10 @@ from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
 
 class PPC(Display):
     """
+
+        .. note:: 
+            A simulator is required to run this plot.
+
         Show the output of the model's generated posterior against the true values for the same context. 
         Can show either output vs input (in 1D) or examples of simulation output (in 2D). 
 
