@@ -1,5 +1,6 @@
 import os 
 import shutil
+import uuid
 import pytest
 import yaml
 import numpy as np
@@ -74,15 +75,15 @@ class Mock2DSimulator(Simulator):
 def setUp(result_output):
     register_simulator("MockSimulator", MockSimulator)
     register_simulator("Mock2DSimulator", Mock2DSimulator)
+
     yield 
     
     simulator_config_path = get_item("common", "sim_location", raise_exception=False)
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
 
-    os.makedirs("resources/test_results/", exist_ok=True)
-    shutil.copytree(result_output, "resources/test_results/",  dirs_exist_ok=True)
-    shutil.rmtree(result_output)
+    out_dir = get_item("common", "out_dir", raise_exception=True)
+    shutil.rmtree(out_dir)
 
 @pytest.fixture
 def model_path():
@@ -113,6 +114,10 @@ def mock_model(model_path):
 @pytest.fixture
 def mock_data(data_path, simulator_name):
     return H5Data(data_path, simulator_name)
+
+@pytest.fixture
+def mock_run_id(): 
+    return str(uuid.uuid4()).replace('-', '')[:10]
 
 @pytest.fixture
 def mock_2d_data(data_path): 

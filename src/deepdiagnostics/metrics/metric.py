@@ -27,6 +27,7 @@ class Metric:
             self, 
             model: model,
             data: data, 
+            run_id: str,
             out_dir: Optional[str] = None, 
             save: bool=True,
             use_progress_bar: Optional[bool] = None,
@@ -36,6 +37,7 @@ class Metric:
               ) -> None:
         self.model = model
         self.data = data
+        self.run_id = run_id
 
         if save: 
             self.out_dir = out_dir if out_dir is not None else get_item("common", "out_dir", raise_exception=False)
@@ -65,7 +67,7 @@ class Metric:
             if not os.path.exists(self.out_dir):
                 os.makedirs(self.out_dir)
 
-            with open(f"{self.out_dir.rstrip('/')}/diagnostic_metrics.json", "w+") as f:
+            with open(f"{self.out_dir.rstrip('/')}/{self.run_id}_diagnostic_metrics.json", "w+") as f:
                 try: 
                     data = json.load(f)
                 except json.decoder.JSONDecodeError: 

@@ -31,8 +31,9 @@ class LocalTwoSampleTest(Metric):
     """
     def __init__(
             self, 
-            model, 
-            data, 
+            model,
+            data,
+            run_id,
             out_dir = None,         
             save=True,
             use_progress_bar = None,
@@ -42,8 +43,9 @@ class LocalTwoSampleTest(Metric):
     ) -> None:
         
         super().__init__(
-            model, 
-            data, 
+            model,
+            data,
+            run_id,
             out_dir,
             save,
             use_progress_bar,

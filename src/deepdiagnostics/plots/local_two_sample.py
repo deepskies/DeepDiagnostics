@@ -39,7 +39,8 @@ class LocalTwoSampleTest(Display):
     def __init__(
         self, 
         model, 
-        data, 
+        data,
+        run_id,
         save, 
         show, 
         out_dir=None, 
@@ -53,7 +54,7 @@ class LocalTwoSampleTest(Display):
         
         super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
         self.region_colors = get_hex_colors(n_colors=len(self.percentiles), colorway=self.colorway)
-        self.l2st = l2st(model, data, out_dir, True, self.use_progress_bar, self.samples_per_inference, self.percentiles, self.number_simulations)
+        self.l2st = l2st(model, data, run_id, out_dir, True, self.use_progress_bar, self.samples_per_inference, self.percentiles, self.number_simulations)
 
     def plot_name(self):
         return "local_C2ST.png"

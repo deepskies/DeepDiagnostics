@@ -28,7 +28,8 @@ class PriorPC(Display):
     def __init__(
         self, 
         model, 
-        data, 
+        data,
+        run_id,
         save, 
         show, 
         out_dir=None, 
@@ -40,7 +41,7 @@ class PriorPC(Display):
         parameter_colors = None, 
         colorway = None):
 
-        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        super().__init__(model, data, run_id, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
         if not hasattr(self.data, "simulator"): 
             raise SimulatorMissingError("Missing a simulator to run PriorPC.")
     

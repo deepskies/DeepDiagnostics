@@ -28,7 +28,8 @@ class Display:
     def __init__(
         self, 
         model, 
-        data, 
+        data,
+        run_id,
         save:bool, 
         show:bool, 
         out_dir:Optional[str]=None, 
@@ -42,6 +43,7 @@ class Display:
 
         self.save = save
         self.show = show
+        self.run_id = run_id
         self.data = data
 
         self.use_progress_bar = use_progress_bar if use_progress_bar is not None else get_item("metrics_common", "use_progress_bar", raise_exception=False)
@@ -103,14 +105,14 @@ class Display:
             plt.show()
 
         if self.save:
-            plt.savefig(f"{self.out_dir.rstrip('/')}/{self.plot_name}")
+            plt.savefig(f"{self.out_dir.rstrip('/')}/{self.run_id}_{self.plot_name}")
             plt.cla()
 
     def __call__(self, **plot_args) -> None:
         try: 
             self._data_setup()
-        except NotImplementedError: 
-            pass 
+        except NotImplementedError:
+            pass
         
         self.plot(**plot_args)
         self._finish()

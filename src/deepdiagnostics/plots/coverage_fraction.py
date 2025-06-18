@@ -25,6 +25,7 @@ class CoverageFraction(Display):
         self, 
         model, 
         data, 
+        run_id,
         save, 
         show, 
         out_dir=None, 
@@ -36,7 +37,7 @@ class CoverageFraction(Display):
         parameter_colors = None, 
         colorway =None):
         
-        super().__init__(model, data, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
+        super().__init__(model, data, run_id, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
             
         self.n_parameters = len(self.parameter_names)
         self.line_cycle =  tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
