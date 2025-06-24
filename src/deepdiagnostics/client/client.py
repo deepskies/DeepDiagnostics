@@ -1,4 +1,5 @@
 import os
+import uuid
 import yaml
 from argparse import ArgumentParser
 
@@ -93,6 +94,8 @@ def parser():
 def main():
     config = parser()
 
+    run_id = str(uuid.uuid4()).replace('-', '')[:10]
+
     model_path = config.get_item("model", "model_path")
     model_engine = config.get_item("model", "model_engine", raise_exception=False)
     model = ModelModules[model_engine](model_path)
@@ -109,15 +112,18 @@ def main():
     metrics = config.get_section("metrics", raise_exception=False)
     plots = config.get_section("plots", raise_exception=False)
 
+    if not config.get_item("common", "random_seed", raise_exception=False): 
+        config["common"]["random_seed"] = int(run_id) % 10000
+
     for metrics_name, metrics_args in metrics.items():
         try: 
             Metrics[metrics_name](model, data, save=True)(**metrics_args)
-        except SimulatorMissingError: 
+        except SimulatorMissingError:
             print(f"Cannot run {metrics_name} - simulator missing.")
 
     for plot_name, plot_args in plots.items():
         try: 
-            Plots[plot_name](model, data, save=True, show=False, out_dir=out_dir)(
+            Plots[plot_name](model, data, run_id, save=True, show=False, out_dir=out_dir)(
                 **plot_args
             )
         except SimulatorMissingError: 

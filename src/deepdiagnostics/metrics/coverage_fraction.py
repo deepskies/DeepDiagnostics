@@ -19,6 +19,7 @@ class CoverageFraction(Metric):
         self,
         model,
         data,
+        run_id,
         out_dir= None,
         save=True,
         use_progress_bar = None,
@@ -27,7 +28,7 @@ class CoverageFraction(Metric):
         number_simulations = None,
     ) -> None:
         
-        super().__init__(model, data, out_dir,
+        super().__init__(model, data, run_id, out_dir,
             save,
             use_progress_bar,
             samples_per_inference,
