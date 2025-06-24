@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "deepdiagnostics" 
 packages = [{include = "*", from="src"}]
-version = "1.0.0"
+version = "1.1.0"
 description = "a package for diagnosing posterior quality from inference methods"
 authors = ["Becky Nevin <rnevin@fnal.gov>", "M Voetberg <maggiev@fnal.gov>"]
 license = "MIT"
@@ -10,17 +10,15 @@ license = "MIT"
 diagnose = "deepdiagnostics.client.client:main"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
+python = ">=3.12,<4.0"
 sbi = "^0.22.0"
-pyarrow = "^15.0.0"
 getdist = "^1.4.7"
 h5py = "^3.10.0"
-numpy = ">=1.18.5,<1.26.0"
+numpy = "^2.0.0"
 matplotlib = "^3.8.3"
 tarp = "^0.1.1"
 deprecation = "^2.1.0"
-scipy = ">=1.6.0, <1.12.0"
-
+scipy = "^1.15.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"

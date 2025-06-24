@@ -18,7 +18,8 @@ pip install deepdiagnostics
 ``` sh
 git clone https://github.com/deepskies/DeepDiagnostics/ 
 pip install poetry 
-poetry shell 
+poetry env activate 
+source {result of env activate}
 poetry install
 pytest
 ```
