@@ -3,47 +3,17 @@ name: test
 on: push
 
 jobs:
-  test:
-
+  build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Cache Poetry dependencies
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cache
-          ~/.local/share/virtualenvs
-        key: ${{ runner.os }}-poetry-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-poetry-
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.10"
-    - name: Install poetry ${{ matrix.poetry-version }}
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      run: |
-        python -m ensurepip
-        python -m pip install --upgrade pip
-        python -m pip install poetry==1.3.2
-    - name: View poetry --help
-      run: poetry --help
-
-    - name: Update lockfile
-      run: python -m poetry lock
-
-    - name: Install dependencies
-      shell: bash
-      run: python -m poetry install --with dev
-
-    - name: Create Environment File
-      run: echo "PYTHONPATH=$(pwd):$(pwd)/src" >> ${{ runner.workspace }}/.env
-    
-    - name: Test with pytest
-      run: python -m poetry run pytest --cov=src/
-      env:
-        PYTHONPATH: ${{ env.PYTHONPATH }}
-        ENV_FILE: ${{ runner.workspace }}/.env
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'poetry'
+      - run: poetry install --with dev
+        
+      - name: Test with pytest
+        run: poetry run pytest --cov=src/
