@@ -1,7 +1,15 @@
+from typing import Union, TYPE_CHECKING
 import matplotlib.pyplot as plt
+from deepdiagnostics.utils.utils import DataDisplay
 import numpy as np
 
+
+
 from deepdiagnostics.plots.plot import Display
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure as fig
+    from matplotlib.axes import Axes as ax
 
 class Parity(Display):
     """
@@ -38,24 +46,33 @@ class Parity(Display):
     def plot_name(self):
         return "parity.png"
 
-    def get_posterior(self, n_samples): 
+    def _data_setup(self, n_samples: int = 80, **kwargs) -> DataDisplay:
+
         context_shape = self.data.true_context().shape
-        self.posterior_sample_mean = np.zeros((n_samples, self.data.n_dims))
-        self.posterior_sample_std = np.zeros_like(self.posterior_sample_mean)
-        self.true_samples = np.zeros_like(self.posterior_sample_mean)
+        posterior_sample_mean = np.zeros((n_samples, self.data.n_dims))
+        posterior_sample_std = np.zeros_like(posterior_sample_mean)
+        true_samples = np.zeros_like(posterior_sample_mean)
 
         random_context_indices = self.data.rng.integers(0, context_shape[0], n_samples)
         for index, sample in enumerate(random_context_indices): 
 
             posterior_sample = self.model.sample_posterior(self.samples_per_inference,  self.data.true_context()[sample, :]).numpy()
-            self.posterior_sample_mean[index] = np.mean(posterior_sample, axis=0)
-            self.posterior_sample_std[index] = np.std(posterior_sample, axis=0)
+            posterior_sample_mean[index] = np.mean(posterior_sample, axis=0)
+            posterior_sample_std[index] = np.std(posterior_sample, axis=0)
 
-            self.true_samples[index] = self.data.get_theta_true()[sample, :]
+            true_samples[index] = self.data.get_theta_true()[sample, :]
+
+        return DataDisplay(
+            n_dims=self.data.n_dims,
+            true_samples=true_samples, 
+            posterior_sample_mean=posterior_sample_mean,
+            posterior_sample_std=posterior_sample_std,
+
+        )
 
     def plot(
-        self, 
-        n_samples: int = 80,
+        self,
+        data_display: Union[str, DataDisplay] = None, 
         include_difference: bool = False, 
         include_residual: bool = False, 
         include_percentage: bool = False,
@@ -64,10 +81,9 @@ class Parity(Display):
         title:str="Parity", 
         y_label:str=r"$\theta_{predicted}$", 
         x_label:str=r"$\theta_{true}$"
-    ): 
+    ) -> tuple["fig", "ax"]: 
         """
         Args:
-            n_samples (int, optional): Samples to draw from the posterior for the plot. Defaults to 80.
             include_difference (bool, optional): Include a plot that shows the difference between the posterior and true. Defaults to False.
             include_residual (bool, optional): Include a plot that shows the residual between posterior and true. Defaults to False.
             include_percentage (bool, optional): Include a plot that shows the residual as a percent between posterior and true. Defaults to False.
@@ -77,7 +93,8 @@ class Parity(Display):
             y_label (str, optional): y axis label. Defaults to r"$\theta_{predicted}$".
             x_label (str, optional): x axis label. Defaults to r"$\theta_{true}$".
         """
-        self.get_posterior(n_samples)
+        if not isinstance(data_display, DataDisplay):
+            data_display = DataDisplay().from_h5(data_display, self.plot_name)
 
         # parity - predicted vs true
         # parity difference plot = true - predicted vs. true (y-axis vs x-axis)
@@ -98,8 +115,8 @@ class Parity(Display):
 
         figure, subplots = plt.subplots(
             nrows=n_rows, 
-            ncols=self.data.n_dims, 
-            figsize=(int(self.figure_size[0]*self.data.n_dims*.8), int(self.figure_size[1]*n_rows*.6)), 
+            ncols=data_display.n_dims, 
+            figsize=(int(self.figure_size[0]*data_display.n_dims*.8), int(self.figure_size[1]*n_rows*.6)), 
             height_ratios=height_ratios,
             sharex="col", 
             sharey=False)
@@ -108,11 +125,11 @@ class Parity(Display):
         figure.supxlabel(x_label)
         figure.supylabel(y_label)
 
-        for theta_dimension in range(self.data.n_dims): 
+        for theta_dimension in range(data_display.n_dims): 
 
-            true = self.true_samples[:, theta_dimension]
-            posterior_sample = self.posterior_sample_mean[:, theta_dimension]
-            posterior_errorbar = self.posterior_sample_std[:, theta_dimension]
+            true = data_display.true_samples[:, theta_dimension]
+            posterior_sample = data_display.posterior_sample_mean[:, theta_dimension]
+            posterior_errorbar = data_display.posterior_sample_std[:, theta_dimension]
 
             title = self.parameter_names[theta_dimension]
             
@@ -156,3 +173,4 @@ class Parity(Display):
 
                 row_index += 1 
         
+        return figure, subplots

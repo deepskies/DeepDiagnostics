@@ -1,9 +1,12 @@
 from typing import Union
+from deepdiagnostics.utils.utils import DataDisplay
 import numpy as np
 import tarp
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as plt_colors
+from matplotlib.axes import Axes as ax
+from matplotlib.figure import Figure as fig
 
 from deepdiagnostics.plots.plot import Display
 from deepdiagnostics.utils.config import get_item
@@ -48,25 +51,28 @@ class TARP(Display):
     def plot_name(self):
         return "tarp.png"
 
-    def _data_setup(self):
+    def _data_setup(self, **kwargs) -> DataDisplay:
         self.theta_true = self.data.get_theta_true()
         n_dims = self.theta_true.shape[1]
-        self.posterior_samples = np.zeros(
+        posterior_samples = np.zeros(
             (self.number_simulations, self.samples_per_inference, n_dims)
         )
-        self.thetas = np.zeros((self.number_simulations, n_dims))
+        thetas = np.zeros((self.number_simulations, n_dims))
         for n in range(self.number_simulations):
             sample_index = self.data.rng.integers(0, len(self.theta_true))
 
             theta = self.theta_true[sample_index, :]
             x = self.data.true_context()[sample_index, :]
-            self.posterior_samples[n] = self.model.sample_posterior(
+            posterior_samples[n] = self.model.sample_posterior(
                 self.samples_per_inference, x
             )
-            self.thetas[n] = theta
+            thetas[n] = theta
 
-        self.posterior_samples = np.swapaxes(self.posterior_samples, 0, 1)
-
+        posterior_samples = np.swapaxes(posterior_samples, 0, 1)
+        return DataDisplay(
+            posterior_samples=posterior_samples,
+            thetas=thetas,
+        )
     def plot_settings(self):
         self.line_style = get_item(
             "plots_common", "line_style_cycle", raise_exception=False
@@ -84,6 +90,7 @@ class TARP(Display):
 
     def plot(
         self,
+        data_display: Union[DataDisplay, dict] = None,
         coverage_sigma: int = 3,
         reference_point: Union[str, np.ndarray] = "random",
         metric: bool = "euclidean",
@@ -93,7 +100,7 @@ class TARP(Display):
         y_label: str = "Expected Coverage",
         x_label: str = "Expected Coverage",
         title: str = "Test of Accuracy with Random Points",
-    ):
+    ) -> tuple["fig", "ax"]:
         """
         Args:
             coverage_sigma (int, optional): Number of sigma to use for coverage. Defaults to 3.
@@ -107,9 +114,12 @@ class TARP(Display):
             title (str, optional): Title of the entire figure. Defaults to "Test of Accuracy with Random Points".
 
         """
+        if not isinstance(data_display, DataDisplay):
+            data_display = DataDisplay().from_h5(data_display, self.plot_name)
+
         coverage_probability, credibility = tarp.get_tarp_coverage(
-            self.posterior_samples,
-            self.thetas,
+            data_display.posterior_samples,
+            data_display.thetas,
             references=reference_point,
             metric=metric,
             norm=normalize,
@@ -117,7 +127,7 @@ class TARP(Display):
         )
         figure_size = get_item("plots_common", "figure_size", raise_exception=False)
         k_sigma = range(1, coverage_sigma + 1)
-        _, ax = plt.subplots(1, 1, figsize=figure_size)
+        fig, ax = plt.subplots(1, 1, figsize=figure_size)
 
         ax.plot([0, 1], [0, 1], ls=self.line_style[0], color="k", label="Ideal")
         ax.plot(
@@ -144,3 +154,5 @@ class TARP(Display):
         ax.set_ylabel(y_label)
         ax.set_xlabel(x_label)
         ax.set_title(title)
+
+        return fig, ax

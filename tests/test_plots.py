@@ -57,7 +57,7 @@ def test_lc2st(plot_config, mock_model, mock_data, mock_2d_data, result_output, 
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
     plot = LC2ST(
-        mock_model, mock_2d_data, save=True, show=False, 
+        mock_model, mock_2d_data, mock_run_id, save=True, show=False, 
         out_dir=f"{result_output.strip('/')}/mock_2d/")
     assert type(plot.data.simulator).__name__ == "Mock2DSimulator"
     plot(**get_item("plots", "LC2ST", raise_exception=False))
@@ -113,3 +113,23 @@ def test_parity(plot_config, mock_model, mock_data, mock_run_id):
         include_percentage = True)
 
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+
+@pytest.mark.parametrize("plot_type", [CDFRanks, Ranks, CoverageFraction, TARP, LC2ST, PPC, PriorPC, Parity])
+def test_rerun_plot(plot_type, plot_config, mock_model, mock_data, mock_run_id):
+
+    Config(plot_config)
+    plot = plot_type(mock_model, mock_data, mock_run_id, save=True, show=False)
+    plot()
+    assert os.path.exists(f"{plot.out_dir}{mock_run_id}_{plot.plot_name}")
+    assert os.path.exists(f"{plot.out_dir}{mock_run_id}_diagnostic_metrics.h5")
+
+    figure, subplots = plot_type(None, None, None, save=False, show=False).plot(
+        data_display=f"{plot.out_dir}{mock_run_id}_diagnostic_metrics.h5",
+        )
+    assert subplots is not None
+    figure.set_tight_layout(True)
+    figure.savefig(f"{plot.out_dir}rerun_plot.png")
+
+    assert os.path.exists(f"{plot.out_dir}rerun_plot.png")
+
