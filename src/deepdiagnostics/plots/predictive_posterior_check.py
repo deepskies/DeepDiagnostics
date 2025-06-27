@@ -1,10 +1,15 @@
-from typing import Optional
+from typing import Optional, Union, TYPE_CHECKING
 import matplotlib.pyplot as plt
+from deepdiagnostics.utils.utils import DataDisplay
 import numpy as np
 
 from deepdiagnostics.plots.plot import Display
 from deepdiagnostics.utils.plotting_utils import get_hex_colors
 from deepdiagnostics.utils.simulator_utils import SimulatorMissingError
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure as fig
+    from matplotlib.axes import Axes as ax
 
 class PPC(Display):
     """
@@ -39,13 +44,13 @@ class PPC(Display):
         colorway =None):
         
         super().__init__(model, data, run_id, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
-        if not hasattr(self.data, "simulator"): 
+        if (self.data is not None) and (not hasattr(self.data, "simulator")): 
             raise SimulatorMissingError("Missing a simulator to run PPC.")
 
     def plot_name(self):
         return "predictive_posterior_check.png"
 
-    def get_posterior_2d(self, n_simulator_draws): 
+    def _get_posterior_2d(self, n_simulator_draws): 
         context_shape = self.data.true_context().shape
         sim_out_shape = self.data.get_simulator_output_shape()
         remove_first_dim = False
@@ -54,8 +59,8 @@ class PPC(Display):
             sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
             remove_first_dim = True
 
-        self.posterior_predictive_samples = np.zeros((n_simulator_draws, *sim_out_shape))
-        self.posterior_true_samples = np.zeros_like(self.posterior_predictive_samples)
+        posterior_predictive_samples = np.zeros((n_simulator_draws, *sim_out_shape))
+        posterior_true_samples = np.zeros_like(posterior_predictive_samples)
 
         random_context_indices = self.data.rng.integers(0, context_shape[0], n_simulator_draws)
         for index, sample in enumerate(random_context_indices): 
@@ -73,95 +78,66 @@ class PPC(Display):
                 sim_out_posterior = sim_out_posterior[0]
                 sim_out_true = sim_out_true[0]
 
-            self.posterior_predictive_samples[index] = sim_out_posterior
-            self.posterior_true_samples[index] = sim_out_true
+            posterior_predictive_samples[index] = sim_out_posterior
+            posterior_true_samples[index] = sim_out_true
 
+        return posterior_predictive_samples, posterior_true_samples
 
-    def get_posterior_1d(self, n_simulator_draws):
+    def _get_posterior_1d(self, n_simulator_draws):
         context_shape = self.data.true_context().shape
-        self.posterior_predictive_samples = np.zeros((n_simulator_draws, self.samples_per_inference, context_shape[-1]))
-        self.posterior_true_samples = np.zeros_like(self.posterior_predictive_samples)
-        self.context = np.zeros((n_simulator_draws, context_shape[-1]))
+        posterior_predictive_samples = np.zeros((n_simulator_draws, self.samples_per_inference, context_shape[-1]))
+        posterior_true_samples = np.zeros_like(posterior_predictive_samples)
+        context = np.zeros((n_simulator_draws, context_shape[-1]))
 
         random_context_indices = self.data.rng.integers(0, context_shape[0], n_simulator_draws)
         for index, sample in enumerate(random_context_indices): 
             context_sample = self.data.true_context()[sample, :]
-            self.context[index] = context_sample
+            context[index] = context_sample
 
             posterior_sample = self.model.sample_posterior(self.samples_per_inference, context_sample)
 
             # get the posterior samples for that context 
-            self.posterior_predictive_samples[index] = self.data.simulator.simulate(
+            posterior_predictive_samples[index] = self.data.simulator.simulate(
                 theta=posterior_sample, context_samples = context_sample
             )
-            self.posterior_true_samples[index] = self.data.simulator.simulate(
+            posterior_true_samples[index] = self.data.simulator.simulate(
                 theta=self.data.get_theta_true()[sample, :], context_samples=context_sample
             )
+        return posterior_predictive_samples, posterior_true_samples, context
 
-    def plot_1d(self, 
-        subplots: np.ndarray, 
-        subplot_index: int,
-        n_coverage_sigma: Optional[int] = 3, 
-        theta_true_marker: Optional[str] = '^'
-    ):
-        
-        dimension_y_simulation = self.posterior_predictive_samples[subplot_index]
-        y_simulation_mean = np.mean(dimension_y_simulation, axis=0).ravel()
-        y_simulation_std = np.std(dimension_y_simulation, axis=0).ravel()
+    def _data_setup(self, n_unique_plots: Optional[int] = 3, **kwargs) -> DataDisplay:
+        if self.data.simulator_dimensions == 1: 
+            n_dims = 1
 
-        for sigma, color in zip(range(n_coverage_sigma), self.colors):
-                subplots[0, subplot_index].fill_between(
-                self.context[subplot_index].ravel(),
-                y_simulation_mean - sigma * y_simulation_std,
-                y_simulation_mean + sigma * y_simulation_std,
-                color=color,
-                alpha=0.6,
-                label=rf"Pred. with {sigma} $\sigma$",
-            )
+            posterior_predictive_samples, posterior_true_samples, context = self._get_posterior_1d(n_unique_plots)
+            true_sigma = self.data.get_sigma_true()
 
-        subplots[0, subplot_index].plot(
-            self.context[subplot_index],
-            y_simulation_mean - self.true_sigma,
-            color="black",
-            linestyle="dashdot",
-            label="True Input Error"
-        )
-        subplots[0, subplot_index].plot(
-            self.context[subplot_index],
-            y_simulation_mean + self.true_sigma,
-            color="black",
-            linestyle="dashdot",
+        elif self.data.simulator_dimensions == 2: 
+            n_dims = 2
+            posterior_predictive_samples, posterior_true_samples = self._get_posterior_2d(n_unique_plots)
+
+        else: 
+            raise NotImplementedError("Posterior Checks only implemented for 1 or two dimensions.")
+
+        return DataDisplay(
+            n_unique_plots=n_unique_plots,
+            posterior_predictive_samples=posterior_predictive_samples,
+            n_dims=n_dims,
+            posterior_true_samples=posterior_true_samples,
+            context=context if n_dims == 1 else None,
+            true_sigma=true_sigma if n_dims == 1 else None
         )
 
-        true_y = np.mean(self.posterior_true_samples[subplot_index, :, :], axis=0).ravel()
-        subplots[1, subplot_index].scatter(
-            self.context[subplot_index], 
-            true_y, 
-            marker=theta_true_marker, 
-            label='Theta True'
-        )
-
-    def plot_2d(self, subplots, subplot_index, include_axis_ticks): 
-        subplots[1, subplot_index].imshow(self.posterior_predictive_samples[subplot_index])
-        subplots[0, subplot_index].imshow(self.posterior_true_samples[subplot_index])
-
-        if not include_axis_ticks: 
-            subplots[1, subplot_index].set_xticks([])
-            subplots[1, subplot_index].set_yticks([])
-
-            subplots[0, subplot_index].set_xticks([])
-            subplots[0, subplot_index].set_yticks([])
 
     def plot(
-            self, 
+            self,
+            data_display: Union[DataDisplay, dict] = None,
             n_coverage_sigma: Optional[int] = 3, 
-            true_sigma: Optional[float] = None, 
             theta_true_marker: Optional[str] = '^', 
-            n_unique_plots: Optional[int] = 3,
             include_axis_ticks: bool = False,
             title:str="Predictive Posterior", 
             y_label:str="Simulation Output", 
-            x_label:str="X"): 
+            x_label:str="X") -> tuple['fig', 'ax']: 
         """
         Args:
             n_coverage_sigma (Optional[int], optional): Show the N different standard dev. sigma of the posterior results. Only used in 1D. Defaults to 3.
@@ -176,32 +152,71 @@ class PPC(Display):
         Raises:
             NotImplementedError: If trying to plot results of a simulation with more than 2 output dimensions. 
         """
-        
-        if self.data.simulator_dimensions == 1: 
-            self.get_posterior_1d(n_unique_plots)
-            self.true_sigma = true_sigma if true_sigma is not None else self.data.get_sigma_true()
-            self.colors = get_hex_colors(n_coverage_sigma, self.colorway)
 
-        elif self.data.simulator_dimensions == 2: 
-            self.get_posterior_2d(n_unique_plots)
+        if not isinstance(data_display, DataDisplay):
+            data_display = DataDisplay().from_h5(data_display, self.plot_name)
 
-        else: 
-            raise NotImplementedError("Posterior Checks only implemented for 1 or two dimensions.")
-        
+        self.colors = get_hex_colors(n_coverage_sigma, self.colorway)
         figure, subplots = plt.subplots(
             2, 
-            n_unique_plots, 
-            figsize=(int(self.figure_size[0]*n_unique_plots*.6), self.figure_size[1]), 
+            data_display.n_unique_plots, 
+            figsize=(int(self.figure_size[0]*data_display.n_unique_plots*.6), self.figure_size[1]), 
             sharex=False, 
             sharey=True
         )
 
-        for plot_index in range(n_unique_plots): 
-            if self.data.simulator_dimensions == 1: 
-                self.plot_1d(subplots, plot_index, n_coverage_sigma, theta_true_marker)
+        for plot_index in range(data_display.n_unique_plots): 
+            if data_display.n_dims == 1: 
+                if data_display.context is None:
+                    raise ValueError("Display Data is malformed. Missing `context` for 1D simulation. Please rerun data setup stage.")
+
+
+                dimension_y_simulation = data_display.posterior_predictive_samples[plot_index]
+                y_simulation_mean = np.mean(dimension_y_simulation, axis=0).ravel()
+                y_simulation_std = np.std(dimension_y_simulation, axis=0).ravel()
+
+                for sigma, color in zip(range(n_coverage_sigma), self.colors):
+                        subplots[0, plot_index].fill_between(
+                        data_display.context[plot_index].ravel(),
+                        y_simulation_mean - sigma * y_simulation_std,
+                        y_simulation_mean + sigma * y_simulation_std,
+                        color=color,
+                        alpha=0.6,
+                        label=rf"Pred. with {sigma} $\sigma$",
+                    )
+
+                subplots[0, plot_index].plot(
+                    data_display.context[plot_index],
+                    y_simulation_mean - data_display.true_sigma,
+                    color="black",
+                    linestyle="dashdot",
+                    label="True Input Error"
+                )
+                subplots[0, plot_index].plot(
+                    data_display.context[plot_index],
+                    y_simulation_mean + data_display.true_sigma,
+                    color="black",
+                    linestyle="dashdot",
+                )
+
+                true_y = np.mean(data_display.posterior_true_samples[plot_index, :, :], axis=0).ravel()
+                subplots[1, plot_index].scatter(
+                    data_display.context[plot_index], 
+                    true_y, 
+                    marker=theta_true_marker, 
+                    label='Theta True'
+                )
 
             else: 
-                self.plot_2d(subplots, plot_index, include_axis_ticks)
+                subplots[1, plot_index].imshow(data_display.posterior_predictive_samples[plot_index])
+                subplots[0, plot_index].imshow(data_display.posterior_true_samples[plot_index])
+
+                if not include_axis_ticks: 
+                    subplots[1, plot_index].set_xticks([])
+                    subplots[1, plot_index].set_yticks([])
+
+                    subplots[0, plot_index].set_xticks([])
+                    subplots[0, plot_index].set_yticks([])
 
 
         subplots[1, 0].set_ylabel("True Parameters")
@@ -210,3 +225,5 @@ class PPC(Display):
         figure.supylabel(y_label)
         figure.supxlabel(x_label)
         figure.suptitle(title)
+
+        return figure, subplots

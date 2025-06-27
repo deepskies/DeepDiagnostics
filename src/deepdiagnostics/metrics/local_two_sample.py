@@ -71,7 +71,7 @@ class LocalTwoSampleTest(Metric):
                 # TODO Debug log with a warning
                 sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
                 remove_first_dim = True
-   
+
             sim_out_shape = np.product(sim_out_shape)
             self.outcome_given_p = np.zeros((self.number_simulations, sim_out_shape))
         else: 
