@@ -51,10 +51,10 @@ class CoverageFraction(Metric):
         Returns:
             tuple[Sequence, Sequence]: A tuple of the samples tested (M samples, Samples per inference, N parameters) and the coverage over those samples. 
         """
+
         all_samples = np.empty(
             (self.number_simulations, self.samples_per_inference, np.shape(self.thetas)[1])
         )
-        count_array = []
         iterator = range(self.number_simulations)
         if self.use_progress_bar:
             iterator = tqdm(
@@ -62,15 +62,17 @@ class CoverageFraction(Metric):
                 desc="Sampling from the posterior for each observation",
                 unit=" observation",
             )
+        n_theta_samples = self.thetas.shape[0]
+        count_array = np.zeros((self.number_simulations, len(self.percentiles), self.thetas.shape[1]))
+
         for sample_index in iterator:
             context_sample = self.context[self.data.rng.integers(0, len(self.context))]
             samples = self._run_model_inference(self.samples_per_inference, context_sample)
 
             all_samples[sample_index] = samples
 
-            count_vector = []
             # step through the percentile list
-            for cov in self.percentiles:
+            for index, cov in enumerate(self.percentiles):
                 percentile_lower = 50.0 - cov / 2
                 percentile_upper = 50.0 + cov / 2
 
@@ -78,7 +80,6 @@ class CoverageFraction(Metric):
                 # this is n_params dimensional
                 # the units are in parameter space
                 confidence_lower = np.percentile(samples, percentile_lower, axis=0)
-                
                 confidence_upper = np.percentile(samples, percentile_upper, axis=0)
                 
 
@@ -87,22 +88,25 @@ class CoverageFraction(Metric):
                 # upper and lower confidence intervals
                 # checks separately for each side of the 50th percentile
 
-                count = np.logical_and(
-                    confidence_upper - self.thetas[sample_index, :].numpy() > 0,
-                    self.thetas[sample_index, :].numpy() - confidence_lower > 0,
+                c = np.logical_and(
+                    confidence_upper - self.thetas.numpy() > 0,
+                    self.thetas.numpy() - confidence_lower > 0,
                 )
-                count_vector.append(count)
+                count_array[sample_index, index] = np.sum(c.astype(int), axis=0)/n_theta_samples
 
             # each time the above is > 0, adds a count
-            count_array.append(count_vector)
+            #count_array[sample_index] = count_vector
 
-        count_sum_array = np.sum(count_array, axis=0)
-        frac_lens_within_vol = np.array(count_sum_array)
-        coverage = frac_lens_within_vol / len(self.context)
+        coverage_mean = np.mean(count_array, axis=0)
+        coverage_std = np.std(count_array, axis=0)
 
-        self.output = coverage
+        self.output = {
+            "coverage": coverage_mean,
+            "coverage_std": coverage_std,
 
-        return all_samples, coverage
+        }
+
+        return all_samples, (coverage_mean, coverage_std)
 
     def __call__(self, **kwds: Any) -> Any:
         self.calculate()
