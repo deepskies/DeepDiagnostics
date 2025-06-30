@@ -2,6 +2,7 @@ from typing import Any, Optional, Sequence, Union
 import numpy as np
 
 from deepdiagnostics.utils.config import get_item
+from deepdiagnostics.data.lookup_table_simulator import LookupTableSimulator
 from deepdiagnostics.utils.simulator_utils import load_simulator
 
 class Data:
@@ -38,8 +39,13 @@ class Data:
         try: 
             self.simulator = load_simulator(simulator_name, simulator_kwargs)
         except RuntimeError: 
-            print("Warning: Simulator not loaded. Can only run non-generative metrics.")
-            
+            print("Warning: Simulator not loaded. Using a lookup table simulator.")
+            try: 
+                self.simulator = LookupTableSimulator(self.data, self.rng)
+            except ValueError as e:
+                msg = f"Could not load the lookup table simulator - {e}. You cannot use generative diagnostics."
+                print(msg)
+
         self.prior_dist = self.load_prior(prior, prior_kwargs)
         self.n_dims = self.get_theta_true().shape[1]
         self.simulator_dimensions = simulation_dimensions if simulation_dimensions is not None else get_item("data", "simulator_dimensions", raise_exception=False)
@@ -49,7 +55,7 @@ class Data:
         Run a single sample of the simulator to verify the out-shape. 
 
         Returns:
-             tuple[Sequence[int]]: Output shape of a single sample of the simulator. 
+            tuple[Sequence[int]]: Output shape of a single sample of the simulator. 
         """
         context_shape = self.true_context().shape
         sim_out = self.simulator(theta=self.get_theta_true()[0:1, :], n_samples=context_shape[-1])
