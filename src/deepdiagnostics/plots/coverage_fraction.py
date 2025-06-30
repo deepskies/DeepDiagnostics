@@ -126,17 +126,26 @@ class CoverageFraction(Display):
         title="NPE"
     ) -> tuple["fig", "ax"]:
         """
-        Args:
+        Plot the coverage fraction and residuals if specified.
+
+        Args: 
+            data_display (Union[DataDisplay, str]): DataDisplay object or path to h5 file containing the data. If str, it will be loaded and requires the fields "coverage_fractions", "coverage_percentiles", and optionally "coverage_std".
             figure_alpha (float, optional): Opacity of parameter lines. Defaults to 1.0.
             line_width (int, optional): Width of parameter lines. Defaults to 3.
-            legend_loc (str, optional): Location of the legend, str based on `matplotlib <https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html>`_. Defaults to "lower right".
+            legend_loc (str, optional): Location of the legend. Defaults to matplotlib specified. 
+            include_coverage_std (bool, optional): Whether to include the standard deviation shading for coverage fractions . Defaults to False.
+            include_coverage_residual (bool, optional): Whether to include the residual plot (coverage fraction - diagonal). Creates an additional subplot under the original plot. Defaults to False.
+            include_coverage_residual_std (bool, optional): Whether to include the standard deviation shading for residuals. Defaults to False.
+            include_ideal_range (bool, optional): Whether to include the ideal range shading (0.1/0.2 around the diagonal). Defaults to True.
             reference_line_label (str, optional): Label name for the diagonal ideal line. Defaults to "Reference Line".
             reference_line_style (str, optional): Line style for the reference line. Defaults to "k--".
             x_label (str, optional): y label. Defaults to "Confidence Interval of the Posterior Volume".
             y_label (str, optional): y label. Defaults to "Fraction of Lenses within Posterior Volume".
+            residual_y_label (str, optional): y label for the residual plot. Defaults to "Coverage Fraction Residual".
             title (str, optional): plot title. Defaults to "NPE".
+
         """
-    
+
         if not isinstance(data_display, DataDisplay):
             data_display = DataDisplay().from_h5(data_display, self.plot_name)
 
