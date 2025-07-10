@@ -121,9 +121,9 @@ class CoverageFraction(Display):
         reference_line_label="Reference Line",
         reference_line_style="k--",
         x_label="Confidence Interval of the Posterior Volume",
-        y_label="Fraction of Lenses within Posterior Volume",
+        y_label="Coverage fraction within posterior volume",
         residual_y_label="Coverage Fraction Residual",
-        title="NPE"
+        title=""
     ) -> tuple["fig", "ax"]:
         """
         Plot the coverage fraction and residuals if specified.
@@ -163,9 +163,11 @@ class CoverageFraction(Display):
                 data_display, subplots[1], figure_alpha, line_width, reference_line_style, include_coverage_residual_std, include_ideal_range
             )
             subplots[1].set_ylabel(residual_y_label)
+            subplots[1].set_xlabel(x_label)
 
         else:
             fig, ax = plt.subplots(1, 1, figsize=self.figure_size)
+            ax.set_xlabel(x_label)
 
         # Iterate over the number of parameters in the model
         for i in range(self.n_parameters):
@@ -228,7 +230,6 @@ class CoverageFraction(Display):
         else:
             ax.legend()
 
-        ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_title(title)
 
