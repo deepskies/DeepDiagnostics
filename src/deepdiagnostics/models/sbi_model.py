@@ -7,7 +7,7 @@ from deepdiagnostics.models.model import Model
 class SBIModel(Model):
     """
     Load a trained model that was generated with Mackelab SBI :cite:p:`centero2020sbi`. 
-    `Read more about saving and loading requirements here <https://sbi-dev.github.io/sbi/faq/question_05/>`_. 
+    `Read more about saving and loading requirements here <https://sbi-dev.github.io/sbi/latest/faq/question_05_pickling/>`_. 
 
     Args:
         model_path (str): relative path to a model - must be a .pkl file. 
