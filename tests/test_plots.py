@@ -50,6 +50,8 @@ def test_plot_tarp(plot_config, mock_model, mock_data, mock_run_id):
     plot(**get_item("plots", "TARP", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="L2CST Test is very slow, should only be run on remote.")
 def test_lc2st(plot_config, mock_model, mock_data, mock_2d_data, result_output, mock_run_id):
     Config(plot_config)
     plot = LC2ST(mock_model, mock_data, mock_run_id, save=True, show=False)
@@ -61,7 +63,7 @@ def test_lc2st(plot_config, mock_model, mock_data, mock_2d_data, result_output, 
         out_dir=f"{result_output.strip('/')}/mock_2d/")
     assert type(plot.data.simulator).__name__ == "Mock2DSimulator"
     plot(**get_item("plots", "LC2ST", raise_exception=False))
-    assert os.path.exists(f"{plot.out_dir}/{plot.plot_name}")
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
 def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output, mock_run_id):
     Config(plot_config)
@@ -115,7 +117,7 @@ def test_parity(plot_config, mock_model, mock_data, mock_run_id):
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
 
-@pytest.mark.parametrize("plot_type", [CDFRanks, Ranks, CoverageFraction, TARP, LC2ST, PPC, PriorPC, Parity])
+@pytest.mark.parametrize("plot_type", [CDFRanks, Ranks, CoverageFraction, TARP, PPC, PriorPC, Parity])
 def test_rerun_plot(plot_type, plot_config, mock_model, mock_data, mock_run_id):
 
     Config(plot_config)

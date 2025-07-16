@@ -1,11 +1,13 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/DeepDiagnostics?style=flat&logo=pypi&labelColor=grey&color=blue)](https://pypi.org/project/DeepDiagnostics/)
- ![status](https://img.shields.io/badge/License-MIT-lightgrey) [![test](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml) [![Documentation Status](https://readthedocs.org/projects/deepdiagnostics/badge/?version=latest)](https://deepdiagnostics.readthedocs.io/en/latest/?badge=latest)
+ ![status](https://img.shields.io/badge/License-MIT-lightgrey) 
+ [![test](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/deepskies/DeepDiagnostics/actions/workflows/test.yaml) 
+[![Documentation Status](https://github.com/deepskies/DeepDiagnostics/actions/workflows/documentation.yml/badge.svg)](https://deepskies.github.io/DeepDiagnostics/)
 
 # DeepDiagnostics
 DeepDiagnostics is a package for diagnosing the posterior from an inference method. It is flexible, applicable for both simulation-based and likelihood-based inference.
 
 ## Documentation
-### [readthedocs](https://deepdiagnostics.readthedocs.io/en/latest/)
+### [Read our docs on github.io](https://deepskies.github.io/DeepDiagnostics/)
 
 ## Installation 
 ### From PyPi 
@@ -15,18 +17,37 @@ pip install deepdiagnostics
 ```
 ### From Source
 
+This project is built from poetry, if working from source we recommend using `poetry run` to run any commands that use the package. 
+You can also use `poetry env activate` to get the path to the python virtual environment used by poetry. 
+For additional information - [please view poetry's environment management documentation](https://python-poetry.org/docs/managing-environments).
+
 ``` sh
 git clone https://github.com/deepskies/DeepDiagnostics/ 
 pip install poetry 
 poetry env activate 
-source {result of env activate}
 poetry install
-pytest
+poetry run pytest
+poetry run diagnose --config {config path}
 ```
 
 ## Quickstart
 
 [View the template yaml here for a minimally working example with our supplied sample data to get started.](https://github.com/deepskies/DeepDiagnostics/blob/main/config.yml.template)
+
+### Data and Model Requirements
+
+To access your trained model, use the `SBIModel` class to load in a trained model in the form of a `.pkl` file.
+[This format specifics are shown here](https://sbi-dev.github.io/sbi/latest/faq/question_05_pickling/)
+If you wish to use a different model format, we encourage you to open a [new issue](https://github.com/deepskies/DeepDiagnostics/issues) requesting it, or even better, write an subclass of `deepdiagnostics.models.Model` to include it!
+
+To read in your own data, supply an `.h5` or `.pkl` file and specify your format in the `data`.`data_engine` field of the configuration file. [The possible fields are listed here.](https://deepskies.github.io/DeepDiagnostics/data.html) We recommend an `.h5` file. 
+
+The data must have the following fields: 
+* `xs` - The range of data your parameters have been tested against. For example, if you are modeling `y = mx + b`, your `xs` are the values you have tested for `x`. Please ensure they are of the shape (x_size, n_samples). 
+* `thetas` - The parameters that characterize your problem. For example, if you are modeling `y = mx + b`, your `thetas` are `m` and `b`. Please ensure they are in the shape of (n_parameters, n_samples) and ordered the same way `parameter_labels` is supplied in your configuration file to prevent mislabelled plots. 
+
+If you do not supply a simulator method, including a `ys` field can allow for the use of a `lookup-table` simulator substitute. 
+
 
 ### Pipeline 
 `DeepDiagnostics` includes a CLI tool for analysis. 
@@ -44,6 +65,7 @@ pytest
 
 
 Additional arguments can be found using ``diagnose -h``
+
 
 ### Standalone 
 
@@ -77,6 +99,8 @@ Ranks(data=data, model=model, show=True)(num_bins=3)
 These child classes need a few methods. A minimal example of both a metric and a display is below. 
 
 It is strongly encouraged to provide typing for all inputs of the `plot` and `calculate` methods so they can be automatically documented. 
+
+Please ensure the proxy format `DataDisplay` is used for all plots, which ensures results can be re-plotted. 
 
 ### Metric
 ``` py

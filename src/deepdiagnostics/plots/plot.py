@@ -132,7 +132,8 @@ class Display:
             with File(f"{self.out_dir.rstrip('/')}/{self.run_id}_diagnostic_metrics.h5", "w") as f:
                 
                 for key, value in data_display.items():
-                    f.create_dataset(f"{self.plot_name}/{key}", data=value)
+                    if value is not None:
+                        f.create_dataset(f"{self.plot_name}/{key}", data=value)
 
             f.close()
 
