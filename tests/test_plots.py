@@ -20,7 +20,7 @@ def plot_config(config_factory):
     metrics_settings = {
         "use_progress_bar": False,
         "samples_per_inference": 10,
-        "percentiles": [95, 75, 50],
+        "percentiles": [68, 95],
     }
     config = config_factory(metrics_settings=metrics_settings)
     return config
@@ -144,3 +144,9 @@ def test_rerun_plot(plot_type, plot_config, mock_model, mock_data, mock_run_id):
 
     assert os.path.exists(f"{plot.out_dir}rerun_plot.png")
 
+def test_cdf_parity(plot_config, mock_model, mock_data, mock_run_id):
+    from deepdiagnostics.plots import CDFParityPlot
+    Config(plot_config)
+    plot = CDFParityPlot(mock_model, mock_data, mock_run_id, save=True, show=False)
+    plot(**get_item("plots", "CDFParityPlot", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
