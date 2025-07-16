@@ -33,7 +33,8 @@ Defaults = {
         "LC2ST": {}, 
         "Parity":{},
         "PPC": {}, 
-        "PriorPC":{}
+        "PriorPC":{}, 
+        "CDFParityPlot": {}
     },
     "metrics_common": {
         "use_progress_bar": False,
