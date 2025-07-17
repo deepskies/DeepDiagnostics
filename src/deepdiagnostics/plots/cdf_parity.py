@@ -159,12 +159,26 @@ class CDFParityPlot(Display):
         colors = self._get_hex_sigma_colors(len(data_display["percentiles"]))
 
         if include_residuals: 
-            fig, ax = plt.subplots(len(self.parameter_names), 2, figsize=(6*len(self.parameter_names), 12), height_ratios=[3, 1])
+            fig, ax = plt.subplots(
+                2, len(self.parameter_names), 
+                figsize=(self.figure_size[0]*len(self.parameter_names), 1.5*self.figure_size[1]), 
+                height_ratios=[3, 1], 
+                sharex='col',
+                sharey='row'
+            )
+            plt.subplots_adjust(hspace=0.01)
+
             residual_ax = ax[1]
             ax = ax[0]
+            if len(self.parameter_names) == 1:
+                residual_ax = [residual_ax]
+                ax = [ax]
 
         else: 
-            fig, ax = plt.subplots(1, len(self.parameter_names), figsize=(6*len(self.parameter_names), 6))
+            fig, ax = plt.subplots(
+                1, len(self.parameter_names), 
+                figsize=(self.figure_size[0]*len(self.parameter_names), self.figure_size[1]),
+                sharey='row')
             if len(self.parameter_names) == 1:
                 ax = [ax]
 
