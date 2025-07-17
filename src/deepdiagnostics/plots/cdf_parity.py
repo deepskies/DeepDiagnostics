@@ -40,7 +40,7 @@ class CDFParityPlot(Display):
         
         """
         super().__init__(model, data, run_id, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
-
+        self.line_cycle =  tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
 
     def plot_name(self):
         return "cdf_parity.png"
@@ -115,8 +115,6 @@ class CDFParityPlot(Display):
             title: str = "CDF Parity Plot",
             samples_label = "Posterior Samples",
             theory_label = "Theory",
-            samples_color = "k", 
-            samples_line_style = "-",
             theory_color = "gray",
             theory_line_style = "--",
             **kwargs
@@ -152,6 +150,9 @@ class CDFParityPlot(Display):
                 Line style for the theory line, by default "--"
         """
 
+        color_cycler = iter(plt.cycler("color", self.parameter_colors))
+        line_style_cycler = iter(plt.cycler("line_style", self.line_cycle))
+
         if not isinstance(data_display, DataDisplay):
             data_display = DataDisplay().from_h5(data_display, self.plot_name)
 
@@ -160,8 +161,8 @@ class CDFParityPlot(Display):
 
         if include_residuals: 
             fig, ax = plt.subplots(
-                2, len(self.parameter_names), 
-                figsize=(self.figure_size[0]*len(self.parameter_names), 1.5*self.figure_size[1]), 
+                2, 1, 
+                figsize=(self.figure_size[0], 1.5*self.figure_size[1]), 
                 height_ratios=[3, 1], 
                 sharex='col',
                 sharey='row'
@@ -170,86 +171,79 @@ class CDFParityPlot(Display):
 
             residual_ax = ax[1]
             ax = ax[0]
-            if len(self.parameter_names) == 1:
-                residual_ax = [residual_ax]
-                ax = [ax]
 
         else: 
             fig, ax = plt.subplots(
-                1, len(self.parameter_names), 
-                figsize=(self.figure_size[0]*len(self.parameter_names), self.figure_size[1]),
+                1, 1, 
+                figsize=self.figure_size,
                 sharey='row')
-            if len(self.parameter_names) == 1:
-                ax = [ax]
 
-        for i, name in enumerate(self.parameter_names):
+        if include_theory_intervals:
+            theory_labels = [f"CDF {int(interval*100)}% CI {theory_label}" for interval in data_display["percentiles"]]
+            theory_handles = [
+                plt.Line2D([0], [0], alpha=0.2, color=color) for color in colors
+            ]
+            for interval, color in zip(data_display["percentiles"], colors):
+                name = self.parameter_names[0]
+                ax.fill_between(
+                    data_display[f"quantiles_{name}"], 
+                    data_display[f"low_theory_probability_{interval}_{name}"], 
+                    data_display[f"high_theory_probability_{interval}_{name}"], 
+                    alpha=0.2,
+                    color=color
+                )
+                if include_residuals:
+                    low = data_display[f"low_theory_probability_{interval}_{name}"] - data_display[f"theory_probability_{name}"]
+                    high = data_display[f"high_theory_probability_{interval}_{name}"] - data_display[f"theory_probability_{name}"]
 
-            ax[i].plot(
+                    residual_ax.fill_between(
+                        data_display[f"quantiles_{name}"], 
+                        low, 
+                        high, 
+                        alpha=0.2,
+                        color=color
+                    )
+        else:
+            theory_labels = [theory_label]
+            theory_handles = [
+                plt.Line2D([0], [0], color=theory_color, linestyle=theory_line_style)
+            ]
+
+        samples_labels = []
+        samples_handles = []
+        for _, name in enumerate(self.parameter_names):
+            ls = next(line_style_cycler)['line_style']
+            color = next(color_cycler)['color']
+            ax.plot(
                 data_display[f"quantiles_{name}"], 
                 data_display[f"sample_probability_{name}"], 
-                linestyle=samples_line_style,
-                color=samples_color,
-                label=samples_label
+                linestyle=ls,
+                color=color,
             )
-
-            ax[i].set_title(name)
+            samples_handles.append(
+                plt.Line2D([0], [0], color=color, linestyle=ls)
+            )
+            samples_labels.append(f"{name} {samples_label}")
 
             if include_residuals:
 
                 # Now we can directly compare probabilities since they're evaluated at the same quantiles
                 residual = (data_display[f"theory_probability_{name}"] - data_display[f"sample_probability_{name}"])
 
-                residual_ax[i].plot(
+                residual_ax.plot(
                     data_display[f"quantiles_{name}"], 
                     residual,
-                    linestyle=samples_line_style,
-                    color=samples_color,
+                    linestyle=ls,
+                    color=color,
                     )
-                if include_theory_intervals: 
-                    for interval, color in zip(data_display["percentiles"], colors):
-                        low = data_display[f"low_theory_probability_{interval}_{name}"] - data_display[f"theory_probability_{name}"]
-                        high = data_display[f"high_theory_probability_{interval}_{name}"] - data_display[f"theory_probability_{name}"]
+                residual_ax.axhline(0, color=theory_color, linestyle=theory_line_style)
 
-                        residual_ax[i].fill_between(
-                            data_display[f"quantiles_{name}"], 
-                            low, 
-                            high, 
-                            alpha=0.2, color=color
-                        )
-                else: 
-                    residual_ax[i].axhline(0, color=theory_color, linestyle=theory_line_style)
-
-            if include_theory_intervals:
-                
-                for interval, color in zip(data_display["percentiles"], colors):
-                    ax[i].fill_between(
-                        data_display[f"quantiles_{name}"], 
-                        data_display[f"low_theory_probability_{interval}_{name}"], 
-                        data_display[f"high_theory_probability_{interval}_{name}"], 
-                        alpha=0.2, color=color
-                    )
-
-                theory_labels = [f"CDF {int(interval*100)}% CI {theory_label or ''}" for interval in data_display["percentiles"]]
-                theory_handles = [
-                    plt.Line2D([0], [0], color=color) for color in colors
-                ]
-            else: 
-                # Just plot the standard theory
-                ax[i].plot(
-                    data_display[f"quantiles_{name}"], 
-                    data_display[f"theory_probability_{name}"], 
-                    linestyle=theory_line_style, color=theory_color
-                )
-                theory_labels = [theory_label]
-                theory_handles = [
-                    plt.Line2D([0], [0], color=theory_color, linestyle=theory_line_style)
-                ]
 
         handles = [
-            plt.Line2D([0], [0], color=samples_color, linestyle=samples_line_style),
+            *samples_handles,
             *theory_handles
         ]
-        labels = [samples_label, *theory_labels]
+        labels = [*theory_labels, *samples_labels]
 
         fig.legend(handles, labels=labels)
         fig.suptitle(title)
