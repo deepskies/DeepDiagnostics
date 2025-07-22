@@ -20,7 +20,7 @@ def plot_config(config_factory):
     metrics_settings = {
         "use_progress_bar": False,
         "samples_per_inference": 10,
-        "percentiles": [68, 95],
+        "percentiles": [50, 68, 95],
     }
     config = config_factory(metrics_settings=metrics_settings)
     return config

@@ -82,8 +82,8 @@ def setUp(result_output):
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
 
-    # out_dir = get_item("common", "out_dir", raise_exception=True)
-    # shutil.rmtree(out_dir)
+    out_dir = get_item("common", "out_dir", raise_exception=True)
+    shutil.rmtree(out_dir)
 
 @pytest.fixture
 def model_path():
