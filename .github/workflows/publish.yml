@@ -4,27 +4,18 @@ on:
     types:  [published]
 
 jobs:
-  release:
-    runs-on:  ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.9"
-    - name: Install poetry ${{ matrix.poetry-version }}
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      run: |
-        python -m ensurepip
-        python -m pip install --upgrade pip
-        python -m pip install poetry==1.3.2
-    - name: View poetry --help
-      run: poetry --help
-    - name: Install dependencies
-      shell: bash
-      run: python -m poetry install
-    - name: Build package
-      run: python3 -m poetry build
-    - name: Publish Package
-      run: python3 -m poetry publish --username=__token__ --password=${{ secrets.PYPI_TOKEN }}
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Install poetry
+          run: pipx install poetry
+        - uses: actions/setup-python@v5
+          with:
+            python-version: '3.13'
+            cache: 'poetry'
+        - run: poetry install --with dev
+        - name: Build package
+          run: poetry build
+        - name: Publish Package
+          run: poetry publish --username=__token__ --password=${{ secrets.PYPI_TOKEN }}
