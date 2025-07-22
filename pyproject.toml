@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "deepdiagnostics" 
 packages = [{include = "*", from="src"}]
-version = "1.1.0"
+version = "1.5.1.alpha"
 description = "a package for diagnosing posterior quality from inference methods"
 authors = ["Becky Nevin <rnevin@fnal.gov>", "M Voetberg <maggiev@fnal.gov>"]
 license = "MIT"
