@@ -101,8 +101,8 @@ class CoverageFraction(Metric):
         coverage_std = np.std(count_array, axis=0)
 
         self.output = {
-            "coverage": coverage_mean,
-            "coverage_std": coverage_std,
+            "coverage": coverage_mean.tolist(),
+            "coverage_std": coverage_std.tolist(),
 
         }
 
