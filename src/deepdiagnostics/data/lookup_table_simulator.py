@@ -13,9 +13,28 @@ class LookupTableSimulator(Simulator):
     where xs is the context, thetas are the parameters, and ys are the outcomes
     """
 
-    def __init__(self, data: np.ndarray, random_state: np.random.Generator) -> None:
+    def __init__(self, data: np.ndarray, random_state: np.random.Generator, outside_range_limit: float = 2.0) -> None:
+        """
+
+        Parameters
+        ----------
+        data : np.ndarray
+            _description_
+        random_state : np.random.Generator
+            Random state used for sampling
+        outside_range_limit : float, optional
+            When values of theta and x are passed that are not in the dataset, 
+            if they are greater than the max by this threshold, (where value > outside_range_limit*value_max), 
+            a value error is raised instead of taking the nearest neighbor; by default 1.5
+
+        Raises
+        ------
+        ValueError
+            If the passed data does not have thetas, xs, and ys fields
+        """
         super().__init__()
         # Normalizing for finding nearest neighbors
+        self.threshold = outside_range_limit
         self.max_theta = np.max(data["thetas"], axis=0)
         self.min_theta = np.min(data["thetas"], axis=0)
         self.max_x = np.max(data["xs"], axis=0)
@@ -86,6 +105,10 @@ class LookupTableSimulator(Simulator):
                 print(f"Could not match theta {t} and x {x} to a result - taking the nearest neighbor")
                 space_hit = self._calc_hash_distance(t, x)
                 nearest_key = min(self.table.keys(), key=lambda k: abs(self.table[k]["loc"] - space_hit))
+
+                if abs(self.table[nearest_key]["loc"] - space_hit) > self.threshold:
+                    raise ValueError(f"Value {t} and {x} are outside the range of the data by more than {self.threshold} times the max value in the dataset. Please provide a value within the range of the data.")
+
                 results.append(self.table[nearest_key]["y"])
 
         return np.array(results)
