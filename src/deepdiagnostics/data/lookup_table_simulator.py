@@ -1,4 +1,6 @@
 from typing import Union
+
+import torch
 from deepdiagnostics.data.simulator import Simulator
 import numpy as np
 
@@ -13,12 +15,12 @@ class LookupTableSimulator(Simulator):
     where xs is the context, thetas are the parameters, and ys are the outcomes
     """
 
-    def __init__(self, data: np.ndarray, random_state: np.random.Generator, outside_range_limit: float = 2.0) -> None:
+    def __init__(self, data: torch.tensor, random_state: np.random.Generator, outside_range_limit: float = 2.0) -> None:
         """
 
         Parameters
         ----------
-        data : np.ndarray
+        data : torch.tensor
             _description_
         random_state : np.random.Generator
             Random state used for sampling
@@ -35,10 +37,10 @@ class LookupTableSimulator(Simulator):
         super().__init__()
         # Normalizing for finding nearest neighbors
         self.threshold = outside_range_limit
-        self.max_theta = np.max(data["thetas"], axis=0)
-        self.min_theta = np.min(data["thetas"], axis=0)
-        self.max_x = np.max(data["xs"], axis=0)
-        self.min_x = np.min(data["xs"], axis=0)
+        self.max_theta = torch.max(data["thetas"], axis=0).values
+        self.min_theta = torch.min(data["thetas"], axis=0).values
+        self.max_x = torch.max(data["xs"], axis=0).values
+        self.min_x = torch.min(data["xs"], axis=0).values
 
         self.table = self._build_table(data)
         self.rng = random_state
@@ -63,13 +65,13 @@ class LookupTableSimulator(Simulator):
 
     def _build_hash(self, theta, context): 
         "Take a theta and context, and build a hashable key for the lookup table"
-        return hash(tuple(np.concatenate([theta, context])))
+        return hash(tuple(torch.concat([theta, context], dim=-1)))
 
-    def _calc_hash_distance(self, theta: Union[np.ndarray, float], context: Union[np.ndarray, float]) -> float:
+    def _calc_hash_distance(self, theta: Union[torch.Tensor, float], context: Union[torch.Tensor, float]) -> float:
         "Create a distance (as the norm) metric between pairs of theta and context"
         theta = (theta - self.min_theta) / (self.max_theta - self.min_theta)
         context = (context - self.min_x) / (self.max_x - self.min_x)
-        return np.linalg.norm(np.concatenate([theta, context]))
+        return torch.linalg.norm(torch.concat([theta, context], dim=-1))
 
     def generate_context(self, n_samples):
         "Draw samples from the context data"
@@ -78,7 +80,7 @@ class LookupTableSimulator(Simulator):
         contexts = [self.table[k]["x"] for k in chosen_keys]
         return np.array(contexts)
     
-    def simulate(self, theta: Union[np.ndarray, float], context_samples: Union[np.ndarray, float]) -> np.ndarray:
+    def simulate(self, theta: Union[torch.Tensor, float], context_samples: Union[torch.Tensor, float]) -> np.ndarray:
         """
         Find the outcome y for a given theta and context sample. 
         If no exact match, take the nearest neighbor (via the L2 norm of normalized theta and context)
@@ -91,11 +93,11 @@ class LookupTableSimulator(Simulator):
         """
 
         results = []
-        if not isinstance(theta, np.ndarray):
-            theta = np.array([theta])
+        if not isinstance(theta, torch.Tensor):
+            theta = torch.Tensor([theta])
 
-        if not isinstance(context_samples, np.ndarray):
-            context_samples = np.array([context_samples])
+        if not isinstance(context_samples, torch.Tensor):
+            context_samples = torch.Tensor([context_samples])
 
         for t, x in zip(theta, context_samples):
             key = self._build_hash(t, x)
