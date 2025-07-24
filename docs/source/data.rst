@@ -14,3 +14,6 @@ Data
 
 .. autoclass:: deepdiagnostics.data.simulator.Simulator
     :members: 
+
+.. autoclass:: deepdiagnostics.data.lookup_table_simulator.LookupTableSimulator
+    :members:
