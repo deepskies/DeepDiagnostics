@@ -20,10 +20,11 @@ def metric_config(config_factory):
 def test_coverage_fraction(metric_config, mock_model, mock_data, mock_run_id): 
     Config(metric_config)
     coverage_fraction = CoverageFraction(mock_model, mock_data, mock_run_id, save=True)
-    _, coverage = coverage_fraction.calculate()
-    assert coverage_fraction.output.all() is not None
+    _, (coverage_mean, coverage_std) = coverage_fraction.calculate()
+    assert coverage_mean.all() is not None
+    assert coverage_std.all() is not None
 
-    assert coverage.shape  ==  (1, 2) # One percentile over 2 dimensions of theta. 
+    assert coverage_mean.shape  ==  (1, 2) # One percentile over 2 dimensions of theta. 
 
     coverage_fraction = CoverageFraction(mock_model, mock_data, mock_run_id, save=True)
     coverage_fraction()

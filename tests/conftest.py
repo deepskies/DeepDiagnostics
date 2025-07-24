@@ -44,30 +44,23 @@ class MockSimulator(Simulator):
 
 class Mock2DSimulator(Simulator): 
     def __init__(self) -> None:
-        import subprocess
-        subprocess.check_call(["python3", "-m", "pip", "install", "deepbench"])
+        "Create a 2D simulator that just produces noise"
 
     def generate_context(self, n_samples: int) -> np.ndarray: 
         return np.linspace(0, 28, n_samples)
 
     def simulate(self, theta, context_samples: np.ndarray): 
-        from deepbench.astro_object import StarObject
 
         generated_stars = []
         if len(theta.shape) == 1: 
             theta = [theta]
             
         for sample_index, t in enumerate(theta): 
-            star = StarObject(
-                image_dimensions = (28,28),
-                noise_level = 0.3,
-                radius = t[0].item(),
-                amplitude = t[1].item()
+            mock_data = np.random.normal(
+                loc=t[0], scale=abs(t[1]), size=(len(context_samples), 2)
             )
             generated_stars.append(
-                star.create_object(
-                    context_samples[sample_index].item(), context_samples[sample_index].item()
-                )
+                np.column_stack((context_samples, mock_data))
             )
         return np.array(generated_stars)
 
@@ -82,8 +75,7 @@ def setUp(result_output):
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
 
-    out_dir = get_item("common", "out_dir", raise_exception=True)
-    shutil.rmtree(out_dir)
+    shutil.rmtree(result_output, ignore_errors=True)
 
 @pytest.fixture
 def model_path():
