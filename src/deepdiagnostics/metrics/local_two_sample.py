@@ -60,13 +60,13 @@ class LocalTwoSampleTest(Metric):
         # P is the prior and x_P is generated via the simulator from the parameters P.
         self.p = self.data.sample_prior(self.number_simulations)
         self.q = np.zeros_like(self.p)
-        context_size = self.data.true_context().shape[-1]
+        context_size = self.data.simulator_outcome.shape[-1]
         remove_first_dim = False
 
         if self.data.simulator_dimensions == 1: 
             self.outcome_given_p = np.zeros((self.number_simulations, context_size))
         elif self.data.simulator_dimensions == 2: 
-            sim_out_shape = self.data.get_simulator_output_shape()
+            sim_out_shape = self.data.simulator_outcome[0].shape
             if len(sim_out_shape) != 2: 
                 # TODO Debug log with a warning
                 sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
@@ -169,7 +169,7 @@ class LocalTwoSampleTest(Metric):
             self.evaluation_data =  np.zeros((n_cross_folds, len(next(cv_splits)[1]), self.evaluation_context.shape[-1]))
         
         elif self.data.simulator_dimensions == 2: 
-            sim_out_shape = self.data.get_simulator_output_shape()
+            sim_out_shape = self.data.simulator_outcome[0].shape
             if len(sim_out_shape) != 2: 
                 # TODO Debug log with a warning
                 sim_out_shape = (sim_out_shape[1], sim_out_shape[2])

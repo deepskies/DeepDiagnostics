@@ -48,7 +48,7 @@ class Parity(Display):
 
     def _data_setup(self, n_samples: int = 80, **kwargs) -> DataDisplay:
 
-        context_shape = self.data.true_context().shape
+        context_shape = self.data.simulator_outcome.shape
         posterior_sample_mean = np.zeros((n_samples, self.data.n_dims))
         posterior_sample_std = np.zeros_like(posterior_sample_mean)
         true_samples = np.zeros_like(posterior_sample_mean)
@@ -56,11 +56,11 @@ class Parity(Display):
         random_context_indices = self.data.rng.integers(0, context_shape[0], n_samples)
         for index, sample in enumerate(random_context_indices): 
 
-            posterior_sample = self.model.sample_posterior(self.samples_per_inference,  self.data.true_context()[sample, :]).numpy()
+            posterior_sample = self.model.sample_posterior(self.samples_per_inference,  self.data.simulator_outcome[sample, :]).numpy()
             posterior_sample_mean[index] = np.mean(posterior_sample, axis=0)
             posterior_sample_std[index] = np.std(posterior_sample, axis=0)
 
-            true_samples[index] = self.data.get_theta_true()[sample, :]
+            true_samples[index] = self.data.thetas[sample, :]
 
         return DataDisplay(
             n_dims=self.data.n_dims,

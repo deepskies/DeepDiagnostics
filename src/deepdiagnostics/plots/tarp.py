@@ -52,7 +52,7 @@ class TARP(Display):
         return "tarp.png"
 
     def _data_setup(self, **kwargs) -> DataDisplay:
-        self.theta_true = self.data.get_theta_true()
+        self.theta_true = self.data.thetas.numpy()
         n_dims = self.theta_true.shape[1]
         posterior_samples = np.zeros(
             (self.number_simulations, self.samples_per_inference, n_dims)
@@ -62,7 +62,7 @@ class TARP(Display):
             sample_index = self.data.rng.integers(0, len(self.theta_true))
 
             theta = self.theta_true[sample_index, :]
-            x = self.data.true_context()[sample_index, :]
+            x = self.data.simulator_outcome[sample_index, :]
             posterior_samples[n] = self.model.sample_posterior(
                 self.samples_per_inference, x
             )

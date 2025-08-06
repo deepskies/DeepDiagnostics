@@ -39,8 +39,8 @@ class AllSBC(Metric):
             number_simulations)
 
     def _collect_data_params(self):
-        self.thetas = tensor(self.data.get_theta_true())
-        self.context = tensor(self.data.true_context())
+        self.thetas = tensor(self.data.thetas)
+        self.simulator_outcome = tensor(self.data.simulator_outcome)
 
     def calculate(self) -> dict[str, Sequence]:
         """
@@ -51,7 +51,7 @@ class AllSBC(Metric):
         """
         ranks, dap_samples = run_sbc(
             self.thetas,
-            self.context,
+            self.simulator_outcome,
             self.model.posterior,
             num_posterior_samples=self.samples_per_inference,
         )

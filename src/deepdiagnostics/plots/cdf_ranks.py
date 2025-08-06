@@ -46,8 +46,8 @@ class CDFRanks(Display):
         return "cdf_ranks.png"
 
     def _data_setup(self) -> DataDisplay:
-        thetas = tensor(self.data.get_theta_true())
-        context = tensor(self.data.true_context())
+        thetas = tensor(self.data.thetas)
+        context = tensor(self.data.simulator_outcome)
 
         ranks, _ = run_sbc(
             thetas, context, self.model.posterior, num_posterior_samples=self.samples_per_inference

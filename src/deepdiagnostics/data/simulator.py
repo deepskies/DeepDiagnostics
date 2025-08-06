@@ -50,7 +50,7 @@ class Simulator(ABC):
 
         Specify a simulation S such that y_{theta} = S(context_samples|theta)
 
-         Example: 
+        Example: 
         .. code-block:: python 
 
             # Generate from a random distribution
