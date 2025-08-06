@@ -11,6 +11,12 @@ class H5Data(Data):
     """
     Load data that has been saved in a h5 format. 
 
+    If you cast your problem to be y = mx + b, these are the fields required and what they represent:
+
+    simulator_outcome - y
+    thetas - parameters of the model - m, b
+    context - xs
+    
     .. attribute:: Data Parameters  
 
         :xs: [REQUIRED] The context, the x values. The data that was used to train a model on what conditions produce what posterior. 
@@ -29,6 +35,7 @@ class H5Data(Data):
         simulation_dimensions = None,
     ):
         super().__init__(path, simulator, simulator_kwargs, prior, prior_kwargs, simulation_dimensions)
+
 
     def _load(self, path):
         assert path.split(".")[-1] == "h5", "File extension must be h5"
@@ -49,17 +56,26 @@ class H5Data(Data):
             for key, value in data_arrays.items():
                 file.create_dataset(key, data=value)
 
-    def true_context(self):
-        """
-        Try to get the `xs` field of the loaded data.
-
-        Raises:
-            NotImplementedError: The data does not have a `xs` field. 
-        """
+    def _simulator_outcome(self): 
         try: 
-            return self.data["xs"]
-        except KeyError: 
-            raise NotImplementedError("Cannot find `xs` in data. Please supply it.")
+            return self.data["simulator_outcome"]
+        except KeyError:
+            try: 
+                sim_outcome = np.array((self.simulator_dimensions, len(self.thetas)))
+                for index, theta in enumerate(self.thetas): 
+                    sim_out = self.simulator(theta=theta.unsqueeze(0), n_samples=1)
+                    sim_outcome[:, index] = sim_out
+                return sim_outcome
+            
+            except Exception as e:
+                e = f"Data does not have a `simulator_output` field and could not generate it from a simulator: {e}"
+                raise ValueError(e)
+        
+    def _context(self): 
+        try: 
+            return self.data["context"]
+        except KeyError:
+            raise NotImplementedError("Data does not have a `context` field.")
 
     def prior(self):
         """
@@ -68,12 +84,14 @@ class H5Data(Data):
         Raises:
             NotImplementedError: The data does not have a `prior` field. 
         """
-        try: 
+        if 'prior' in self.data:
             return self.data['prior']
-        except KeyError: 
-            raise NotImplementedError("Data does not have a `prior` field.")
-
-    def get_theta_true(self):
+        elif self.prior_dist is not None: 
+            return self.prior_dist
+        else: 
+            raise ValueError("Data does not have a `prior` field.")
+        
+    def _thetas(self):
         """ Get stored theta used to train the model. 
 
         Returns:

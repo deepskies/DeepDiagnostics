@@ -51,69 +51,60 @@ class PPC(Display):
         return "predictive_posterior_check.png"
 
     def _get_posterior_2d(self, n_simulator_draws): 
-        context_shape = self.data.true_context().shape
-        sim_out_shape = self.data.get_simulator_output_shape()
+        sim_out_shape = self.data.simulator(
+            theta=self.data.thetas[0].unsqueeze(0), 
+            n_samples=1
+        )[0].shape
+
         remove_first_dim = False
-        if len(sim_out_shape) != 2: 
+        if len(sim_out_shape) > 2: 
             # TODO Debug log with a warning
             sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
             remove_first_dim = True
 
         posterior_predictive_samples = np.zeros((n_simulator_draws, *sim_out_shape))
-        posterior_true_samples = np.zeros_like(posterior_predictive_samples)
 
-        random_context_indices = self.data.rng.integers(0, context_shape[0], n_simulator_draws)
-        for index, sample in enumerate(random_context_indices): 
-            context_sample = self.data.true_context()[sample, :]
-            posterior_sample = self.model.sample_posterior(1, context_sample)
+        random_context_indices = self.data.rng.integers(0, self.data.simulator_outcome.shape[0], n_simulator_draws)
+        simulator_true = self.data.simulator_outcome[random_context_indices, :].numpy()
+        for index, sample in enumerate(simulator_true): 
+            posterior_sample = self.model.sample_posterior(1, sample)
 
             # get the posterior samples for that context 
-            sim_out_posterior =  self.data.simulator.simulate(
-                theta=posterior_sample, context_samples = context_sample
-            )
-            sim_out_true = self.data.simulator.simulate(
-                theta=self.data.get_theta_true()[sample, :], context_samples=context_sample
+            sim_out_posterior =  self.data.simulator(n_samples=1,
+                theta=posterior_sample
             )
             if remove_first_dim: 
                 sim_out_posterior = sim_out_posterior[0]
-                sim_out_true = sim_out_true[0]
 
             posterior_predictive_samples[index] = sim_out_posterior
-            posterior_true_samples[index] = sim_out_true
 
-        return posterior_predictive_samples, posterior_true_samples
+        return posterior_predictive_samples, simulator_true
 
     def _get_posterior_1d(self, n_simulator_draws):
-        context_shape = self.data.true_context().shape
-        posterior_predictive_samples = np.zeros((n_simulator_draws, self.samples_per_inference, context_shape[-1]))
-        posterior_true_samples = np.zeros_like(posterior_predictive_samples)
-        context = np.zeros((n_simulator_draws, context_shape[-1]))
+        simulator_outcome_shape = self.data.simulator_dimensions
 
-        random_context_indices = self.data.rng.integers(0, context_shape[0], n_simulator_draws)
-        for index, sample in enumerate(random_context_indices): 
-            context_sample = self.data.true_context()[sample, :]
-            context[index] = context_sample
+        posterior_predictive_samples = np.zeros((n_simulator_draws, self.samples_per_inference, simulator_outcome_shape))
 
-            posterior_sample = self.model.sample_posterior(self.samples_per_inference, context_sample)
+        # Sample one random simulator output for each draw
+        random_context_indices = self.data.rng.integers(0, self.data.simulator_outcome.shape[0], n_simulator_draws)
+        simulator_samples = self.data.simulator_outcome[random_context_indices, :].numpy()
+        posterior_predictive_samples = np.zeros((n_simulator_draws, self.samples_per_inference, *simulator_samples[0].shape))
 
-            # get the posterior samples for that context 
-            posterior_predictive_samples[index] = self.data.simulator.simulate(
-                theta=posterior_sample, context_samples = context_sample
+        for index, sample in enumerate(simulator_samples): 
+            posterior_sample = self.model.sample_posterior(self.samples_per_inference, sample)
+            posterior_predictive_samples[index] = self.data.simulator(n_samples=len(sample),
+                theta=posterior_sample
             )
-            posterior_true_samples[index] = self.data.simulator.simulate(
-                theta=self.data.get_theta_true()[sample, :], context_samples=context_sample
-            )
-        return posterior_predictive_samples, posterior_true_samples, context
+
+        return posterior_predictive_samples, simulator_samples
 
     def _data_setup(self, n_unique_plots: Optional[int] = 3, **kwargs) -> DataDisplay:
+        true_sigma = None
         if self.data.simulator_dimensions == 1: 
-            n_dims = 1
-
-            posterior_predictive_samples, posterior_true_samples, context = self._get_posterior_1d(n_unique_plots)
+            posterior_predictive_samples, posterior_true_samples = self._get_posterior_1d(n_unique_plots)
             true_sigma = self.data.get_sigma_true()
 
         elif self.data.simulator_dimensions == 2: 
-            n_dims = 2
             posterior_predictive_samples, posterior_true_samples = self._get_posterior_2d(n_unique_plots)
 
         else: 
@@ -122,10 +113,9 @@ class PPC(Display):
         return DataDisplay(
             n_unique_plots=n_unique_plots,
             posterior_predictive_samples=posterior_predictive_samples,
-            n_dims=n_dims,
+            n_dims=self.data.simulator_dimensions,
             posterior_true_samples=posterior_true_samples,
-            context=context if n_dims == 1 else None,
-            true_sigma=true_sigma if n_dims == 1 else None
+            true_sigma=true_sigma
         )
 
 
@@ -167,9 +157,6 @@ class PPC(Display):
 
         for plot_index in range(data_display.n_unique_plots): 
             if data_display.n_dims == 1: 
-                if data_display.context is None:
-                    raise ValueError("Display Data is malformed. Missing `context` for 1D simulation. Please rerun data setup stage.")
-
 
                 dimension_y_simulation = data_display.posterior_predictive_samples[plot_index]
                 y_simulation_mean = np.mean(dimension_y_simulation, axis=0).ravel()
@@ -177,7 +164,7 @@ class PPC(Display):
 
                 for sigma, color in zip(range(n_coverage_sigma), self.colors):
                         subplots[0, plot_index].fill_between(
-                        data_display.context[plot_index].ravel(),
+                        range(len(y_simulation_mean)),
                         y_simulation_mean - sigma * y_simulation_std,
                         y_simulation_mean + sigma * y_simulation_std,
                         color=color,
@@ -186,22 +173,22 @@ class PPC(Display):
                     )
 
                 subplots[0, plot_index].plot(
-                    data_display.context[plot_index],
+                    range(len(y_simulation_mean)),
                     y_simulation_mean - data_display.true_sigma,
                     color="black",
                     linestyle="dashdot",
                     label="True Input Error"
                 )
                 subplots[0, plot_index].plot(
-                    data_display.context[plot_index],
+                    range(len(y_simulation_mean)),
                     y_simulation_mean + data_display.true_sigma,
                     color="black",
                     linestyle="dashdot",
                 )
 
-                true_y = np.mean(data_display.posterior_true_samples[plot_index, :, :], axis=0).ravel()
+                true_y = data_display.posterior_true_samples[plot_index, :].ravel()
                 subplots[1, plot_index].scatter(
-                    data_display.context[plot_index], 
+                    range(len(true_y)),
                     true_y, 
                     marker=theta_true_marker, 
                     label='Theta True'

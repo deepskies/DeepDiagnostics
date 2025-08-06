@@ -37,12 +37,8 @@ class CoverageFraction(Metric):
         self._collect_data_params()
 
     def _collect_data_params(self):
-        self.thetas = self.data.get_theta_true()
-        self.context = self.data.true_context()
-
-    def _run_model_inference(self, samples_per_inference, y_inference):
-        samples = self.model.sample_posterior(samples_per_inference, y_inference)
-        return samples.numpy()
+        self.thetas = self.data.thetas
+        self.simulator_outcome = self.data.simulator_outcome
 
     def calculate(self) -> tuple[Sequence, Sequence]:
         """
@@ -55,6 +51,7 @@ class CoverageFraction(Metric):
         all_samples = np.empty(
             (self.number_simulations, self.samples_per_inference, np.shape(self.thetas)[1])
         )
+
         iterator = range(self.number_simulations)
         if self.use_progress_bar:
             iterator = tqdm(
@@ -62,12 +59,13 @@ class CoverageFraction(Metric):
                 desc="Sampling from the posterior for each observation",
                 unit=" observation",
             )
+
         n_theta_samples = self.thetas.shape[0]
         count_array = np.zeros((self.number_simulations, len(self.percentiles), self.thetas.shape[1]))
 
         for sample_index in iterator:
-            context_sample = self.context[self.data.rng.integers(0, len(self.context))]
-            samples = self._run_model_inference(self.samples_per_inference, context_sample)
+            context_sample = self.simulator_outcome[self.data.rng.integers(0, len(self.simulator_outcome))]
+            samples = self.model.sample_posterior(self.samples_per_inference, context_sample).numpy()
 
             all_samples[sample_index] = samples
 
@@ -81,7 +79,6 @@ class CoverageFraction(Metric):
                 # the units are in parameter space
                 confidence_lower = np.percentile(samples, percentile_lower, axis=0)
                 confidence_upper = np.percentile(samples, percentile_upper, axis=0)
-                
 
                 # this is asking if the true parameter value
                 # is contained between the

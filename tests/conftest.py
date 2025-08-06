@@ -57,7 +57,7 @@ class Mock2DSimulator(Simulator):
             
         for sample_index, t in enumerate(theta): 
             mock_data = np.random.normal(
-                loc=t[0], scale=abs(t[1]), size=(len(context_samples), 2)
+                loc=t[0], scale=abs(t[1]), size=(len(context_samples), len(context_samples))
             )
             generated_stars.append(
                 np.column_stack((context_samples, mock_data))
@@ -84,7 +84,7 @@ def model_path():
 
 @pytest.fixture
 def data_path():
-    return "resources/saveddata/data_validation.h5"
+    return "resources/saveddata/data_test.h5"
 
 @pytest.fixture
 def result_output(): 
