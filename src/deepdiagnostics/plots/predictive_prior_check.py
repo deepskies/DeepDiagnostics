@@ -54,7 +54,7 @@ class PriorPC(Display):
         return "predictive_prior_check.png"
 
     def _data_setup(self, n_rows: int = 3, n_columns: int = 3, **kwargs) -> DataDisplay:
-        context_shape = self.data.true_context().shape
+        sim_out_shape = self.data.simulator_outcome[0].shape
         remove_first_dim = False
 
         if self.data.simulator_dimensions == 1: 
@@ -65,45 +65,37 @@ class PriorPC(Display):
 
 
         if plot_image: 
-            sim_out_shape = self.data.get_simulator_output_shape()
             if len(sim_out_shape) != 2: 
                 # TODO Debug log with a warning
                 sim_out_shape = (sim_out_shape[1], sim_out_shape[2])
                 remove_first_dim = True
-            prior_predictive_samples = np.zeros((n_rows, n_columns, *sim_out_shape))
 
-        else: 
-            prior_predictive_samples = np.zeros((n_rows, n_columns, context_shape[-1]))
-
+        prior_predictive_samples = np.zeros((n_rows, n_columns, *sim_out_shape))
         prior_true_sample = np.zeros((n_rows, n_columns, self.data.n_dims))
-        context = np.zeros((n_rows, n_columns, context_shape[-1]))
-        random_context_indices = self.data.rng.integers(0, context_shape[0], (n_rows, n_columns))
+
+        print(prior_predictive_samples.shape)
+        print(prior_true_sample.shape)
 
         for row_index in range(n_rows): 
             for column_index in range(n_columns): 
 
-                sample = random_context_indices[row_index, column_index]
-                context_sample = self.data.true_context()[sample, :]
-
                 prior_sample = self.data.sample_prior(1)[0]
                 # get the posterior samples for that context 
-                simulation_sample = self.data.simulator.simulate(
-                    theta=prior_sample, context_samples = context_sample
+                simulation_sample = self.data.simulator(
+                    theta=prior_sample, n_samples=np.prod(sim_out_shape)
                 )
                 if remove_first_dim: 
                     simulation_sample = simulation_sample[0]
 
                 prior_predictive_samples[row_index, column_index] = simulation_sample
                 prior_true_sample[row_index, column_index] = prior_sample
-                context[row_index, column_index] = context_sample
 
         return DataDisplay(
             plot_image=plot_image,
             n_rows=n_rows,
             n_columns=n_columns,
             prior_predictive_samples=prior_predictive_samples, 
-            prior_true_sample=prior_true_sample, 
-            context=context)
+            prior_true_sample=prior_true_sample)
 
     def plot(
             self, 
@@ -192,7 +184,7 @@ class PriorPC(Display):
 
                 else: 
                     subplots[plot_row_index, plot_column_index].plot(
-                        data_display.context[column_index, row_index],
+                        range(len(data_display.prior_predictive_samples[column_index, row_index])),
                         data_display.prior_predictive_samples[column_index, row_index]
                     )
 

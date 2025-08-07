@@ -46,99 +46,32 @@ class Data:
                 msg = f"Could not load the lookup table simulator - {e}. You cannot use generative diagnostics."
                 print(msg)
 
+        self.context = self._context()
+        self.thetas = self._thetas()
+
         self.prior_dist = self.load_prior(prior, prior_kwargs)
-        self.n_dims = self.get_theta_true().shape[1]
+        self.n_dims = self.thetas.shape[1]
         self.simulator_dimensions = simulation_dimensions if simulation_dimensions is not None else get_item("data", "simulator_dimensions", raise_exception=False)
 
-    def get_simulator_output_shape(self) -> tuple[Sequence[int]]: 
-        """
-        Run a single sample of the simulator to verify the out-shape. 
-
-        Returns:
-            tuple[Sequence[int]]: Output shape of a single sample of the simulator. 
-        """
-        context_shape = self.true_context().shape
-        sim_out = self.simulator(theta=self.get_theta_true()[0:1, :], n_samples=context_shape[-1])
-        return sim_out.shape
+        self.simulator_outcome = self._simulator_outcome()
 
     def _load(self, path: str):
         raise NotImplementedError
 
-    def true_context(self):
-        """
-        True data x values, if supplied by the data method. 
-        """
-        # From Data
+    def _simulator_outcome(self):
+        raise NotImplementedError
+    
+    def _context(self):
+        raise NotImplementedError
+    
+    def _thetas(self):
         raise NotImplementedError
 
-    def true_simulator_outcome(self) -> np.ndarray:
-        """
-        Run the simulator on all true theta and true x values. 
+    def save(self, data, path: str):
+        raise NotImplementedError
 
-        Returns:
-            np.ndarray: array of (n samples, simulator shape) showing output of the simulator on all true samples in data.
-        """
-        return self.simulator(self.get_theta_true(), self.true_context())
-
-    def sample_prior(self, n_samples: int) -> np.ndarray:
-        """
-        Draw samples from the simulator
-
-        Args:
-            n_samples (int): Number of samples to draw
-
-        Returns:
-            np.ndarray: 
-        """
-        return self.prior_dist(size=(n_samples, self.n_dims))
-
-    def simulator_outcome(self, theta:np.ndarray, condition_context:np.ndarray=None, n_samples:int=None):
-        """_summary_
-
-        Args:
-            theta (np.ndarray): Theta value of shape (n_samples, theta_dimensions)
-            condition_context (np.ndarray, optional): If x values for theta are known, use them. Defaults to None.
-            n_samples (int, optional): If x values are not known for theta, draw them randomly. Defaults to None.
-
-        Raises:
-            ValueError: If either n samples or content samples is supplied. 
-
-        Returns:
-            np.ndarray: Simulator output of shape (n samples, simulator_dimensions)
-        """
-        if condition_context is None:
-            if n_samples is None:
-                raise ValueError(
-                    "Samples required if condition context is not specified"
-                )
-            return self.simulator(theta, n_samples)
-        else:
-            return self.simulator.simulate(theta, condition_context)
-
-    def simulated_context(self, n_samples:int) -> np.ndarray:
-        """
-        Call the simulator's `generate_context` method. 
-
-        Args:
-            n_samples (int): Number of samples to draw. 
-
-        Returns:
-            np.ndarray: context (x values), as defined by the simulator. 
-        """
-        return self.simulator.generate_context(n_samples)
-
-    def get_theta_true(self) -> Union[Any, float, int, np.ndarray]:
-        """
-        Look for the true theta given by data. If supplied in the method, use that, other look in the configuration file. 
-        If neither are supplied, return None.
-
-        Returns:
-            Any: Theta value selected by the search. 
-        """
-        if hasattr(self, "theta_true"):
-            return self.theta_true
-        else:
-            return get_item("data", "theta_true", raise_exception=True)
+    def read_prior(self):
+        raise NotImplementedError
 
     def get_sigma_true(self) -> Union[Any, float, int, np.ndarray]:
         """
@@ -152,12 +85,6 @@ class Data:
             return self.sigma_true()
         else:
             return get_item("data", "sigma_true", raise_exception=True)
-
-    def save(self, data, path: str):
-        raise NotImplementedError
-
-    def read_prior(self):
-        raise NotImplementedError
 
     def load_prior(self, prior:str, prior_kwargs:dict[str, any]) -> callable:
         """
@@ -201,3 +128,21 @@ class Data:
 
         except KeyError as e:
             raise RuntimeError(f"Data missing a prior specification - {e}")
+
+    def sample_prior(self, n_samples: int) -> np.ndarray:
+        """
+        Sample from the prior. 
+
+        Args:
+            n_samples (int): Number of samples to draw. 
+
+        Returns:
+            np.ndarray: Samples drawn from the prior. 
+        """
+
+        if self.prior_dist is None:
+            prior = self.read_prior()
+            sample = self.rng.randint(0, len(prior), size=n_samples)
+            return prior[sample]
+        else: 
+            return self.prior_dist(size=(n_samples, self.n_dims))

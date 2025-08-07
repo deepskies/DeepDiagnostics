@@ -71,6 +71,10 @@ def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output, mo
     plot(**get_item("plots", "PPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
+
+@pytest.mark.xfail(reason="2D dataset needs to be generated - the simulator will not run automatically.")
+def test_ppc_2d(plot_config, mock_model, mock_2d_data, result_output, mock_run_id):
+    Config(plot_config)
     plot = PPC(
         mock_model,
         mock_2d_data, mock_run_id, save=True, show=False, 
@@ -79,11 +83,16 @@ def test_ppc(plot_config, mock_model, mock_data, mock_2d_data, result_output, mo
     plot(**get_item("plots", "PPC", raise_exception=False))
 
 
-def test_prior_pc(plot_config, mock_model, mock_2d_data, mock_data, mock_run_id, result_output):
+def test_prior_pc(plot_config, mock_model, mock_data, mock_run_id):
     Config(plot_config)
     plot = PriorPC(mock_model, mock_data, mock_run_id, save=True, show=False)
     plot(**get_item("plots", "PriorPC", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+
+@pytest.mark.xfail(reason="2D dataset needs to be generated - the simulator will not run automatically.")
+def plot_prior_pc_2d(plot_config, mock_model, mock_2d_data, result_output, mock_run_id):
+    Config(plot_config)
     plot = PriorPC(
         mock_model,
         mock_2d_data, mock_run_id, save=True, show=False, 

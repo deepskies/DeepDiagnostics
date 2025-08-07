@@ -81,6 +81,5 @@ def test_missing_simulator(model_path, data_path):
     process = subprocess.run(command, capture_output=True)
     exit_code = process.returncode
     stdout = process.stdout.decode("utf-8") 
-    assert exit_code == 0
-    plot_name = "PPC"
-    assert f"Cannot run {plot_name} - simulator missing." in stdout
+    assert exit_code == 0, process.stderr.decode("utf-8")
+    assert "Warning: Simulator not loaded. Using a lookup table simulator." in stdout

@@ -11,11 +11,11 @@ class LookupTableSimulator(Simulator):
 
     Does not need to be registered, it is automatically available as the default simulator
 
-    Assumes your has the following fields accessible as data["xs"], data["thetas"], data["ys"]
+    Assumes your has the following fields accessible as data["context"], data["thetas"], data["simulator_outcome"],
     where xs is the context, thetas are the parameters, and ys are the outcomes
     """
 
-    def __init__(self, data: torch.tensor, random_state: np.random.Generator, outside_range_limit: float = 2.0) -> None:
+    def __init__(self, data: torch.tensor, random_state: np.random.Generator, outside_range_limit: float = 2.0, hash_precision: int = 10) -> None:
         """
 
         Parameters
@@ -28,7 +28,9 @@ class LookupTableSimulator(Simulator):
             When values of theta and x are passed that are not in the dataset, 
             if they are greater than the max by this threshold, (where value > outside_range_limit*value_max), 
             a value error is raised instead of taking the nearest neighbor; by default 1.5
-
+        hash_precision : int, optional
+            Number of decimal places to round to when creating hash keys, by default 10
+            
         Raises
         ------
         ValueError
@@ -36,41 +38,49 @@ class LookupTableSimulator(Simulator):
         """
         super().__init__()
         # Normalizing for finding nearest neighbors
-        self.threshold = outside_range_limit
-        self.max_theta = torch.max(data["thetas"], axis=0).values
-        self.min_theta = torch.min(data["thetas"], axis=0).values
-        self.max_x = torch.max(data["xs"], axis=0).values
-        self.min_x = torch.min(data["xs"], axis=0).values
-
-        self.table = self._build_table(data)
-        self.rng = random_state
-
-        for key in ["xs", "thetas", "ys"]:
+        for key in ["simulator_outcome", "thetas", "context"]:
             if key not in data.keys():
                 msg = f"Data must have a field `{key}` - found {data.keys()}"
                 raise ValueError(msg)
+
+        self.precision = hash_precision
+
+        self.max_theta = torch.max(data["thetas"], axis=0).values
+        self.min_theta = torch.min(data["thetas"], axis=0).values
+        self.max_x = torch.max(data["context"], axis=0).values
+        self.min_x = torch.min(data["context"], axis=0).values
+
+        self.threshold = outside_range_limit * torch.max(self.max_theta)
+
+        self.table = self._build_table(data)
+        self.rng = random_state
         
     def _build_table(self, data): 
         "Takes all the theta, context and outcome data and builds a lookup table"
         table = {
-            self._build_hash(theta, context): {
-                "y": outcome,
+            self._build_hash(theta, simulator_outcome): {
+                "y": simulator_outcome,
                 "loc": self._calc_hash_distance(theta, context),
                 "theta": theta,
                 "x": context,
             }
-            for theta, context, outcome in zip(data["thetas"], data["xs"], data["ys"])
+            for theta, simulator_outcome, context in zip(data["thetas"], data["simulator_outcome"], data['context'])
         }
+        print(table)
         return table
 
     def _build_hash(self, theta, context): 
         "Take a theta and context, and build a hashable key for the lookup table"
-        return hash(tuple(torch.concat([theta, context], dim=-1)))
+        hashval = torch.concat([theta, context], dim=-1).flatten()
+        rounded_values = [round(val.item(), self.precision) for val in hashval]
+        return hash(tuple(rounded_values))
 
     def _calc_hash_distance(self, theta: Union[torch.Tensor, float], context: Union[torch.Tensor, float]) -> float:
         "Create a distance (as the norm) metric between pairs of theta and context"
         theta = (theta - self.min_theta) / (self.max_theta - self.min_theta)
         context = (context - self.min_x) / (self.max_x - self.min_x)
+        theta = theta.unsqueeze(0) if theta.dim() == 0 else theta
+        context = context.unsqueeze(0) if context.dim() == 0 else context
         return torch.linalg.norm(torch.concat([theta, context], dim=-1))
 
     def generate_context(self, n_samples):
@@ -100,11 +110,13 @@ class LookupTableSimulator(Simulator):
             context_samples = torch.Tensor([context_samples])
 
         for t, x in zip(theta, context_samples):
+            t = t.unsqueeze(0) if t.dim() == 0 else t
+            x = x.unsqueeze(0) if x.dim() == 0 else x
             key = self._build_hash(t, x)
             try: 
                 results.append(self.table[key]["y"])
             except KeyError:
-                print(f"Could not match theta {t} and x {x} to a result - taking the nearest neighbor")
+                print(f"Could not match theta {t} and context {x} to a result - taking the nearest neighbor")
                 space_hit = self._calc_hash_distance(t, x)
                 nearest_key = min(self.table.keys(), key=lambda k: abs(self.table[k]["loc"] - space_hit))
 
