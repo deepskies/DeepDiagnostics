@@ -20,14 +20,76 @@ Installation
     
     git clone https://github.com/deepskies/DeepDiagnostics/ 
     pip install poetry 
-    poetry shell 
-    poetry install
+    poetry install 
+    poetry run diagnose --help
 
+
+Pre-requisites
+-------------
+
+DeepDiagnostics does not train models or generate data, they must be provided.
+Possible model formats are listed in :ref:`models` and data formats in :ref:`data`.
+If you are using a simulator, it must be registered by using `deepdiagnostics.utils.register.register_simulator`.
+More information can be found in :ref:`custom_simulations`.
+
+Output directories are automatically created, and if a run ID is not specified, one is generated. 
+Only if a run ID is specified will previous runs be overwritten.
 
 Configuration 
-----
+-------------
 
-Description of the configuration file, including defaults, can be found in :ref:`configuration`.
+Description of the configuration file, including defaults, can be found in :ref:`configuration`. 
+Below is a minimal example. 
+
+...code-block:: yaml
+
+    common: 
+        out_dir: "./deepdiagnostics_results/"
+        random_seed: 42
+    data: 
+        data_engine: "H5Data"
+        data_path: "./data/my_data.h5"
+        simulator: "MySimulator"
+        simulator_kwargs: # Any augments used to initialize the simulator
+            foo: bar
+    model: 
+        model_engine: "SBIModel"
+        model_path: "./models/my_model.pkl"
+    plots_common:   # Used across all plots
+        parameter_labels:  # Can either be plain strings or rendered LaTeX strings
+            - "My favorite parameter"
+            - "My least favorite parameter"
+            - "My most mid parameter"
+        parameter_colors:   # Any color recognized by matplotlib
+            - "#264a95"
+            - "#ed9561"
+            - "#89b7bb"
+        line_style_cycle:  # Any line type recognized by matplotlib
+            - solid
+            - dashed
+            - dotted
+        figure_size:  # Approximate size, it can be scaled when adding additional subfigures
+            - 6 # x length
+            - 6 # y length
+    metrics_common: # Used across all metrics (and plots if the plots have a calculation step)
+        samples_per_inference: 1000
+        number_simulations: 100
+        percentiles: 
+            - 68
+            - 95
+    plots:
+        CoverageFraction:   # Arguments supplied to {plottype}.plot()
+            include_coverage_std: True
+            include_ideal_range: True
+            reference_line_label: "Ideal Coverage"
+        TARP: 
+            coverage_sigma: 4
+            title: "TARP of My Model"
+    metrics:
+        AllSBC
+        Ranks:
+            num_bins: 3
+
 
 Pipeline 
 ---------
