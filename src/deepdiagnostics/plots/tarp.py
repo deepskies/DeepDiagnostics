@@ -4,7 +4,6 @@ import numpy as np
 import tarp
 
 import matplotlib.pyplot as plt
-import matplotlib.colors as plt_colors
 from matplotlib.axes import Axes as ax
 from matplotlib.figure import Figure as fig
 
@@ -77,16 +76,6 @@ class TARP(Display):
         self.line_style = get_item(
             "plots_common", "line_style_cycle", raise_exception=False
         )
-
-    def _get_hex_sigma_colors(self, n_colors):
-
-        cmap = plt.get_cmap(self.colorway)
-        hex_colors = []
-        arr = np.linspace(0, 1, n_colors)
-        for hit in arr:
-            hex_colors.append(plt_colors.rgb2hex(cmap(hit)))
-
-        return hex_colors
 
     def plot(
         self,
