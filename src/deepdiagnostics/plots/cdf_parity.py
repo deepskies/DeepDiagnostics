@@ -3,7 +3,7 @@ from typing import Union, TYPE_CHECKING
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches as mpatches
-from scipy.stats import ecdf
+from scipy.stats import ecdf, binom
 
 from deepdiagnostics.plots.plot import Display
 from deepdiagnostics.utils.config import get_item
@@ -47,32 +47,35 @@ class CDFParityPlot(Display):
     def plot_name(self):
         return "cdf_parity.png"
     
-    def _calculate_theory_cdf(self, distribution:np.array, probability:float) -> tuple[np.array, np.array]:
+    def _calculate_theory_cdf(self, probability:float, num_bins:int=100) -> tuple[np.array, np.array]:
         """
         Calculate the theoretical limits for the CDF of `distribution` with the percentile `probability`.
-
-        Uses the  Dvoretzky-Kiefer-Wolfowitz confidence bands as an approximation for plotting purposes. : https://en.wikipedia.org/wiki/Dvoretzky%E2%80%93Kiefer%E2%80%93Wolfowitz_inequality
+        Assumes the distribution is a binomial distribution
         """
         
         n_dims = self.data.n_dims
-        bounds = np.zeros((distribution.shape[0], 2, n_dims))
-        cdf = np.zeros((distribution.shape[0], n_dims))
+        bounds = np.zeros((num_bins, 2, n_dims))
+        cdf = np.zeros((num_bins, n_dims))
+
         for dim in range(n_dims):
-            # normalize the distribution between 0 and 1
-            samples = distribution[:, dim]
-            samples = (samples - np.min(samples)) / (np.max(samples) - np.min(samples))
 
-            samples = np.sort(samples)
+            # Construct uniform histogram.
+            uni_bins = binom(self.samples_per_inference, p=1 / num_bins).ppf(0.5) * np.ones(num_bins)
+            uni_bins_cdf = uni_bins.cumsum() / uni_bins.sum()
+            # Decrease value one in last entry by epsilon to find valid
+            # confidence intervals.
+            uni_bins_cdf[-1] -= 1e-9
+            lower = [binom(self.samples_per_inference, p=p).ppf(1-probability) for p in uni_bins_cdf]
+            upper = [binom(self.samples_per_inference, p=p).ppf(probability) for p in uni_bins_cdf]
 
-            cdf[:, dim] = np.cumsum(samples)/np.sum(samples)
-            lower, upper = self._compute_intervals(cdf, probability, dim)
+            bounds[:, 0, dim] = lower/np.max(lower) 
+            bounds[:, 1, dim] = upper/np.max(upper)
 
-            bounds[:, 0, dim] = lower
-            bounds[:, 1, dim] = upper
+            cdf[:, dim] = uni_bins_cdf 
             
-            return bounds, cdf
+        return bounds, cdf
 
-    def _data_setup(self) -> DataDisplay:
+    def _data_setup(self, num_bins:int=100, **kwargs) -> DataDisplay:
         if all([p >= 1 for p in self.percentiles]): 
             percentiles = [p/100 for p in self.percentiles]
         else: 
@@ -109,16 +112,14 @@ class CDFParityPlot(Display):
         
         all_bands = {}
         for interval in percentiles:
-            bands, cdf = self._calculate_theory_cdf(
-                thetas, interval
-            )
+            bands, cdf = self._calculate_theory_cdf(interval, num_bins)
             all_bands[interval] = bands
 
         for dim, name in zip(range(n_dims), self.parameter_names):
             parameter_quantiles = np.linspace(
                 np.min(thetas[:, dim]), 
                 np.max(thetas[:, dim]), 
-                num=thetas.shape[0]
+                num=num_bins
             )
             ecdf_sample = ecdf(posterior_samples[:, dim].ravel())
             sample_probs_common = ecdf_sample.cdf.evaluate(parameter_quantiles)
@@ -155,24 +156,16 @@ class CDFParityPlot(Display):
         )
 
     def _plot_theory_intervals(self, data_display, ax, parameter_name, theory_label, color, interval): 
-
-        if data_display[f"low_theory_probability_{interval}_{parameter_name}"] is None: 
-            lower, upper = self._compute_intervals(
-                data_display[f"theory_probability_{parameter_name}"], 
-                interval, 
-                self.parameter_names.index(parameter_name)
-            )
-        else: 
-            lower, upper = (
-                data_display[f"low_theory_probability_{interval}_{parameter_name}"],    
-                data_display[f"high_theory_probability_{interval}_{parameter_name}"]
-            )
+        lower, upper = (
+            data_display[f"low_theory_probability_{interval}_{parameter_name}"],
+            data_display[f"high_theory_probability_{interval}_{parameter_name}"]
+        )
 
         ax.fill_between(
             data_display[f"quantiles_{parameter_name}"], 
             lower, 
             upper, 
-            alpha=0.2,
+            alpha=0.6,
             color=color
         )
 
@@ -213,13 +206,14 @@ class CDFParityPlot(Display):
             include_residuals: bool = False,
             include_theory_intervals: bool = True,
             display_parameters_separate: bool = False,
-            x_label: str = "", 
-            y_label: str = "",
+            x_label: str = "Quantiles", 
+            y_label: str = "CDF",
             title: str = "CDF Parity Plot",
             samples_label = "Posterior Samples",
             theory_label = "Theory",
             theory_color = "gray",
             theory_line_style = "--",
+            normalize_view: bool = True,
             **kwargs
         ) -> tuple["fig", "ax"]: 
         """
@@ -254,6 +248,7 @@ class CDFParityPlot(Display):
         # Used if theory intervals are included
         theory_color_cycle = self._get_hex_sigma_colors(len(data_display["percentiles"]))
 
+
         if include_residuals: 
             row_len = self.figure_size[0] * .8*len(self.parameter_names) if display_parameters_separate else self.figure_size[0]
             figsize = (row_len, 1.5*self.figure_size[1])
@@ -273,6 +268,9 @@ class CDFParityPlot(Display):
                 figsize=(row_len, self.figure_size[1]),
                 sharey='row')
 
+        if normalize_view: 
+            for parameter_name in self.parameter_names:
+                data_display[f"quantiles_{parameter_name}"] = np.linspace(0, 1, num=len(data_display[f"quantiles_{parameter_name}"]))
 
         if include_theory_intervals:  # Each plot needs to iterate over the percentiles in the main plot and the residuals 
             if display_parameters_separate: 
