@@ -83,7 +83,7 @@ class CDFParityPlot(Display):
             percentiles = self.percentiles or [0.95]
 
         n_dims = self.data.n_dims
-        theta_true = self.data.get_theta_true()
+        theta_true = self.data.thetas
         posterior_samples = np.zeros(
             (self.number_simulations, self.samples_per_inference, n_dims)
         )
@@ -94,7 +94,7 @@ class CDFParityPlot(Display):
             sample_index = self.data.rng.integers(0, len(theta_true))
 
             theta = theta_true[sample_index, :]
-            x = self.data.true_context()[sample_index, :]
+            x = self.data.context[sample_index, :]
             posterior_samples[n] = self.model.sample_posterior(
                 self.samples_per_inference, x
             )
