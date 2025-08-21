@@ -43,6 +43,7 @@ class CDFParityPlot(Display):
         super().__init__(model, data, run_id, save, show, out_dir, percentiles, use_progress_bar, samples_per_inference, number_simulations, parameter_names, parameter_colors, colorway)
         self.line_cycle =  tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
         self.labels_dict = {}
+        self.theory_alpha = 0.2
 
     def plot_name(self):
         return "cdf_parity.png"
@@ -165,7 +166,7 @@ class CDFParityPlot(Display):
             data_display[f"quantiles_{parameter_name}"], 
             lower, 
             upper, 
-            alpha=0.6,
+            alpha=self.theory_alpha,
             color=color
         )
 
@@ -187,7 +188,7 @@ class CDFParityPlot(Display):
             data_display[f"quantiles_{parameter_name}"], 
             low, 
             high, 
-            alpha=0.2,
+            alpha=self.theory_alpha,
             color=color
         )
 
@@ -214,16 +215,14 @@ class CDFParityPlot(Display):
             theory_color = "gray",
             theory_line_style = "--",
             normalize_view: bool = True,
+            theory_alpha: float = 0.2,
             **kwargs
         ) -> tuple["fig", "ax"]: 
         """
         Compute the ECDF for post posteriors samples against the true parameter values.
         Uses [scipy.stats.ecdf](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ecdf.html) to compute the distributions for sampled posterior samples. 
 
-        If `include_theory_intervals` is true, those intervals are computed using the Dvoretzky-Kiefer-Wolfowitz confidence bands as an approximation for plotting purposes.
-        Please note that the theory intervals are required to be the same for all parameters, so if `display_parameters_separate` is not set, the theory intervals will be 
-        computed from the first parameter's distribution, which may not be correct for all parameters. 
-        Check both options before using this plot for analysis.
+        To show the all distributions on one plot - set `display_parameters_separate` to `False` and verify `normalize_view` is set to `True`, this will ensure the x & y axes is normalized to [0, 1] for all parameters.
 
         Args: 
             data_display (DataDisplay or str): The data to plot. If a string, it is assumed to be the path to an HDF5 file.
@@ -237,8 +236,11 @@ class CDFParityPlot(Display):
             theory_label (str): Label for the theory in the plot.
             theory_color (str): Color for the center theory line.
             theory_line_style (str): Line style for center theory line.
+            normalize_view (bool): Whether to normalize the x axis of the plot to [0, 1] for all parameters.
+            theory_alpha (float): Alpha (transparency) value for the fill between the theory intervals. Between 0 and 1.
         """
 
+        self.theory_alpha = theory_alpha
         color_cycler = iter(plt.cycler("color", self.parameter_colors))
         line_style_cycler = iter(plt.cycler("line_style", self.line_cycle))
 
@@ -271,7 +273,7 @@ class CDFParityPlot(Display):
         if normalize_view: 
             for parameter_name in self.parameter_names:
                 data_display[f"quantiles_{parameter_name}"] = np.linspace(0, 1, num=len(data_display[f"quantiles_{parameter_name}"]))
-
+        
         if include_theory_intervals:  # Each plot needs to iterate over the percentiles in the main plot and the residuals 
             if display_parameters_separate: 
                 for index, parameter_name in enumerate(self.parameter_names):
@@ -315,16 +317,17 @@ class CDFParityPlot(Display):
                     line_style = next(line_style_cycler)["line_style"]
                     self._plot_base_plot(data_display, plot_ax, parameter_name, samples_label, line_style, color, theory_color, theory_line_style)
                     for interval_index, interval in enumerate(data_display["percentiles"]):  # iterate over the percentiles
-                        self._plot_theory_intervals(
-                            data_display, plot_ax, parameter_name, theory_label, 
-                            theory_color_cycle[interval_index], interval
-                        )
-
-                        if include_residuals: 
-                            self._plot_theory_intervals_residual(
-                                data_display, ax[1], parameter_name, theory_label, 
+                        if self.parameter_names.index(parameter_name) == 0: # Only plot for the first theory interval when not displaying parameters separately
+                            self._plot_theory_intervals(
+                                data_display, plot_ax, parameter_name, theory_label, 
                                 theory_color_cycle[interval_index], interval
                             )
+
+                            if include_residuals: 
+                                self._plot_theory_intervals_residual(
+                                    data_display, ax[1], parameter_name, theory_label, 
+                                    theory_color_cycle[interval_index], interval
+                                )
 
                     if include_residuals:
                         # Plot the residuals between the theory and sample
@@ -384,7 +387,7 @@ class CDFParityPlot(Display):
         ]
         if include_theory_intervals:
             handles += [
-                mpatches.Rectangle((0, 0), 0, 0, facecolor=theory_color_cycle[i], alpha=0.2, edgecolor='none', label=f"CDF {int(data_display['percentiles'][i]*100)}% CI {theory_label}")
+                mpatches.Rectangle((0, 0), 0, 0, facecolor=theory_color_cycle[i], alpha=self.theory_alpha, edgecolor='none', label=f"CDF {int(data_display['percentiles'][i]*100)}% CI {theory_label}")
                 for i in range(len(data_display["percentiles"]))
             ]
 
