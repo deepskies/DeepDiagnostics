@@ -66,7 +66,6 @@ class LookupTableSimulator(Simulator):
             }
             for theta, simulator_outcome, context in zip(data["thetas"], data["simulator_outcome"], data['context'])
         }
-        print(table)
         return table
 
     def _build_hash(self, theta, context): 
