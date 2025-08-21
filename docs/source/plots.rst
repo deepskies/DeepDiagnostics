@@ -30,4 +30,7 @@ Plots
 .. autoclass:: deepdiagnostics.plots.Parity
     :members: plot
 
+.. autoclass:: deepdiagnostics.plots.CDFParity
+    :members: plot
+
 .. bibliography:: 

@@ -73,7 +73,10 @@ class H5Data(Data):
         
     def _context(self): 
         try: 
-            return self.data["context"]
+            context = self.data["context"]
+            if context.ndim == 1:
+                context = context.unsqueeze(1)
+            return context
         except KeyError:
             raise NotImplementedError("Data does not have a `context` field.")
 

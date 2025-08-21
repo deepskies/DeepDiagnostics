@@ -4,6 +4,8 @@ import os
 from typing import Optional, Sequence, TYPE_CHECKING, Union
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+import matplotlib.colors as plt_colors
+import numpy as np
 
 from deepdiagnostics.utils.config import get_item
 from deepdiagnostics.utils.utils import DataDisplay
@@ -88,6 +90,17 @@ class Display:
     def _data_setup(self, **kwargs) -> Optional[DataDisplay]:
         "Return all the data required for plotting"
         raise NotImplementedError
+
+    def _get_hex_sigma_colors(self, n_colors):
+
+        cmap = plt.get_cmap(self.colorway)
+        hex_colors = []
+        arr = np.linspace(0, 1, n_colors)
+        for hit in arr:
+            hex_colors.append(plt_colors.rgb2hex(cmap(hit)))
+
+        return hex_colors
+
 
     @abstractmethod
     def plot(self, data_display: Union[dict, "data_display"], **kwrgs) -> tuple["figure", "axes"]:
