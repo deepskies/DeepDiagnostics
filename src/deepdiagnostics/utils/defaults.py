@@ -38,9 +38,9 @@ Defaults = {
     },
     "metrics_common": {
         "use_progress_bar": False,
-        "samples_per_inference": 1000,
+        "samples_per_inference": 100,
         "percentiles": [75, 85, 95],
-        "number_simulations": 50,
+        "number_simulations": 10,
     },
     "metrics": {
         "AllSBC": {},

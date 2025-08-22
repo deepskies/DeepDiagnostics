@@ -15,7 +15,7 @@ def get_section(section, raise_exception=True):
 
 class Config:
     ENV_VAR_PATH = "DeepDiagnostics_Config"
-
+    _printed_warning = False
     def __init__(self, config_path: Optional[str] = None) -> None:
         if config_path is not None:
             # Add it to the env vars in case we need to get it later.
@@ -31,7 +31,9 @@ class Config:
                 self._validate_config()
 
             except KeyError:
-                print("Warning: Cannot load config from environment. Hint: Have you set the config path by passing a str path to Config?")
+                if not Config._printed_warning:
+                    Config._printed_warning = True
+                    print("Warning: Cannot load config from environment. Hint: Have you set the config path by passing a str path to Config?", flush=True)
                 self.config = Defaults
 
     def _validate_config(self):
@@ -40,7 +42,8 @@ class Config:
         pass
 
     def _read_config(self, path):
-        assert os.path.exists(path), f"Config path at {path} does not exist."
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Config path at {path} does not exist.")
         with open(path, "r") as f:
             config = yaml.safe_load(f)
         return config
