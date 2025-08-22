@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Union
 import numpy as np
 
 from deepdiagnostics.utils.config import get_item
@@ -43,7 +43,7 @@ class Data:
             try: 
                 self.simulator = LookupTableSimulator(self.data, self.rng)
             except ValueError as e:
-                msg = f"Could not load the lookup table simulator - {e}. You cannot use generative diagnostics."
+                msg = f"Could not load the lookup table simulator - {e}. You cannot use online diagnostics."
                 print(msg)
 
         self.context = self._context()

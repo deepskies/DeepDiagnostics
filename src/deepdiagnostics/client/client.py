@@ -117,7 +117,7 @@ def main():
 
     for metrics_name, metrics_args in metrics.items():
         try: 
-            Metrics[metrics_name](model, data, save=True)(**metrics_args)
+            Metrics[metrics_name](model, data, run_id, save=True)(**metrics_args)
         except SimulatorMissingError:
             print(f"Cannot run {metrics_name} - simulator missing.")
 
