@@ -6,12 +6,13 @@ from deepdiagnostics.models.model import Model
 
 class SBIModel(Model):
     """
-    Load a trained model that was generated with Mackelab SBI :cite:p:`centero2020sbi`. 
-    `Read more about saving and loading requirements here <https://sbi-dev.github.io/sbi/latest/faq/question_05_pickling/>`_. 
+    Load a trained model that was generated with Mackelab SBI :cite:p:`centero2020sbi`.
+    `Read more about saving and loading requirements here <https://sbi-dev.github.io/sbi/latest/faq/question_05_pickling/>`_.
 
     Args:
-        model_path (str): relative path to a model - must be a .pkl file. 
+        model_path (str): Relative path to a model - must be a .pkl file.
     """
+
     def __init__(self, model_path):
         super().__init__(model_path)
 
@@ -23,9 +24,27 @@ class SBIModel(Model):
             posterior = pickle.load(file)
         self.posterior = posterior
 
+    def save(self, path: str, allow_overwrite: bool = False) -> None:
+        """
+        Save the posterior model to a pickle file.
+
+        Args:
+            path (str): Relative path to a model - must be a .pkl file.
+            allow_overwrite (bool, optional): Controls whether an attempt to
+                overwrite succeeds or results in an error. Defaults to False.
+        """
+        assert (
+            not os.path.exists(path)
+        ) or allow_overwrite, f"The path {path} already exists. To overwrite, use 'save(..., overwrite=True)'"
+
+        assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
+
+        with open(path, "wb") as file:
+            pickle.dump(self.posterior, file)
+
     def sample_posterior(self, n_samples: int, x_true):
         """
-        Sample the posterior 
+        Sample the posterior
 
         Args:
             n_samples (int): Number of samples to draw
@@ -40,14 +59,14 @@ class SBIModel(Model):
 
     def predict_posterior(self, data, context_samples):
         """
-        Sample the posterior and then 
+        Sample the posterior and then
 
         Args:
             data (deepdiagnostics.data.Data): Data module with the loaded simulation
-            context_samples (np.ndarray): X values to test the posterior over. 
+            context_samples (np.ndarray): X values to test the posterior over.
 
         Returns:
-            np.ndarray: Simulator output 
+            np.ndarray: Simulator output
         """
         posterior_samples = self.sample_posterior(context_samples)
         posterior_predictive_samples = data.simulator(
