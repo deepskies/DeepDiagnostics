@@ -12,9 +12,6 @@ class Model:
     def _load(self, path: str) -> None:
         raise NotImplementedError
 
-    def save(self, path: str, allow_overwrite: bool = False) -> None:
-        raise NotImplementedError
-
     def sample_posterior(self):
         raise NotImplementedError
 

@@ -1,6 +1,8 @@
 import os
 import pickle
 
+from sbi.inference.posteriors.base_posterior import NeuralPosterior
+
 from deepdiagnostics.models.model import Model
 
 
@@ -17,30 +19,43 @@ class SBIModel(Model):
         super().__init__(model_path)
 
     def _load(self, path: str) -> None:
-        assert os.path.exists(path), f"Cannot find model file at location {path}"
-        assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
+        if not os.path.exists(path):
+            raise ValueError(f"Cannot find model file at location {path}")
+        if path.split(".")[-1] != "pkl":
+            raise ValueError("File extension must be 'pkl'")
 
         with open(path, "rb") as file:
             posterior = pickle.load(file)
         self.posterior = posterior
 
-    def save(self, path: str, allow_overwrite: bool = False) -> None:
+    @staticmethod
+    def save_sbi_posterior(
+        neural_posterior: NeuralPosterior, path: str, allow_overwrite: bool = False
+    ) -> None:
         """
-        Save the posterior model to a pickle file.
+        Save an SBI posterior to a pickle file.
 
         Args:
+            neural_posterior (NeuralPosterior): A neural posterior object.
+                Must be an instance of the base class 'NeuralPosterior'
+                from the sbi package.
             path (str): Relative path to a model - must be a .pkl file.
             allow_overwrite (bool, optional): Controls whether an attempt to
                 overwrite succeeds or results in an error. Defaults to False.
         """
-        assert (
-            not os.path.exists(path)
-        ) or allow_overwrite, f"The path {path} already exists. To overwrite, use 'save(..., overwrite=True)'"
-
-        assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
+        if not isinstance(NeuralPosterior):
+            raise ValueError(
+                f"'neural_posterior' must be an instance of the base class 'NeuralPosterior' from the 'sbi' package."
+            )
+        if os.path.exists(path) and (not allow_overwrite):
+            raise ValueError(
+                f"The path {path} already exists. To overwrite, use 'save_sbi_posterior(..., allow_overwrite=True)'"
+            )
+        if path.split(".")[-1] != "pkl":
+            raise ValueError("File extension must be 'pkl'")
 
         with open(path, "wb") as file:
-            pickle.dump(self.posterior, file)
+            pickle.dump(neural_posterior, file)
 
     def sample_posterior(self, n_samples: int, x_true):
         """
