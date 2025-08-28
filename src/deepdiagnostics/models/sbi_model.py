@@ -29,7 +29,7 @@ class SBIModel(Model):
         self.posterior = posterior
 
     @staticmethod
-    def save_sbi_posterior(
+    def save_posterior(
         neural_posterior: NeuralPosterior, path: str, allow_overwrite: bool = False
     ) -> None:
         """
@@ -49,7 +49,7 @@ class SBIModel(Model):
             )
         if os.path.exists(path) and (not allow_overwrite):
             raise ValueError(
-                f"The path {path} already exists. To overwrite, use 'save_sbi_posterior(..., allow_overwrite=True)'"
+                f"The path {path} already exists. To overwrite, use 'save_posterior(..., allow_overwrite=True)'"
             )
         if path.split(".")[-1] != "pkl":
             raise ValueError("File extension must be 'pkl'")
