@@ -5,6 +5,10 @@ from deepdiagnostics.utils.config import get_item
 from deepdiagnostics.data.lookup_table_simulator import LookupTableSimulator
 from deepdiagnostics.utils.simulator_utils import load_simulator
 
+# in hierarchy data, there are two n_dims, n_local and n_global which are summed to give n_dims. 
+# they can be accessed as data["n_local"] and data["n_global"]
+# in this data class, n_dims is in __init__. would that be an issue?
+
 class Data:
     """
         Load stored data to use in diagnostics

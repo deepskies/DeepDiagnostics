@@ -10,7 +10,7 @@ class Model:
 
     def _load(self, path: str) -> None:
         return NotImplementedError
-
+    
     def sample_posterior(self):
         return NotImplementedError
 
