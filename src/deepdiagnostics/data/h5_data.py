@@ -118,7 +118,7 @@ class H5Data(Data):
             return 1
         
 
-class H5HierarchyData():
+class H5HierarchyData(Data):
     """
     Load data that has been saved in a h5 format. 
 

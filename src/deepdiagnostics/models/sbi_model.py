@@ -67,9 +67,12 @@ class HierarchyModel(Model):
         # self.load()
         super().__init__(model_path)
 
-    def _load(self):
-        """ Load the model from a file. """
-        with open(self.model_path, "rb") as file:
+    def _load(self, path: str):
+        assert os.path.exists(path), f"Cannot find model file at location {path}"
+        assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
+
+        # with open(self.model_path, "rb") as file:
+        with open(path, "rb") as file:
             self.model = pickle.load(file)
 
     def _sample_global(self, x, n_samples=1000, device="cpu"):

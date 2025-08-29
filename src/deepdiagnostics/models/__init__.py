@@ -1,3 +1,4 @@
-from deepdiagnostics.models.sbi_model import SBIModel
+from deepdiagnostics.models.sbi_model import SBIModel, HierarchyModel
 
-ModelModules = {"SBIModel": SBIModel}
+ModelModules = {"SBIModel": SBIModel, "HierarchyModel": HierarchyModel}
+
