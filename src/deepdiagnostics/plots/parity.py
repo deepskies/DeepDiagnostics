@@ -63,6 +63,12 @@ class Parity(Display):
 
             true_samples[index] = self.data.thetas[sample, :]
 
+        # print shape of arrays
+        print(f"n_dims: {self.data.n_dims}")
+        print(f"true_samples shape: {true_samples.shape}")
+        print(f"posterior_sample_mean shape: {posterior_sample_mean.shape}")
+        print(f"posterior_sample_std shape: {posterior_sample_std.shape}")
+
         return DataDisplay(
             n_dims=self.data.n_dims,
             true_samples=true_samples, 
@@ -120,7 +126,8 @@ class Parity(Display):
             figsize=(int(self.figure_size[0]*data_display.n_dims*.8), int(self.figure_size[1]*n_rows*.6)), 
             height_ratios=height_ratios,
             sharex="col", 
-            sharey=False)
+            sharey=False,
+            squeeze=False)
 
         figure.suptitle(title)
         figure.supxlabel(x_label)
@@ -139,8 +146,9 @@ class Parity(Display):
                 subplots[0, 0].set_ylabel("Parity")
 
             else: 
-                parity_plot = subplots[theta_dimension]
-                subplots[0].set_ylabel("Parity")
+                print('theta_dimension', theta_dimension)
+                parity_plot = subplots[0, theta_dimension]
+                subplots[0, 0].set_ylabel("Parity")
 
 
             parity_plot.title.set_text(title)
@@ -177,19 +185,27 @@ class Parity(Display):
         return figure, subplots
     
 class HierarchyParity(Parity):
+    def __init__(self, model, data, global_samples: bool = True, **kwargs):
+        # Parity.__init__ doesn't know global_samples; don't pass it up
+        super().__init__(model, data, **kwargs)
+        self.global_samples = bool(global_samples)
+
     def plot_name(self):
         return "hierarchy_parity.png"
 
-    def _data_setup(self, n_samples: int = 1000, global_samples: bool = True, **kwargs) -> DataDisplay:
+    def _data_setup(self, n_samples: int = 1000, **kwargs) -> DataDisplay:
+
+        gs = kwargs.pop("global_samples", self.global_samples)
+        gs = bool(gs)
         # support attribute or callable access
         x_true = self.data.simulator_outcome() if callable(self.data.simulator_outcome) else self.data.simulator_outcome
         thetas = self.data.thetas() if callable(self.data.thetas) else self.data.thetas
 
         # sample hierarchical posterior
-        samples = self.model.sample_posterior(n_samples, x_true, global_samples=global_samples)
+        samples = self.model.sample_posterior(n_samples, x_true, global_samples=gs)
 
         # pick global or local targets
-        y_test = thetas[1] if global_samples else thetas[0]
+        y_test = thetas[1] if gs else thetas[0]
 
         # sort by y_test to make parity plots monotonic in x
         srt = torch.argsort(y_test, dim=0)
@@ -204,6 +220,12 @@ class HierarchyParity(Parity):
         # convert to numpy for matplotlib
         def to_np(t):
             return t.detach().cpu().numpy() if isinstance(t, torch.Tensor) else np.asarray(t)
+        
+        # print shape of arrays
+        print(f"n_dims: {n_dims}")
+        print(f"true_samples shape: {to_np(true_samples).shape}")
+        print(f"posterior_sample_mean shape: {to_np(posterior_sample_mean).shape}")
+        print(f"posterior_sample_std shape: {to_np(posterior_sample_std).shape}")
 
         return DataDisplay(
             n_dims=n_dims,

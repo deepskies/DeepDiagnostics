@@ -54,7 +54,8 @@ class Data:
         self.thetas = self._thetas()
 
         self.prior_dist = self.load_prior(prior, prior_kwargs)
-        self.n_dims = self.thetas.shape[1]
+        # Uncomment this for NPE
+        # self.n_dims = self.thetas.shape[1]
         self.simulator_dimensions = simulation_dimensions if simulation_dimensions is not None else get_item("data", "simulator_dimensions", raise_exception=False)
 
         self.simulator_outcome = self._simulator_outcome()

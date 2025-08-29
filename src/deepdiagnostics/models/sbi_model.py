@@ -7,6 +7,9 @@ from einops import rearrange, repeat
 
 from deepdiagnostics.models.model import Model
 
+# import sys
+# sys.path.append('/Users/jarugula/Research/Deepdiagnostics/DeepDiagnostics/hnpe_src')
+
 
 class SBIModel(Model):
     """
@@ -71,15 +74,17 @@ class HierarchyModel(Model):
         assert os.path.exists(path), f"Cannot find model file at location {path}"
         assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
 
-        # with open(self.model_path, "rb") as file:
         with open(path, "rb") as file:
-            self.model = pickle.load(file)
+            model = pickle.load(file)
+
+        # self.model = model
+        print("Model loaded successfully.")
+        return model
 
     def _sample_global(self, x, n_samples=1000, device="cpu"):
         deep_set = self.model.deep_set
         deep_set.eval()
         n_eval = x.shape[-2]
-        print("n_eval in global:", n_eval)
         device = torch.device(device)
         deep_set.to(device)
 
@@ -102,9 +107,7 @@ class HierarchyModel(Model):
     def _sample_local(self, x, n_samples=1000, device="cpu"):
         deep_set = self.model.deep_set
         deep_set.eval()
-        print("x shape in local:", x.shape)
         n_eval = x.shape[-2]
-        print("n_eval in local:", n_eval)
         device = torch.device(device)
         deep_set.to(device)
 
@@ -113,8 +116,6 @@ class HierarchyModel(Model):
         x_enc = deep_set.enc.to(device)(x_flat.to(device))
         x_enc = rearrange(x_enc, "(batch n_set) n_out -> batch n_set n_out", n_set=n_eval)
         _, x_cond_local = torch.chunk(x_enc, 2, -1)  # (batch, n_eval, ctx_dim_local)
-
-        print("x shape before giving to global:", x.shape)
 
         # Global mean context
         g_samples = self._sample_global(x, n_samples=n_samples, device=str(device))  # pass x, not data
@@ -133,12 +134,13 @@ class HierarchyModel(Model):
         samples = samples.reshape(batch, n_eval_eff, n_samples, -1)
         return samples
 
-    def sample_posterior(self, n_samples, x_true, global_samples=True):
-        if global_samples:
-            print("x_true shape in sample posterior:", x_true.shape)
+    def sample_posterior(self, n_samples, x_true, global_samples):
+        if global_samples == True:
+            print("Evaluating global samples")
             global_samples = self._sample_global(x_true, n_samples=n_samples)
             return global_samples
-        else:
+        elif global_samples == False:
+            print("Evaluating local samples")
             local_samples = self._sample_local(x_true, n_samples=n_samples)
             return local_samples
         

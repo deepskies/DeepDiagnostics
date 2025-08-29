@@ -20,6 +20,7 @@ tarp = "^0.1.1"
 deprecation = "^2.1.0"
 scipy = "^1.15.0"
 einops = "^0.8.1"
+lightning = "^2.5.4"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
