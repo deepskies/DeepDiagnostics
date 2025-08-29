@@ -114,7 +114,7 @@ class HierarchyModel(Model):
         print("x shape before giving to global:", x.shape)
 
         # Global mean context
-        g_samples = self.sample_global(x, n_samples=n_samples, device=str(device))  # pass x, not data
+        g_samples = self._sample_global(x, n_samples=n_samples, device=str(device))  # pass x, not data
         g_mean = g_samples.mean(dim=1)                                              # (batch, n_global)
         g_mean = repeat(g_mean, "batch p -> batch n_eval p", n_eval=n_eval)         # (batch, n_eval, n_global)
 

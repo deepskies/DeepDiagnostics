@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from deepdiagnostics.utils.utils import DataDisplay
 import numpy as np
 
-
+# import for hirerarchical model
+import torch
 
 from deepdiagnostics.plots.plot import Display
 
@@ -174,3 +175,40 @@ class Parity(Display):
                 row_index += 1 
         
         return figure, subplots
+    
+class HierarchyParity(Parity):
+    def plot_name(self):
+        return "hierarchy_parity.png"
+
+    def _data_setup(self, n_samples: int = 1000, global_samples: bool = True, **kwargs) -> DataDisplay:
+        # support attribute or callable access
+        x_true = self.data.simulator_outcome() if callable(self.data.simulator_outcome) else self.data.simulator_outcome
+        thetas = self.data.thetas() if callable(self.data.thetas) else self.data.thetas
+
+        # sample hierarchical posterior
+        samples = self.model.sample_posterior(n_samples, x_true, global_samples=global_samples)
+
+        # pick global or local targets
+        y_test = thetas[1] if global_samples else thetas[0]
+
+        # sort by y_test to make parity plots monotonic in x
+        srt = torch.argsort(y_test, dim=0)
+        true_samples = torch.take_along_dim(y_test, srt, dim=0)
+
+        # aggregate posterior along the sample dimension (-2) and align with sorting
+        posterior_sample_mean = torch.take_along_dim(samples.mean(dim=-2), srt, dim=0)
+        posterior_sample_std = torch.take_along_dim(samples.std(dim=-2), srt, dim=0)
+
+        n_dims = int(y_test.shape[-1])
+
+        # convert to numpy for matplotlib
+        def to_np(t):
+            return t.detach().cpu().numpy() if isinstance(t, torch.Tensor) else np.asarray(t)
+
+        return DataDisplay(
+            n_dims=n_dims,
+            true_samples=to_np(true_samples),
+            posterior_sample_mean=to_np(posterior_sample_mean),
+            posterior_sample_std=to_np(posterior_sample_std),
+        )
+    
