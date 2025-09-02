@@ -215,6 +215,12 @@ class HierarchyParity(Parity):
         posterior_sample_mean = torch.take_along_dim(samples.mean(dim=-2), srt, dim=0)
         posterior_sample_std = torch.take_along_dim(samples.std(dim=-2), srt, dim=0)
 
+        # if local, flatten samples to (n_samples* n_eval, n_local)
+        if not gs: 
+            posterior_sample_mean = posterior_sample_mean.reshape(-1, posterior_sample_mean.shape[-1])
+            posterior_sample_std = posterior_sample_std.reshape(-1, posterior_sample_std.shape[-1])
+            true_samples = true_samples.reshape(-1, true_samples.shape[-1])
+
         n_dims = int(y_test.shape[-1])
 
         # convert to numpy for matplotlib
@@ -222,10 +228,10 @@ class HierarchyParity(Parity):
             return t.detach().cpu().numpy() if isinstance(t, torch.Tensor) else np.asarray(t)
         
         # print shape of arrays
-        print(f"n_dims: {n_dims}")
-        print(f"true_samples shape: {to_np(true_samples).shape}")
-        print(f"posterior_sample_mean shape: {to_np(posterior_sample_mean).shape}")
-        print(f"posterior_sample_std shape: {to_np(posterior_sample_std).shape}")
+        # print(f"n_dims: {n_dims}")
+        # print(f"true_samples shape: {to_np(true_samples).shape}")
+        # print(f"posterior_sample_mean shape: {to_np(posterior_sample_mean).shape}")
+        # print(f"posterior_sample_std shape: {to_np(posterior_sample_std).shape}")
 
         return DataDisplay(
             n_dims=n_dims,
