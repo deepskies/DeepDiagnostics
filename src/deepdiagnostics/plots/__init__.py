@@ -1,6 +1,6 @@
 from deepdiagnostics.plots.cdf_ranks import CDFRanks, HierarchyCDFRanks
 from deepdiagnostics.plots.coverage_fraction import CoverageFraction
-from deepdiagnostics.plots.ranks import Ranks
+from deepdiagnostics.plots.ranks import Ranks, HierarchyRanks
 from deepdiagnostics.plots.tarp import TARP
 from deepdiagnostics.plots.local_two_sample import LocalTwoSampleTest as LC2ST
 from deepdiagnostics.plots.predictive_posterior_check import PPC

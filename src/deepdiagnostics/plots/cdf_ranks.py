@@ -82,8 +82,8 @@ class CDFRanks(Display):
     
 class HierarchyCDFRanks(CDFRanks):
     def __init__(self, model, data, global_samples: bool = True, **kwargs):
-        super().__init__(model, data, **kwargs)
         self.global_samples = bool(global_samples)
+        super().__init__(model, data, **kwargs)
 
     def plot_name(self, **kwargs) -> str:
         gs = kwargs.pop("global_samples", self.global_samples)
@@ -103,33 +103,22 @@ class HierarchyCDFRanks(CDFRanks):
         # sample hierarchical posterior
         posterior_samples = self.model.sample_posterior(self.samples_per_inference, x, global_samples=gs)
 
-        print(f"Posterior samples shape: {posterior_samples.shape}") 
-
         n_params = posterior_samples.shape[-1]
-
-        print(f"number of parameters: {n_params}")
 
         reduce_1d_fn = [eval(f"lambda theta, x: theta[:, {i}]") for i in range(n_params)]
 
         # pick global or local targets
         y_true = thetas[1] if gs else thetas[0]
 
-        print(f"y_true shape: {y_true.shape}")
-
         # flatten if local samples such that [200, 25, 1000, 1] -> [200*25, 1000, 1]
         if not gs:
             posterior_samples = posterior_samples.reshape(-1, posterior_samples.shape[-2], posterior_samples.shape[-1])
             y_true = y_true.reshape(-1, y_true.shape[-1])
-            print(f"Flattened posterior samples shape: {posterior_samples.shape}")
-            print(f"Flattened y_true shape: {y_true.shape}")
-
 
         n_sbc_runs = posterior_samples.shape[0]
         
         # flatten x
         x = x.reshape(-1, x.shape[-1])
-        print(f"Context shape: {x.shape}")
-
 
         ranks = torch.zeros((n_sbc_runs, len(reduce_1d_fn)))
 

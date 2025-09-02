@@ -187,8 +187,9 @@ class Parity(Display):
 class HierarchyParity(Parity):
     def __init__(self, model, data, global_samples: bool = True, **kwargs):
         # Parity.__init__ doesn't know global_samples; don't pass it up
-        super().__init__(model, data, **kwargs)
         self.global_samples = bool(global_samples)
+        super().__init__(model, data, **kwargs)
+        
 
     def plot_name(self, **kwargs) -> str:
         gs = kwargs.pop("global_samples", self.global_samples)
