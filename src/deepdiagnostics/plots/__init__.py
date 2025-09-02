@@ -1,4 +1,4 @@
-from deepdiagnostics.plots.cdf_ranks import CDFRanks
+from deepdiagnostics.plots.cdf_ranks import CDFRanks, HierarchyCDFRanks
 from deepdiagnostics.plots.coverage_fraction import CoverageFraction
 from deepdiagnostics.plots.ranks import Ranks
 from deepdiagnostics.plots.tarp import TARP

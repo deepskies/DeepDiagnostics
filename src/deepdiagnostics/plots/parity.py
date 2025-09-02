@@ -190,8 +190,12 @@ class HierarchyParity(Parity):
         super().__init__(model, data, **kwargs)
         self.global_samples = bool(global_samples)
 
-    def plot_name(self):
-        return "hierarchy_parity.png"
+    def plot_name(self, **kwargs) -> str:
+        gs = kwargs.pop("global_samples", self.global_samples)
+        if gs:
+            return "global_parity.png"
+        else:
+            return "local_parity.png"
 
     def _data_setup(self, n_samples: int = 1000, **kwargs) -> DataDisplay:
 
