@@ -52,5 +52,5 @@ class LossPlot(Display):
        plt.grid()
        plt.show()
 
-   def __call__(self, **kwargs): 
+    def __call__(self, **kwargs): 
        raise NotImplementedError("Plotting loss is not supported in pipeline mode")
