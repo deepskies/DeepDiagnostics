@@ -81,6 +81,17 @@ class CDFRanks(Display):
         )
     
 class HierarchyCDFRanks(CDFRanks):
+    """
+    Plots the ranks as a CDF plot for each theta parameter. 
+    Option to choose between global and local ranks.
+
+        .. code-block:: python
+        
+            from deepdiagnostics.plots import HierarchyCDFRanks
+
+            HierarchyCDFRanks(model, data, global_samples=True, save=False, show=True)()
+    
+    """
     def __init__(self, model, data, global_samples: bool = True, **kwargs):
         self.global_samples = bool(global_samples)
         super().__init__(model, data, **kwargs)

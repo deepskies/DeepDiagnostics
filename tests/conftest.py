@@ -87,6 +87,10 @@ def hierarchy_model_path():
     return "resources/savedmodels/trained_model_0909.pkl"
 
 @pytest.fixture
+def hierarchy_model_nn_path():
+    return "resources/savedmodels/hnpe_src"
+
+@pytest.fixture
 def data_path():
     return "resources/saveddata/data_test.h5"
 
@@ -111,12 +115,8 @@ def mock_model(model_path):
     return SBIModel(model_path)
 
 @pytest.fixture
-def mock_hierarchy_model(hierarchy_model_path):
-    # Ensure HierarchyModel dependencies are importable during unpickle
-    hnpe_path = "resources/savedmodels/hnpe_src"
-    if hnpe_path not in sys.path:
-        sys.path.insert(0, hnpe_path)
-    return HierarchyModel(hierarchy_model_path)
+def mock_hierarchy_model(hierarchy_model_path, hierarchy_model_nn_path):
+    return HierarchyModel(hierarchy_model_path, hierarchy_model_nn_path)
 
 @pytest.fixture
 def mock_data(data_path, simulator_name):
@@ -186,71 +186,3 @@ def config_factory(result_output, model_path, data_path, hierarchy_model_path, h
         return temp_outpath
 
     return factory
-# def config_factory(result_output):
-#     def factory(
-#         model_path=None,
-#         model_engine=None,
-#         data_path=None,
-#         data_engine=None,
-#         plot_2d=False,
-#         simulator=None,
-#         plot_settings=None,
-#         metrics_settings=None,
-#         plots=None,
-#         metrics=None,
-#     ):
-#         config = {
-#             "common": {},
-#             "model": {},
-#             "data": {},
-#             "plots_common": {},
-#             "plots": {},
-#             "metrics_common": {},
-#             "metrics": {},
-#         }
-
-#         # Single settings
-#         config["common"]["out_dir"] = result_output
-#         if model_path is not None:
-#             config["model"]["model_path"] = model_path
-#         if hierarchy_model_path is not None:
-#             config["model"]["model_path"] = hierarchy_model_path
-#         if model_engine is not None:
-#             config["model"]["model_engine"] = model_engine
-#         if data_path is not None:
-#             config["data"]["data_path"] = data_path
-#         if hierarchy_data_path is not None:
-#             config["data"]["data_path"] = hierarchy_data_path
-#         if data_engine is not None:
-#             config["data"]["data_engine"] = data_engine
-#         if simulator is not None:
-#             config["data"]["simulator"] = simulator
-#         if plot_2d: 
-#             config["data"]["simulator_dimensions"] = 2
-
-#         # Dict settings
-#         if plot_settings is not None:
-#             for key, item in plot_settings.items():
-#                 config["plots_common"][key] = item
-#         if metrics_settings is not None:
-#             for key, item in metrics_settings.items():
-#                 config["metrics_common"][key] = item
-
-#         if metrics is not None:
-#             if isinstance(metrics, dict):
-#                 config["metrics"] = metrics
-#             if isinstance(metrics, list):
-#                 config["metrics"] = {metric: {} for metric in metrics}
-
-#         if plots is not None:
-#             if isinstance(plots, dict):
-#                 config["plots"] = plots
-#             if isinstance(metrics, list):
-#                 config["plots"] = {plot: {} for plot in plots}
-
-#         temp_outpath = "./temp_config.yml"
-#         yaml.dump(config, open(temp_outpath, "w"))
-
-#         return temp_outpath
-
-#     return factory

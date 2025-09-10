@@ -1,5 +1,6 @@
 import os
 import pickle
+import sys
 
 # imports for Hierarchical model
 import torch
@@ -64,15 +65,28 @@ class SBIModel(Model):
 
 
 class HierarchyModel(Model):
-    def __init__(self, model_path):
-        # Load the model
-        # self.model_path = model_path
-        # self.load()
-        super().__init__(model_path)
+    """
+    Load the trained hierarchical model for deep sets saved as pickle file 
+    pickle.dump(trained_model, file)
 
+    The hierarchy deep sets model also needs to load its neural network components from the specified path.
+
+    Args:
+        model_nn_path (str): Path to the neural network model file.
+        model_path (str): Path to the trained model pickle file.
+    """
+    def __init__(self, model_path, model_nn_path):
+        # Load the model
+        self.model_nn_path = model_nn_path
+        super().__init__(model_path)
+        
     def _load(self, path: str):
         assert os.path.exists(path), f"Cannot find model file at location {path}"
+        assert os.path.exists(self.model_nn_path), f"Cannot find hierarchy deep sets model at location {self.model_nn_path}"
         assert path.split(".")[-1] == "pkl", "File extension must be 'pkl'"
+
+        if self.model_nn_path not in sys.path:
+            sys.path.insert(0, self.model_nn_path)
 
         with open(path, "rb") as file:
             model = pickle.load(file)
@@ -82,6 +96,17 @@ class HierarchyModel(Model):
         return model
 
     def _sample_global(self, x, n_samples=1000, device="cpu"):
+        """
+        Sample from the global thetas using the deep set model eval.
+
+        Args:
+            x (torch.Tensor): The output of the simulator at which the posteriors are evaluated as (number_of_global_samples, number_of_local_samples, simulator_dimensions)
+            n_samples (int): Number of samples to draw
+            device (str): Device to run the evaluation on
+
+        Returns:
+            torch.Tensor: Samples from the global thetas
+        """
         deep_set = self.model.deep_set
         deep_set.eval()
         n_eval = x.shape[-2]
@@ -105,6 +130,17 @@ class HierarchyModel(Model):
         return samples
 
     def _sample_local(self, x, n_samples=1000, device="cpu"):
+        """
+        Sample from the local context distribution using the deep set model eval.
+
+        Args:
+            x (torch.Tensor): The output of the simulator at which the posteriors are evaluated as (number_of_global_samples, number_of_local_samples, simulator_dimensions)
+            n_samples (int): Number of samples to draw
+            device (str): Device to run the evaluation on
+
+        Returns:
+            torch.Tensor: Samples from the local thetas
+        """
         deep_set = self.model.deep_set
         deep_set.eval()
         n_eval = x.shape[-2]
@@ -135,6 +171,18 @@ class HierarchyModel(Model):
         return samples
 
     def sample_posterior(self, n_samples, x_true, global_samples):
+        """
+        Sample either the global or local thetas from the posterior distribution.
+
+        Args:
+            n_samples (int): Number of samples to draw
+            x_true (torch.Tensor): The true observations
+            global_samples (bool): Whether to sample from the global or local distribution
+
+        Returns:
+            torch.Tensor: Samples from the global or local thetas
+
+        """
         if global_samples == True:
             print("Evaluating global samples")
             global_samples = self._sample_global(x_true, n_samples=n_samples)

@@ -185,6 +185,22 @@ class Parity(Display):
         return figure, subplots
     
 class HierarchyParity(Parity):
+    """
+    Show plots directly comparing the posterior vs. true theta values. Make a plot that is (number of selected metrics) X dimensions of theta. 
+    Includes the option to show differences, residual, and percent residual as plots under the main parity plot. 
+
+    Option to plot either the global or the local thetas of the Hierarchical model.
+
+    .. code-block:: python 
+    
+        from deepdiagnostics.plots import HierarchyParity
+
+        HierarchyParity(model, data, global_samples = True,
+        show=True, save=False, run_id="090925", 
+        parameter_names=["g"], include_residual = True # Add a plot showing the residual)
+        
+    """
+
     def __init__(self, model, data, global_samples: bool = True, **kwargs):
         # Parity.__init__ doesn't know global_samples; don't pass it up
         self.global_samples = bool(global_samples)

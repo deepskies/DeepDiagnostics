@@ -8,3 +8,6 @@ Models
 
 .. autoclass:: deepdiagnostics.models.SBIModel
     :members:
+
+.. autoclass:: deepdiagnostics.models.HierarchyModel
+    :members:

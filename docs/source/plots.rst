@@ -8,7 +8,13 @@ Plots
 .. autoclass:: deepdiagnostics.plots.CDFRanks
     :members: plot
 
+.. autoclass:: deepdiagnostics.plots.HierarchyCDFRanks
+    :members: plot
+
 .. autoclass:: deepdiagnostics.plots.Ranks
+    :members: plot
+
+.. autoclass:: deepdiagnostics.plots.HierarchyRanks
     :members: plot
 
 .. autoclass:: deepdiagnostics.plots.CoverageFraction
@@ -28,6 +34,9 @@ Plots
     :members: plot
 
 .. autoclass:: deepdiagnostics.plots.Parity
+    :members: plot
+
+.. autoclass:: deepdiagnostics.plots.HierarchyParity
     :members: plot
 
 .. bibliography:: 

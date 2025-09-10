@@ -9,6 +9,9 @@ Data
 .. autoclass:: deepdiagnostics.data.H5Data
     :members:
 
+.. autoclass:: deepdiagnostics.data.H5HierarchyData
+    :members:
+
 .. autoclass:: deepdiagnostics.data.PickleData
     :members:
 

@@ -73,6 +73,17 @@ class Ranks(Display):
         )
     
 class HierarchyRanks(Ranks):
+    """
+    Plots the histogram of each theta parameter's rank. 
+
+    Option to choose between global and local ranks.
+
+        .. code-block:: python
+        
+            from deepdiagnostics.plots import HierarchyRanks
+
+            HierarchyRanks(model, data, global_samples=True, save=False, show=True)(num_bins=25)
+    """
     def __init__(self, model, data, global_samples: bool = True, **kwargs):
         self.global_samples = bool(global_samples)
         super().__init__(model, data, **kwargs)
