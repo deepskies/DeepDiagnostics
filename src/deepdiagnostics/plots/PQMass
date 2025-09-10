@@ -1,0 +1,417 @@
+from typing import Union, Tuple, List, Optional, TYPE_CHECKING
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import chi2
+
+from deepdiagnostics.plots.plot import Display
+from deepdiagnostics.utils.config import get_item
+from deepdiagnostics.utils.utils import DataDisplay
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure as fig
+    from matplotlib.axes import Axes as ax
+
+
+class PQMassPlot(Display):
+    """
+    PQMass: likelihood-free comparison of two sample sets via probability mass over Voronoi regions.
+
+    Given two collections of samples A ~ p and B ~ q in R^d, PQMass:
+      1) draws n_regions reference points from a mixture of A and B (half/half),
+      2) tessellates the space into Voronoi cells around those references (metric: L2 by default),
+      3) counts how many points of A and B fall into each cell,
+      4) performs a Pearson chi-squared test comparing the two multinomials to obtain χ² and a p-value,
+      5) repeats steps 1–4 'n_repeats' times to reduce variance from tessellation choice.
+
+    This class mirrors your Display/DataDisplay wiring and the model/data loading style from other plots.
+    You can provide the two sample sets explicitly via kwargs to _data_setup() or let the class build
+    a default pair using the repository’s model/data conventions (see notes below).
+
+    Typical usage:
+
+        from deepdiagnostics.plots import PQMassPlot
+        PQMassPlot(model, data, save=False, show=True)(
+            # Optionally provide samples explicitly:
+            samples_p=samples_from_truth,   # shape (m, d)
+            samples_q=samples_from_model,   # shape (n, d)
+            # or rely on default generation; see _data_setup docstring
+        )
+    """
+
+    def __init__(
+        self,
+        model,
+        data,
+        run_id,
+        save,
+        show,
+        out_dir=None,
+        percentiles=None,             # kept for signature parity; unused
+        use_progress_bar=None,
+        samples_per_inference=None,   # used in default sample builders
+        number_simulations=None,      # used in default sample builders
+        parameter_names=None,         # not required here but kept for parity
+        parameter_colors=None,
+        colorway=None,
+        # --- PQMass-specific options ---
+        n_regions: int = 100,
+        n_repeats: int = 20,
+        metric: str = "l2",           # "l2" or "l1"
+        remove_refs_from_counts: bool = True,  # ensure reference points aren't also counted
+        min_expected_per_cell: float = 1e-12,  # drop cells with zero expected to avoid div/0
+        two_sided_overfit: bool = False,       # also report mirrored p-value (overfit guard)
+        show_cell_contribs: bool = True,       # plot per-cell χ² contributions (last repeat)
+        show_pvalue_hist: bool = True,         # plot histogram of p-values across repeats
+        pvalue_hist_bins: int = 20,
+    ):
+        super().__init__(
+            model, data, run_id, save, show, out_dir,
+            percentiles, use_progress_bar, samples_per_inference,
+            number_simulations, parameter_names, parameter_colors, colorway
+        )
+        self.line_cycle = tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
+
+        self.n_regions = int(n_regions)
+        self.n_repeats = int(n_repeats)
+        self.metric = metric.lower()
+        self.remove_refs_from_counts = bool(remove_refs_from_counts)
+        self.min_expected_per_cell = float(min_expected_per_cell)
+        self.two_sided_overfit = bool(two_sided_overfit)
+        self.show_cell_contribs = bool(show_cell_contribs)
+        self.show_pvalue_hist = bool(show_pvalue_hist)
+        self.pvalue_hist_bins = int(pvalue_hist_bins)
+
+        if self.n_regions < 2:
+            raise ValueError("n_regions must be at least 2.")
+
+    def plot_name(self):
+        return "pqmass.png"
+
+    # ---------------------------
+    # Distance & Voronoi helpers
+    # ---------------------------
+
+    def _pairwise_dist(self, X: np.ndarray, Z: np.ndarray) -> np.ndarray:
+        """
+        Return pairwise distances D[i, j] = dist(X[i], Z[j]) under chosen metric.
+        """
+        if self.metric == "l2":
+            # ||x - z||_2
+            # (x - z)^2 = x^2 + z^2 - 2 x·z
+            X2 = (X * X).sum(axis=1, keepdims=True)
+            Z2 = (Z * Z).sum(axis=1, keepdims=True).T
+            D2 = X2 + Z2 - 2.0 * (X @ Z.T)
+            np.maximum(D2, 0.0, out=D2)
+            return np.sqrt(D2, dtype=X.dtype)
+        elif self.metric == "l1":
+            # broadcasted |x - z|_1
+            return np.abs(X[:, None, :] - Z[None, :, :]).sum(axis=2)
+        else:
+            raise ValueError(f"Unsupported metric: {self.metric}. Use 'l2' or 'l1'.")
+
+    def _assign_regions(self, X: np.ndarray, Z: np.ndarray) -> np.ndarray:
+        """
+        Assign each X[i] to nearest reference in Z (Voronoi index). Tie-break: lowest index.
+        """
+        D = self._pairwise_dist(X, Z)
+        return np.argmin(D, axis=1)
+
+    # --------------------------------
+    # Core PQMass computation (1 run)
+    # --------------------------------
+
+    def _pqmass_once(
+        self,
+        A: np.ndarray,  # samples from p: shape (m, d)
+        B: np.ndarray,  # samples from q: shape (n, d)
+        rng: np.random.Generator,
+    ):
+        """
+        Perform one PQMass run: draw references, tessellate, count, compute χ² and p-value.
+
+        Returns a dict with fields:
+            'chi2', 'df', 'pvalue', 'pvalue_overfit' (if enabled),
+            'counts_A', 'counts_B', 'expected_A', 'expected_B', 'contribs'
+        """
+        m, n = A.shape[0], B.shape[0]
+        if m < 1 or n < 1:
+            raise ValueError("Both sample sets must be non-empty.")
+
+        nR = min(self.n_regions, m + n)  # cannot exceed total available points
+        if nR < 2:
+            raise ValueError("Need at least 2 reference points for Voronoi tessellation.")
+
+        # Choose ~half references from each set (balanced mixture)
+        nA = nR // 2
+        nB = nR - nA
+
+        idxA = rng.choice(m, size=nA, replace=False) if m >= nA else np.arange(m)
+        idxB = rng.choice(n, size=nB, replace=False) if n >= nB else np.arange(n)
+
+        Z_A = A[idxA]
+        Z_B = B[idxB]
+        Z = np.concatenate([Z_A, Z_B], axis=0)  # (nR, d)
+
+        # Prepare working copies if we need to remove reference points from counts
+        if self.remove_refs_from_counts:
+            maskA = np.ones(m, dtype=bool)
+            maskA[idxA] = False
+            A_work = A[maskA]
+            maskB = np.ones(n, dtype=bool)
+            maskB[idxB] = False
+            B_work = B[maskB]
+        else:
+            A_work, B_work = A, B
+
+        # Assign to nearest references and bin counts
+        labA = self._assign_regions(A_work, Z)
+        labB = self._assign_regions(B_work, Z)
+
+        counts_A = np.bincount(labA, minlength=nR).astype(np.float64)
+        counts_B = np.bincount(labB, minlength=nR).astype(np.float64)
+
+        # Pooled region probabilities and expected counts
+        pooled = counts_A + counts_B
+        total = pooled.sum()
+        # Drop cells with zero expected (pooled == 0) to avoid div/0
+        valid = pooled > self.min_expected_per_cell
+        pooled = pooled[valid]
+        counts_A = counts_A[valid]
+        counts_B = counts_B[valid]
+
+        # Effective numbers after removing refs (if enabled)
+        m_eff = counts_A.sum()
+        n_eff = counts_B.sum()
+        if m_eff <= 0 or n_eff <= 0:
+            # Degenerate (e.g., all data used as refs), bail with neutral stats
+            return {
+                "chi2": np.nan, "df": 0, "pvalue": np.nan, "pvalue_overfit": np.nan,
+                "counts_A": counts_A, "counts_B": counts_B,
+                "expected_A": np.zeros_like(counts_A), "expected_B": np.zeros_like(counts_B),
+                "contribs": np.zeros_like(counts_A)
+            }
+
+        p_j = pooled / (m_eff + n_eff)
+        exp_A = m_eff * p_j
+        exp_B = n_eff * p_j
+
+        # Pearson chi-square across cells
+        # contrib = ( (A - exp_A)^2 / exp_A ) + ( (B - exp_B)^2 / exp_B )
+        with np.errstate(divide="ignore", invalid="ignore"):
+            termA = np.where(exp_A > 0, (counts_A - exp_A) ** 2 / exp_A, 0.0)
+            termB = np.where(exp_B > 0, (counts_B - exp_B) ** 2 / exp_B, 0.0)
+        contribs = termA + termB
+        chi2_stat = np.nansum(contribs)
+
+        # Degrees of freedom = (#valid cells) - 1
+        df = max(int(valid.sum()) - 1, 1)
+
+        # Upper-tail p-value under χ²_df
+        pval = chi2.sf(chi2_stat, df)
+
+        # Optional two-sided "overfit" mirror p-value (penalize suspiciously low χ²)
+        pval_overfit = np.nan
+        if self.two_sided_overfit:
+            mirror = max(2.0 * df - chi2_stat, 0.0)
+            pval_overfit = chi2.cdf(mirror, df)
+
+        return {
+            "chi2": float(chi2_stat),
+            "df": int(df),
+            "pvalue": float(pval),
+            "pvalue_overfit": float(pval_overfit) if self.two_sided_overfit else np.nan,
+            "counts_A": counts_A,
+            "counts_B": counts_B,
+            "expected_A": exp_A,
+            "expected_B": exp_B,
+            "contribs": contribs,
+        }
+
+    # --------------------------------
+    # Data preparation
+    # --------------------------------
+
+    def _data_setup(
+        self,
+        # You can pass the two sample sets directly:
+        samples_p: Optional[np.ndarray] = None,   # shape (m, d)
+        samples_q: Optional[np.ndarray] = None,   # shape (n, d)
+        # Or rely on a sensible default builder, see below:
+        default_space: str = "theta",             # "theta" or "posterior"
+        **kwargs
+    ) -> DataDisplay:
+        """
+        Build/collect the two sample sets and run PQMass over n_repeats randomized tessellations.
+
+        Options
+        -------
+        samples_p, samples_q : np.ndarray or None
+            If provided, these are used directly as the two sets. They must have the same dimensionality.
+        default_space : {"theta", "posterior"}
+            If explicit samples are not provided:
+              - "theta": use m = number_simulations instances of θ_true from data.thetas as set A (p),
+                         and n = number_simulations * samples_per_inference posterior draws concatenated
+                         over those same contexts as set B (q). This compares the amortized posterior
+                         aggregate against the empirical θ distribution (coarse diagnostic).
+              - "posterior": compare two posterior estimators for the same x. If your `model` exposes
+                              `sample_posterior_alt(...)` for a baseline/alt model, we draw both and compare.
+                              (Fallbacks to "theta" if not present.)
+
+        Notes
+        -----
+        For rigorous generative-model assessment, pass (samples_p, samples_q) explicitly as two i.i.d.
+        sets drawn from the target and candidate distributions in the SAME space (e.g., pixel/features).
+        """
+        rng = self.data.rng
+
+        if samples_p is None or samples_q is None:
+            if default_space == "posterior" and hasattr(self.model, "sample_posterior_alt"):
+                # Choose one random context x; compare two posteriors q1 vs q2 for that x
+                idx = int(rng.integers(0, len(self.data.thetas), endpoint=False))
+                x = self.data.context[idx, :]
+                A = self.model.sample_posterior(self.samples_per_inference, x)    # (S, d_theta)
+                B = self.model.sample_posterior_alt(self.samples_per_inference, x)
+            else:
+                # Default: aggregate across contexts — A = θ_true, B = posterior draws across them.
+                m = int(self.number_simulations)
+                S = int(self.samples_per_inference)
+                if m <= 0 or S <= 0:
+                    raise ValueError("number_simulations and samples_per_inference must be positive.")
+
+                # draw m contexts/θ from dataset
+                idxs = rng.integers(0, len(self.data.thetas), size=m)
+                thetas_true = self.data.thetas[idxs, :]
+                A = thetas_true  # (m, d_theta)
+
+                # posterior draws pooled across those contexts
+                draws = []
+                for i in idxs:
+                    x = self.data.context[i, :]
+                    draws.append(self.model.sample_posterior(S, x))
+                B = np.concatenate(draws, axis=0)  # (m*S, d_theta)
+        else:
+            A = np.asarray(samples_p)
+            B = np.asarray(samples_q)
+
+        if A.ndim != 2 or B.ndim != 2 or A.shape[1] != B.shape[1]:
+            raise ValueError("samples_p and samples_q must be 2D arrays with the same number of columns (dimensions).")
+
+        # Run PQMass n_repeats times
+        chi2_vals = np.zeros(self.n_repeats, dtype=float)
+        df_vals = np.zeros(self.n_repeats, dtype=int)
+        p_vals = np.zeros(self.n_repeats, dtype=float)
+        overfit_vals = np.full(self.n_repeats, np.nan, dtype=float)
+
+        # For plotting contributions, keep the last run’s details
+        last_details = None
+        for r in range(self.n_repeats):
+            out = self._pqmass_once(A, B, rng)
+            chi2_vals[r] = out["chi2"]
+            df_vals[r] = out["df"]
+            p_vals[r] = out["pvalue"]
+            if self.two_sided_overfit:
+                overfit_vals[r] = out["pvalue_overfit"]
+            last_details = out
+
+        payload = {
+            "n_regions": int(self.n_regions),
+            "n_repeats": int(self.n_repeats),
+            "metric": self.metric,
+            "remove_refs_from_counts": self.remove_refs_from_counts,
+            "two_sided_overfit": self.two_sided_overfit,
+            "pvalue_hist_bins": int(self.pvalue_hist_bins),
+            "chi2_vals": chi2_vals,
+            "df_vals": df_vals,
+            "p_vals": p_vals,
+            "p_vals_overfit": overfit_vals,
+            # last run breakdown (for cell contributions plot)
+            "last_counts_A": last_details["counts_A"],
+            "last_counts_B": last_details["counts_B"],
+            "last_exp_A": last_details["expected_A"],
+            "last_exp_B": last_details["expected_B"],
+            "last_contribs": last_details["contribs"],
+        }
+
+        return DataDisplay(payload)
+
+    # ---------------------------
+    # Plotting
+    # ---------------------------
+
+    def plot(
+        self,
+        data_display: Union[DataDisplay, str],
+        title: str = "PQMass (Voronoi multinomial χ² test)",
+        x_label: str = "",
+        y_label: str = "",
+        **kwargs
+    ) -> Tuple["fig", "ax"]:
+        """
+        Renders:
+          - Left (or top): histogram of p-values across repeats (uniform ref under null).
+          - Right (or bottom): per-cell χ² contributions for the last run (sorted).
+        """
+        if not isinstance(data_display, DataDisplay):
+            data_display = DataDisplay().from_h5(data_display, self.plot_name)
+
+        p_vals = np.asarray(data_display["p_vals"])
+        chi2_vals = np.asarray(data_display["chi2_vals"])
+        df_vals = np.asarray(data_display["df_vals"])
+        n_repeats = int(data_display["n_repeats"])
+        n_regions = int(data_display["n_regions"])
+
+        # Layout
+        n_plots = int(self.show_pvalue_hist) + int(self.show_cell_contribs)
+        n_plots = max(n_plots, 1)
+
+        # Width heuristics similar to other plots
+        row_len = self.figure_size[0] * (0.8 * n_plots)
+        fig, axes = plt.subplots(
+            1, n_plots, figsize=(row_len, self.figure_size[1]), squeeze=False
+        )
+        axes = axes[0]
+
+        plot_idx = 0
+
+        # P-value histogram
+        if self.show_pvalue_hist:
+            ax_hist = axes[plot_idx]
+            plot_idx += 1
+            ax_hist.hist(p_vals, bins=self.pvalue_hist_bins, range=(0, 1), density=True, alpha=0.8, edgecolor="black")
+            ax_hist.axhline(1.0, color="gray", linestyle="--", label="Uniform ref (null)")
+            ax_hist.set_title("p-value distribution over repeats")
+            ax_hist.set_xlabel("p-value")
+            ax_hist.set_ylabel("Density")
+            ax_hist.legend()
+
+            # annotate summary stats
+            txt = f"mean={np.nanmean(p_vals):.3f}, median={np.nanmedian(p_vals):.3f}"
+            ax_hist.text(0.02, 0.95, txt, transform=ax_hist.transAxes, va="top", ha="left")
+
+        # Per-cell contributions (last run)
+        if self.show_cell_contribs:
+            ax_cells = axes[plot_idx]
+            plot_idx += 1
+            contribs = np.asarray(data_display["last_contribs"])
+            order = np.argsort(contribs)[::-1]  # descending
+            top = contribs[order]
+            ax_cells.bar(np.arange(top.size), top, alpha=0.85, edgecolor="black", linewidth=0.5)
+            ax_cells.set_title("Per-cell χ² contributions (last repeat)")
+            ax_cells.set_xlabel("Cells (sorted by contribution)")
+            ax_cells.set_ylabel("Contribution")
+
+        # Super labels / title
+        fig.suptitle(title)
+        if x_label:
+            fig.supxlabel(x_label)
+        if y_label:
+            fig.supylabel(y_label)
+
+        # Add a compact legend with χ² summaries
+        mean_df = int(np.round(np.nanmean(df_vals)))
+        mean_chi2 = float(np.nanmean(chi2_vals))
+        handles = [plt.Line2D([0], [0], color="gray", linestyle="--", label=f"df≈{mean_df},  E[χ²]≈{mean_df}")]
+        fig.legend(handles=handles, loc="upper center", ncol=1)
+
+        return fig, axes if len(axes) > 1 else axes[0]
