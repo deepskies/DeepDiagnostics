@@ -1,0 +1,327 @@
+from typing import Union, Tuple, List, TYPE_CHECKING
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
+
+from deepdiagnostics.plots.plot import Display
+from deepdiagnostics.utils.config import get_item
+from deepdiagnostics.utils.utils import DataDisplay
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure as fig
+    from matplotlib.axes import Axes as ax
+
+
+class CredibleRegionsPlot(Display):
+    """
+    2D credible regions for SBI NPE posteriors via KDE-based HPD contours.
+
+    For a selected data instance (random by default), this:
+      1) draws posterior samples θ ~ q(θ | x),
+      2) builds 2D KDEs for each requested parameter pair,
+      3) computes density thresholds that enclose the desired mass levels,
+      4) plots filled regions and contour lines at those thresholds,
+      5) overlays θ_true and (optionally) a scatter of posterior samples.
+
+    Typical usage:
+
+        from deepdiagnostics.plots import CredibleRegionsPlot
+        CredibleRegionsPlot(model, data, save=False, show=True)()
+    """
+
+    def __init__(
+        self,
+        model,
+        data,
+        run_id,
+        save,
+        show,
+        out_dir=None,
+        percentiles=None,
+        use_progress_bar=None,
+        samples_per_inference=None,
+        number_simulations=None,         # kept for interface parity; not used here
+        parameter_names=None,
+        parameter_colors=None,
+        colorway=None,
+        # Credible region–specific options
+        parameter_pairs: Union[None, List[Tuple[int, int]]] = None,
+        gridsize: int = 128,
+        bandwidth: Union[None, float, str] = None,  # passed to scipy.stats.gaussian_kde (e.g., 'scott', 'silverman', float)
+        padding: float = 0.05,                      # fraction to pad the min/max bounds for grids
+        show_samples: bool = True,
+        max_scatter: int = 3000,                    # subsample for scatter overlay
+        show_true_point: bool = True,
+    ):
+        super().__init__(
+            model,
+            data,
+            run_id,
+            save,
+            show,
+            out_dir,
+            percentiles,
+            use_progress_bar,
+            samples_per_inference,
+            number_simulations,
+            parameter_names,
+            parameter_colors,
+            colorway,
+        )
+        self.line_cycle = tuple(get_item("plots_common", "line_style_cycle", raise_exception=False))
+        self.parameter_pairs = parameter_pairs
+        self.gridsize = gridsize
+        self.bandwidth = bandwidth
+        self.padding = padding
+        self.show_samples = show_samples
+        self.max_scatter = max_scatter
+        self.show_true_point = show_true_point
+
+        # default to all unique unordered pairs if not provided
+        if self.parameter_pairs is None:
+            self.parameter_pairs = [(i, j) for i in range(self.data.n_dims) for j in range(i + 1, self.data.n_dims)]
+
+    def plot_name(self):
+        return "credible_regions.png"
+
+    # ---------------------------
+    # Internals: KDE + HPD levels
+    # ---------------------------
+
+    def _kde_on_grid(self, samples_2d: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
+        """
+        Evaluate a 2D KDE on a regular grid with a small padding margin.
+
+        Returns
+        -------
+        X, Y : meshgrid arrays
+        Z    : KDE density evaluated on the grid
+        dx, dy : grid cell widths (for mass calculations)
+        """
+        x = samples_2d[:, 0]
+        y = samples_2d[:, 1]
+
+        # padded bounds
+        x_min, x_max = np.min(x), np.max(x)
+        y_min, y_max = np.min(y), np.max(y)
+        x_pad = (x_max - x_min) * self.padding if x_max > x_min else 1.0
+        y_pad = (y_max - y_min) * self.padding if y_max > y_min else 1.0
+
+        xlin = np.linspace(x_min - x_pad, x_max + x_pad, self.gridsize)
+        ylin = np.linspace(y_min - y_pad, y_max + y_pad, self.gridsize)
+        X, Y = np.meshgrid(xlin, ylin, indexing="xy")
+
+        kde = gaussian_kde(samples_2d.T, bw_method=self.bandwidth)
+        Z = kde(np.vstack([X.ravel(), Y.ravel()])).reshape(X.shape)
+
+        dx = (xlin[1] - xlin[0]) if len(xlin) > 1 else 1.0
+        dy = (ylin[1] - ylin[0]) if len(ylin) > 1 else 1.0
+        return X, Y, Z, dx, dy
+
+    def _levels_for_mass(self, Z: np.ndarray, dx: float, dy: float, masses: np.ndarray) -> np.ndarray:
+        """
+        Given a grid of densities Z and cell area dx*dy, find density thresholds t_m
+        such that the superlevel set {Z >= t_m} encloses mass m.
+        """
+        z = Z.ravel()
+        order = np.argsort(z)[::-1]
+        z_sorted = z[order]
+        cumsum = (z_sorted * dx * dy).cumsum()
+        total = cumsum[-1] if cumsum.size > 0 else 1.0
+        if total <= 0:
+            return np.full_like(masses, fill_value=np.nan, dtype=float)
+
+        cdf = cumsum / total
+        levels = []
+        for m in masses:
+            k = int(np.searchsorted(cdf, m, side="left"))
+            k = np.clip(k, 0, len(z_sorted) - 1)
+            levels.append(z_sorted[k])
+        return np.array(levels, dtype=float)
+
+    # ---------------------------
+    # Data preparation
+    # ---------------------------
+
+    def _data_setup(self, data_index: Union[None, int] = None, **kwargs) -> DataDisplay:
+        if self.percentiles is None:
+            percentiles = np.array([0.5, 0.8, 0.95])
+        else:
+            # accept either fractions (0–1) or percentages (1–100)
+            if all([p >= 1 for p in self.percentiles]):
+                percentiles = np.array(self.percentiles, dtype=float) / 100.0
+            else:
+                percentiles = np.array(self.percentiles, dtype=float)
+
+        # pick a single data instance (credible regions are per-x)
+        rng = self.data.rng
+        if data_index is None:
+            data_index = int(rng.integers(0, len(self.data.thetas), endpoint=False))
+
+        theta_true = self.data.thetas[data_index, :]
+        x = self.data.context[data_index, :]
+
+        # posterior ensemble for this context x
+        samples = self.model.sample_posterior(self.samples_per_inference, x)  # (S, n_dims)
+
+        payload = {
+            "percentiles": percentiles,
+            "data_index": int(data_index),
+            "theta_true": theta_true,
+            "pairs": np.array(self.parameter_pairs, dtype=int),
+            "samples_per_inference": int(self.samples_per_inference),
+        }
+
+        # compute KDE grids + HPD thresholds for each pair
+        for i, j in self.parameter_pairs:
+            pname_i = self.parameter_names[i]
+            pname_j = self.parameter_names[j]
+            key = f"{pname_i}_vs_{pname_j}"
+
+            S_ij = samples[:, [i, j]]
+            X, Y, Z, dx, dy = self._kde_on_grid(S_ij)
+            levels = self._levels_for_mass(Z, dx, dy, percentiles)
+
+            payload[f"grid_x_{key}"] = X
+            payload[f"grid_y_{key}"] = Y
+            payload[f"kde_{key}"] = Z
+            payload[f"levels_{key}"] = levels
+            payload[f"dxdy_{key}"] = np.array([dx, dy])
+            payload[f"theta_true_{key}"] = np.array([theta_true[i], theta_true[j]])
+
+            # optional scatter subsample
+            if self.show_samples:
+                idxs = np.arange(S_ij.shape[0])
+                if S_ij.shape[0] > self.max_scatter:
+                    idxs = rng.choice(S_ij.shape[0], size=self.max_scatter, replace=False)
+                payload[f"samples_{key}"] = S_ij[idxs]
+
+        return DataDisplay(payload)
+
+    # ---------------------------
+    # Plotting
+    # ---------------------------
+
+    def plot(
+        self,
+        data_display: Union[DataDisplay, str],
+        display_parameters_separate: bool = True,
+        title: str = "Credible Regions (HPD) – Pairwise Marginals",
+        x_label: str = "Parameter value",
+        y_label: str = "Parameter value",
+        contour_line_color: str = "black",
+        contour_line_style: str = "-",
+        fill_alpha_base: float = 0.35,
+        sample_scatter_alpha: float = 0.25,
+        true_marker: str = "x",
+        true_marker_size: int = 60,
+        **kwargs,
+    ) -> Tuple["fig", "ax"]:
+        """
+        Render 2D credible regions for each parameter pair using KDE-based HPD contours.
+
+        Args
+        ----
+        data_display : DataDisplay or str
+            If str, treated as HDF5 path previously saved by this plot.
+        display_parameters_separate : bool
+            Whether to show a subplot per pair (recommended). If False, overlays all pairs.
+        title, x_label, y_label : str
+            Labels for figure and axes.
+        contour_line_color, contour_line_style : str
+            Styling for the HPD contour lines.
+        fill_alpha_base : float
+            Base alpha for filled regions; deeper regions scale up slightly.
+        sample_scatter_alpha : float
+            Alpha for posterior sample scatter.
+        true_marker : str
+            Matplotlib marker for θ_true overlay.
+        true_marker_size : int
+            Size for θ_true scatter.
+        """
+        if not isinstance(data_display, DataDisplay):
+            data_display = DataDisplay().from_h5(data_display, self.plot_name)
+
+        pairs = [tuple(map(int, p)) for p in data_display["pairs"]]
+        percentiles = np.array(data_display["percentiles"], dtype=float)
+        n_pairs = len(pairs)
+
+        # Color cycles
+        sigma_colors = self._get_hex_sigma_colors(len(percentiles))  # inner -> outer mass levels
+        pair_color_cycler = iter(plt.cycler("color", self.parameter_colors if self.parameter_colors is not None else plt.rcParams['axes.prop_cycle'].by_key().get('color', ['C0','C1','C2','C3','C4'])))
+        line_style_cycler = iter(plt.cycler("line_style", self.line_cycle if self.line_cycle else ["-"]))
+
+        # Layout
+        if display_parameters_separate:
+            row_len = self.figure_size[0] * 0.8 * max(1, n_pairs)
+            fig, ax = plt.subplots(1, n_pairs, figsize=(row_len, self.figure_size[1]), squeeze=False)
+            axes = ax[0]
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=self.figure_size)
+            axes = [ax]
+
+        # Draw each pair
+        for idx, (i, j) in enumerate(pairs):
+            pname_i = self.parameter_names[i]
+            pname_j = self.parameter_names[j]
+            key = f"{pname_i}_vs_{pname_j}"
+
+            X = data_display[f"grid_x_{key}"]
+            Y = data_display[f"grid_y_{key}"]
+            Z = data_display[f"kde_{key}"]
+            levels = data_display[f"levels_{key}"]
+            theta_true_ij = data_display[f"theta_true_{key}"]
+
+            ax_i = axes[idx] if display_parameters_separate else axes[0]
+            pair_color = next(pair_color_cycler)["color"]
+            _ = next(line_style_cycler)["line_style"]  # reserved if we later vary lines per pair
+
+            # Ensure levels sorted ascending for contour drawing (outermost last)
+            order = np.argsort(levels)
+            levels_sorted = levels[order]
+            # Fill from outermost to innermost so smaller regions sit on top
+            for k, t in enumerate(levels_sorted[::-1]):
+                fill_color = sigma_colors[len(levels_sorted) - 1 - k]
+                # Fill region Z >= t using a two-level contourf
+                ax_i.contourf(X, Y, Z, levels=[t, Z.max()], colors=[fill_color], alpha=fill_alpha_base + 0.1 * k, antialiased=True)
+
+            # Contour lines at each threshold
+            cs = ax_i.contour(X, Y, Z, levels=list(levels_sorted), colors=contour_line_color, linestyles=contour_line_style, linewidths=1.0)
+            # Label contours with percent values
+            fmt = {lev: f"{int(p*100)}%" for lev, p in zip(levels_sorted, percentiles[order])}
+            ax_i.clabel(cs, inline=True, fontsize=8, fmt=fmt)
+
+            # Optional sample scatter
+            samples_key = f"samples_{key}"
+            if self.show_samples and samples_key in data_display:
+                S_ij = data_display[samples_key]
+                ax_i.scatter(S_ij[:, 0], S_ij[:, 1], s=4, alpha=sample_scatter_alpha, color=pair_color, linewidths=0, label=f"samples {pname_i},{pname_j}")
+
+            # True theta overlay
+            if self.show_true_point:
+                ax_i.scatter([theta_true_ij[0]], [theta_true_ij[1]], s=true_marker_size, marker=true_marker, color="k", label="θ true", zorder=5)
+
+            ax_i.set_title(f"{pname_i} vs {pname_j}")
+            ax_i.set_xlabel(pname_i if display_parameters_separate else x_label)
+            ax_i.set_ylabel(pname_j if display_parameters_separate else y_label)
+
+        # Legend (deduplicate)
+        handles, labels = [], []
+        for a in axes:
+            h, l = a.get_legend_handles_labels()
+            handles += h
+            labels += l
+        if handles:
+            seen = set()
+            dedup_h, dedup_l = [], []
+            for h, l in zip(handles, labels):
+                if l not in seen:
+                    dedup_h.append(h); dedup_l.append(l); seen.add(l)
+            fig.legend(dedup_h, dedup_l, loc="upper center", ncol=min(4, len(dedup_h)))
+
+        fig.suptitle(title)
+        fig.supxlabel(x_label)
+        fig.supylabel(y_label)
+
+        return fig, ax
