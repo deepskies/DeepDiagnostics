@@ -4,10 +4,11 @@ import uuid
 import pytest
 import yaml
 import numpy as np
+import sys
 
-from deepdiagnostics.data import H5Data
+from deepdiagnostics.data import H5Data, H5HierarchyData
 from deepdiagnostics.data.simulator import Simulator
-from deepdiagnostics.models import SBIModel
+from deepdiagnostics.models import SBIModel, HierarchyModel
 from deepdiagnostics.utils.config import get_item
 from deepdiagnostics.utils.simulator_utils import register_simulator
 
@@ -75,16 +76,23 @@ def setUp(result_output):
     sim_paths = f"{simulator_config_path.strip('/')}/simulators.json"
     os.remove(sim_paths)
 
-    shutil.rmtree(result_output, ignore_errors=True)
+    # shutil.rmtree(result_output, ignore_errors=True)
 
 @pytest.fixture
 def model_path():
     return "resources/savedmodels/sbi/sbi_linear_from_data.pkl"
 
+@pytest.fixture
+def hierarchy_model_path():
+    return "resources/savedmodels/trained_model_0909.pkl"
 
 @pytest.fixture
 def data_path():
     return "resources/saveddata/data_test.h5"
+
+@pytest.fixture
+def hierarchy_data_path():
+    return "resources/saveddata/Hierarchicalpendulum_data_test_40.h5"
 
 @pytest.fixture
 def result_output(): 
@@ -102,10 +110,21 @@ def simulator_name():
 def mock_model(model_path):
     return SBIModel(model_path)
 
+@pytest.fixture
+def mock_hierarchy_model(hierarchy_model_path):
+    # Ensure HierarchyModel dependencies are importable during unpickle
+    hnpe_path = "resources/savedmodels/hnpe_src"
+    if hnpe_path not in sys.path:
+        sys.path.insert(0, hnpe_path)
+    return HierarchyModel(hierarchy_model_path)
 
 @pytest.fixture
 def mock_data(data_path, simulator_name):
     return H5Data(data_path, simulator_name)
+
+@pytest.fixture
+def mock_hierarchy_data(hierarchy_data_path, simulator_name):
+    return H5HierarchyData(hierarchy_data_path, simulator_name)
 
 @pytest.fixture
 def mock_run_id(): 
@@ -116,11 +135,10 @@ def mock_2d_data(data_path):
     return H5Data(data_path, "Mock2DSimulator", simulation_dimensions=2)
 
 @pytest.fixture
-def config_factory(result_output):
+def config_factory(result_output, model_path, data_path, hierarchy_model_path, hierarchy_data_path):
     def factory(
-        model_path=None,
+        use_hierarchy: bool = False,
         model_engine=None,
-        data_path=None,
         data_engine=None,
         plot_2d=False,
         simulator=None,
@@ -129,8 +147,8 @@ def config_factory(result_output):
         plots=None,
         metrics=None,
     ):
-        config = {
-            "common": {},
+        cfg = {
+            "common": {"out_dir": result_output},
             "model": {},
             "data": {},
             "plots_common": {},
@@ -139,44 +157,100 @@ def config_factory(result_output):
             "metrics": {},
         }
 
-        # Single settings
-        config["common"]["out_dir"] = result_output
-        if model_path is not None:
-            config["model"]["model_path"] = model_path
+        mp = hierarchy_model_path if use_hierarchy else model_path
+        dp = hierarchy_data_path if use_hierarchy else data_path
+        cfg["model"]["model_path"] = str(mp)
+        cfg["data"]["data_path"] = str(dp)
+
         if model_engine is not None:
-            config["model"]["model_engine"] = model_engine
-        if data_path is not None:
-            config["data"]["data_path"] = data_path
+            cfg["model"]["model_engine"] = model_engine
         if data_engine is not None:
-            config["data"]["data_engine"] = data_engine
+            cfg["data"]["data_engine"] = data_engine
         if simulator is not None:
-            config["data"]["simulator"] = simulator
-        if plot_2d: 
-            config["data"]["simulator_dimensions"] = 2
+            cfg["data"]["simulator"] = simulator
+        if plot_2d:
+            cfg["data"]["simulator_dimensions"] = 2
 
-        # Dict settings
-        if plot_settings is not None:
-            for key, item in plot_settings.items():
-                config["plots_common"][key] = item
-        if metrics_settings is not None:
-            for key, item in metrics_settings.items():
-                config["metrics_common"][key] = item
-
+        if plot_settings:
+            cfg["plots_common"].update(plot_settings)
+        if metrics_settings:
+            cfg["metrics_common"].update(metrics_settings)
         if metrics is not None:
-            if isinstance(metrics, dict):
-                config["metrics"] = metrics
-            if isinstance(metrics, list):
-                config["metrics"] = {metric: {} for metric in metrics}
-
+            cfg["metrics"] = metrics if isinstance(metrics, dict) else {m: {} for m in metrics}
         if plots is not None:
-            if isinstance(plots, dict):
-                config["plots"] = plots
-            if isinstance(metrics, list):
-                config["plots"] = {plot: {} for plot in plots}
+            cfg["plots"] = plots if isinstance(plots, dict) else {p: {} for p in plots}
 
         temp_outpath = "./temp_config.yml"
-        yaml.dump(config, open(temp_outpath, "w"))
-
+        with open(temp_outpath, "w") as f:
+            yaml.safe_dump(cfg, f, sort_keys=False)
         return temp_outpath
 
     return factory
+# def config_factory(result_output):
+#     def factory(
+#         model_path=None,
+#         model_engine=None,
+#         data_path=None,
+#         data_engine=None,
+#         plot_2d=False,
+#         simulator=None,
+#         plot_settings=None,
+#         metrics_settings=None,
+#         plots=None,
+#         metrics=None,
+#     ):
+#         config = {
+#             "common": {},
+#             "model": {},
+#             "data": {},
+#             "plots_common": {},
+#             "plots": {},
+#             "metrics_common": {},
+#             "metrics": {},
+#         }
+
+#         # Single settings
+#         config["common"]["out_dir"] = result_output
+#         if model_path is not None:
+#             config["model"]["model_path"] = model_path
+#         if hierarchy_model_path is not None:
+#             config["model"]["model_path"] = hierarchy_model_path
+#         if model_engine is not None:
+#             config["model"]["model_engine"] = model_engine
+#         if data_path is not None:
+#             config["data"]["data_path"] = data_path
+#         if hierarchy_data_path is not None:
+#             config["data"]["data_path"] = hierarchy_data_path
+#         if data_engine is not None:
+#             config["data"]["data_engine"] = data_engine
+#         if simulator is not None:
+#             config["data"]["simulator"] = simulator
+#         if plot_2d: 
+#             config["data"]["simulator_dimensions"] = 2
+
+#         # Dict settings
+#         if plot_settings is not None:
+#             for key, item in plot_settings.items():
+#                 config["plots_common"][key] = item
+#         if metrics_settings is not None:
+#             for key, item in metrics_settings.items():
+#                 config["metrics_common"][key] = item
+
+#         if metrics is not None:
+#             if isinstance(metrics, dict):
+#                 config["metrics"] = metrics
+#             if isinstance(metrics, list):
+#                 config["metrics"] = {metric: {} for metric in metrics}
+
+#         if plots is not None:
+#             if isinstance(plots, dict):
+#                 config["plots"] = plots
+#             if isinstance(metrics, list):
+#                 config["plots"] = {plot: {} for plot in plots}
+
+#         temp_outpath = "./temp_config.yml"
+#         yaml.dump(config, open(temp_outpath, "w"))
+
+#         return temp_outpath
+
+#     return factory

@@ -25,13 +25,16 @@ Defaults = {
     },
     "plots": {
         "CDFRanks": {},
+        "HierarchyCDFRanks": {},
         "Ranks": {"num_bins": None},
+        "HierarchyRanks": {"num_bins": None},
         "CoverageFraction": {},
         "TARP": {
             "coverage_sigma": 3 
         },
         "LC2ST": {}, 
         "Parity":{},
+        "HierarchyParity": {},
         "PPC": {}, 
         "PriorPC":{}
     },

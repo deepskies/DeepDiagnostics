@@ -5,15 +5,17 @@ from deepdiagnostics.utils.config import Config, get_item
 
 from deepdiagnostics.plots import (
     CDFRanks, 
+    HierarchyCDFRanks,
     Ranks, 
+    HierarchyRanks,
     CoverageFraction, 
     TARP, 
     LC2ST, 
     PPC,
     PriorPC,
-    Parity
+    Parity,
+    HierarchyParity
 )
-
 
 @pytest.fixture
 def plot_config(config_factory):
@@ -25,6 +27,15 @@ def plot_config(config_factory):
     config = config_factory(metrics_settings=metrics_settings)
     return config
 
+@pytest.fixture
+def plot_hierarchy_config(config_factory):
+    metrics_settings = {
+        "use_progress_bar": False,
+        "samples_per_inference": 10,
+        "percentiles": [95, 75, 50],
+    }
+    config = config_factory(metrics_settings=metrics_settings, use_hierarchy=True)
+    return config
 
 def test_plot_cdf(plot_config, mock_model, mock_data, mock_run_id):
     Config(plot_config)
@@ -32,10 +43,34 @@ def test_plot_cdf(plot_config, mock_model, mock_data, mock_run_id):
     plot(**get_item("plots", "CDFRanks", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
+def test_plot_hierarchy_cdf(plot_hierarchy_config, mock_hierarchy_model, mock_hierarchy_data, mock_run_id):
+    Config(plot_hierarchy_config)
+    plot = HierarchyCDFRanks(mock_hierarchy_model, mock_hierarchy_data, global_samples=True,
+                             run_id=mock_run_id, save=True, show=False, parameter_names=["g"])
+    plot(**get_item("plots", "HierarchyCDFRanks", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot = HierarchyCDFRanks(mock_hierarchy_model, mock_hierarchy_data, global_samples=False,
+                             run_id=mock_run_id, save=True, show=False, parameter_names=["l"])
+    plot(**get_item("plots", "HierarchyCDFRanks", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
 def test_plot_ranks(plot_config, mock_model, mock_data, mock_run_id):
     Config(plot_config)
     plot = Ranks(mock_model, mock_data, mock_run_id, save=True, show=False)
     plot(**get_item("plots", "Ranks", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+def test_plot_hierarchy_ranks(plot_hierarchy_config, mock_hierarchy_model, mock_hierarchy_data, mock_run_id):
+    Config(plot_hierarchy_config)
+    plot = HierarchyRanks(mock_hierarchy_model, mock_hierarchy_data, global_samples=True,
+                          run_id=mock_run_id, save=True, show=False, parameter_names=["g"])
+    plot(**get_item("plots", "HierarchyRanks", raise_exception=False))
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot = HierarchyRanks(mock_hierarchy_model, mock_hierarchy_data, global_samples=False,
+                          run_id=mock_run_id, save=True, show=False, parameter_names=["l"])
+    plot(**get_item("plots", "HierarchyRanks", raise_exception=False))
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
 def test_plot_coverage(plot_config, mock_model, mock_data, mock_run_id):
@@ -125,6 +160,49 @@ def test_parity(plot_config, mock_model, mock_data, mock_run_id):
 
     assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
+def test_hierarchy_parity(plot_hierarchy_config, mock_hierarchy_model, mock_hierarchy_data, mock_run_id):
+    Config(plot_hierarchy_config)
+    plot = HierarchyParity(mock_hierarchy_model, mock_hierarchy_data, global_samples = True,
+                           run_id=mock_run_id, save=True, show=False, parameter_names=["g"])
+    
+    plot(include_difference= False, 
+        include_residual = False, 
+        include_percentage = False)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot(include_difference= True, 
+        include_residual = True, 
+        include_percentage = True)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot(include_difference= True,
+        include_residual = True,
+        include_percentage = True)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot = HierarchyParity(mock_hierarchy_model, mock_hierarchy_data, global_samples = False,
+                           run_id=mock_run_id, save=True, show=False, parameter_names=["l"])
+
+    plot(include_difference= False, 
+        include_residual = False, 
+        include_percentage = False)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot(include_difference= True, 
+        include_residual = True, 
+        include_percentage = True)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
+
+    plot(include_difference= True,
+        include_residual = True,
+        include_percentage = True)
+
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")
 
 @pytest.mark.parametrize("plot_type", [CDFRanks, Ranks, CoverageFraction, TARP, PPC, PriorPC, Parity])
 def test_rerun_plot(plot_type, plot_config, mock_model, mock_data, mock_run_id):
