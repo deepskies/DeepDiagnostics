@@ -44,17 +44,18 @@ class CDFParityAreaUnderCurve(Metric):
 
     def _collect_data_params(self):
         n_dims = self.data.n_dims
-        theta_true = self.data.get_theta_true()#self.data.thetas
+        theta_true = self.data.thetas#self.data.get_theta_true()#self.data.thetas
         self.posterior_samples = np.zeros(
              (self.number_simulations, self.samples_per_inference, n_dims)
         )
+        thetas = np.zeros((self.number_simulations, self.samples_per_inference, n_dims))
 
         for n in range(self.number_simulations):
             sample_index = self.data.rng.integers(0, len(theta_true))
             
             theta = theta_true[sample_index, :]
             x = self.data.context[sample_index, :]
-            posterior_samples[n] = self.model.sample_posterior(
+            self.posterior_samples[n] = self.model.sample_posterior(
                 self.samples_per_inference, x
             )
 
