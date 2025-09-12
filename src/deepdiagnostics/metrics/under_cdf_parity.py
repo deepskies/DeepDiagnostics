@@ -84,7 +84,7 @@ class CDFParityAreaUnderCurve(Metric):
         # Calculate the area under the ECDF curve
         # Compute the ECDF
         #res = stats.ecdf_sample
-        x1 = ecdf_sample.cdf.quantiles
+        x = ecdf_sample.cdf.quantiles
         y = ecdf_sample.cdf.probabilities
         print("x",x," y ", y)
         area_under_ecdf = np.trapezoid(y, x)
