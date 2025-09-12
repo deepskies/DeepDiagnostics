@@ -5,7 +5,8 @@ from deepdiagnostics.utils.config import Config
 from deepdiagnostics.metrics import (
     CoverageFraction, 
     AllSBC, 
-    LC2ST
+    LC2ST,
+    CDFParityAreaUnderCurve
 )
 
 @pytest.fixture
@@ -44,3 +45,11 @@ def test_lc2st(metric_config, mock_model, mock_data, mock_run_id):
     assert lc2st.output is not None
     assert os.path.exists(f"{lc2st.out_dir}/{mock_run_id}_diagnostic_metrics.json")
 
+def test_CDFParity_Area_Under_Curve(metric_config, mock_model, mock_data, mock_run_id):
+    Config(metric_config)
+    areaunderecdf=CDFParityAreaUnderCurve( mock_model, mock_data, mock_run_id, save=True)
+    areaunderecdf()
+    assert areaunderecdf.output is not None
+    #print(areaunderecdf.output) #used for testing to check output
+    #assert False #testing 
+    assert os.path.exists(f"{areaunderecdf.out_dir}/{mock_run_id}_diagnostic_metrics.json")
