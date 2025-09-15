@@ -61,10 +61,10 @@ class H5Data(Data):
             return self.data["simulator_outcome"]
         except KeyError:
             try: 
-                sim_outcome = np.array((self.simulator_dimensions, len(self.thetas)))
+                sim_outcome = np.empty((len(self.thetas), self.simulator_dimensions))
                 for index, theta in enumerate(self.thetas): 
                     sim_out = self.simulator(theta=theta.unsqueeze(0), n_samples=1)
-                    sim_outcome[:, index] = sim_out
+                    sim_outcome[index] = sim_out
                 return sim_outcome
             
             except Exception as e:

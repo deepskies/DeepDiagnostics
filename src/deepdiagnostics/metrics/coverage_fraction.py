@@ -48,9 +48,16 @@ class CoverageFraction(Metric):
             tuple[Sequence, Sequence]: A tuple of the samples tested (M samples, Samples per inference, N parameters) and the coverage over those samples. 
         """
 
-        all_samples = np.empty(
-            (self.number_simulations, self.samples_per_inference, np.shape(self.thetas)[1])
+        test_data_len = self.simulator_outcome.shape[0]
+        assert self.thetas.shape[0] == test_data_len
+
+        theta_shape = self.thetas.shape[1:]
+
+        theta_posterior_samples = np.empty(
+            (self.number_simulations, self.samples_per_inference, *theta_shape)
         )
+
+        theta_true_values = np.empty((self.number_simulations, *theta_shape))
 
         iterator = range(self.number_simulations)
         if self.use_progress_bar:
@@ -60,50 +67,40 @@ class CoverageFraction(Metric):
                 unit=" observation",
             )
 
-        n_theta_samples = self.thetas.shape[0]
-        count_array = np.zeros((self.number_simulations, len(self.percentiles), self.thetas.shape[1]))
+        for sim_idx in iterator:
+            test_data_idx = self.data.rng.integers(0, test_data_len)
 
-        for sample_index in iterator:
-            context_sample = self.simulator_outcome[self.data.rng.integers(0, len(self.simulator_outcome))]
-            samples = self.model.sample_posterior(self.samples_per_inference, context_sample).numpy()
+            theta_true_values[sim_idx] = self.thetas[test_data_idx]
+            observed_data = self.simulator_outcome[test_data_idx]
 
-            all_samples[sample_index] = samples
+            theta_posterior_samples[sim_idx] = self.model.sample_posterior(
+                self.samples_per_inference, observed_data
+            ).numpy()
 
-            # step through the percentile list
-            for index, cov in enumerate(self.percentiles):
-                percentile_lower = 50.0 - cov / 2
-                percentile_upper = 50.0 + cov / 2
+        confidence_lower = np.percentile(
+            theta_posterior_samples, 50 - np.asarray(self.percentiles) / 2, axis=1
+        )  # shape: (len(self.percentile), self.number_simulations, *theta_shape)
 
-                # find the percentile for the posterior for this observation
-                # this is n_params dimensional
-                # the units are in parameter space
-                confidence_lower = np.percentile(samples, percentile_lower, axis=0)
-                confidence_upper = np.percentile(samples, percentile_upper, axis=0)
+        confidence_upper = np.percentile(
+            theta_posterior_samples, 50 + np.asarray(self.percentiles) / 2, axis=1
+        )  # shape: (len(self.percentile), self.number_simulations, *theta_shape)
 
-                # this is asking if the true parameter value
-                # is contained between the
-                # upper and lower confidence intervals
-                # checks separately for each side of the 50th percentile
+        is_covered = np.logical_and(
+            confidence_upper - theta_true_values > 0,
+            theta_true_values - confidence_lower > 0,
+        )  # shape: (len(self.percentile), self.number_simulations, *theta_shape)
 
-                c = np.logical_and(
-                    confidence_upper - self.thetas.numpy() > 0,
-                    self.thetas.numpy() - confidence_lower > 0,
-                )
-                count_array[sample_index, index] = np.sum(c.astype(int), axis=0)/n_theta_samples
-
-            # each time the above is > 0, adds a count
-            #count_array[sample_index] = count_vector
-
-        coverage_mean = np.mean(count_array, axis=0)
-        coverage_std = np.std(count_array, axis=0)
+        coverage_mean = np.mean(is_covered, axis=1)
+        coverage_std = np.std(is_covered, axis=1, ddof=1) / np.sqrt(
+            self.number_simulations
+        )
 
         self.output = {
             "coverage": coverage_mean.tolist(),
             "coverage_std": coverage_std.tolist(),
-
         }
 
-        return all_samples, (coverage_mean, coverage_std)
+        return theta_posterior_samples, (coverage_mean, coverage_std)
 
     def __call__(self, **kwds: Any) -> Any:
         self.calculate()
