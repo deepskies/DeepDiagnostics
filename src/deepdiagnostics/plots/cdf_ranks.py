@@ -45,7 +45,7 @@ class CDFRanks(Display):
     def plot_name(self):
         return "cdf_ranks.png"
 
-    def _data_setup(self) -> DataDisplay:
+    def _data_setup(self, **kwargs) -> DataDisplay:
         thetas = tensor(self.data.thetas)
         context = tensor(self.data.simulator_outcome)
 

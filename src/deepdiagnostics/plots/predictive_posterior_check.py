@@ -127,7 +127,8 @@ class PPC(Display):
             include_axis_ticks: bool = False,
             title:str="Predictive Posterior", 
             y_label:str="Simulation Output", 
-            x_label:str="X") -> tuple['fig', 'ax']: 
+            x_label:str="X",
+            **kwargs) -> tuple['fig', 'ax']: 
         """
         Args:
             n_coverage_sigma (Optional[int], optional): Show the N different standard dev. sigma of the posterior results. Only used in 1D. Defaults to 3.
