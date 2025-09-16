@@ -80,7 +80,8 @@ class Parity(Display):
         errorbar_color: str = 'black',
         title:str="Parity", 
         y_label:str=r"$\theta_{predicted}$", 
-        x_label:str=r"$\theta_{true}$"
+        x_label:str=r"$\theta_{true}$",
+        **kwargs
     ) -> tuple["fig", "ax"]: 
         """
         Args:

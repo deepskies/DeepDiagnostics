@@ -107,7 +107,8 @@ class PriorPC(Display):
             label_samples: Optional[str] = 'both', 
             title:Optional[str]="Simulated output from prior", 
             y_label:Optional[str]=None, 
-            x_label:str=None) -> tuple['figure', "axes"]: 
+            x_label:str=None,
+            **kwargs) -> tuple['figure', "axes"]: 
         """
 
         Args:

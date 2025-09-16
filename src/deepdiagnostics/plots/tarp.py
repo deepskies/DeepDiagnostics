@@ -89,6 +89,7 @@ class TARP(Display):
         y_label: str = "Expected Coverage",
         x_label: str = "Expected Coverage",
         title: str = "Test of Accuracy with Random Points",
+        **kwargs
     ) -> tuple["fig", "ax"]:
         """
         Args:

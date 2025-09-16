@@ -80,7 +80,7 @@ Below is a minimal example.
     plots:
         CoverageFraction:   # Arguments supplied to {plottype}.plot()
             include_coverage_std: True
-            include_ideal_range: True
+            include_ideal_range: False
             reference_line_label: "Ideal Coverage"
         TARP: 
             coverage_sigma: 4

@@ -53,7 +53,7 @@ class Ranks(Display):
         )
         return DataDisplay(ranks=ranks)
 
-    def plot(self, data_display: Union[DataDisplay, dict], num_bins:int=20) -> tuple["fig", "ax"]:
+    def plot(self, data_display: Union[DataDisplay, dict], num_bins:int=20, **kwargs) -> tuple["fig", "ax"]:
         """
         Args:
             num_bins (int): Number of histogram bins. Defaults to 20.

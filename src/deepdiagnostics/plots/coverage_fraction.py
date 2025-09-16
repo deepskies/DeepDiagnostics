@@ -49,7 +49,7 @@ class CoverageFraction(Display):
     def plot_name(self):
         return "coverage_fraction.png"
 
-    def _data_setup(self, percentile_step_size:float=1) -> DataDisplay:
+    def _data_setup(self, percentile_step_size:float=1, **kwargs) -> DataDisplay:
         _, (coverage_mean, coverage_std) = coverage_fraction_metric(
             self.model, self.data, self.run_id, out_dir=None, percentiles=np.arange(0, 100, percentile_step_size), use_progress_bar=self.use_progress_bar
         ).calculate()
@@ -114,16 +114,17 @@ class CoverageFraction(Display):
         figure_alpha=1.0,
         line_width=3,
         legend_loc:Optional[str]=None,
-        include_coverage_std:bool = False, 
+        include_coverage_std:bool = True, 
         include_coverage_residual:bool = False,
         include_coverage_residual_std:bool = False,
-        include_ideal_range: bool=True,
+        include_ideal_range: bool=False,
         reference_line_label="Reference Line",
         reference_line_style="k--",
         x_label="Confidence Interval of the Posterior Volume",
         y_label="Coverage fraction within posterior volume",
         residual_y_label="Coverage Fraction Residual",
-        title=""
+        title="",
+        **kwargs
     ) -> tuple["fig", "ax"]:
         """
         Plot the coverage fraction and residuals if specified.
@@ -133,10 +134,10 @@ class CoverageFraction(Display):
             figure_alpha (float, optional): Opacity of parameter lines. Defaults to 1.0.
             line_width (int, optional): Width of parameter lines. Defaults to 3.
             legend_loc (str, optional): Location of the legend. Defaults to matplotlib specified. 
-            include_coverage_std (bool, optional): Whether to include the standard deviation shading for coverage fractions . Defaults to False.
+            include_coverage_std (bool, optional): Whether to include the standard error shading for coverage fractions. Defaults to True.
             include_coverage_residual (bool, optional): Whether to include the residual plot (coverage fraction - diagonal). Creates an additional subplot under the original plot. Defaults to False.
             include_coverage_residual_std (bool, optional): Whether to include the standard deviation shading for residuals. Defaults to False.
-            include_ideal_range (bool, optional): Whether to include the ideal range shading (0.1/0.2 around the diagonal). Defaults to True.
+            include_ideal_range (bool, optional): Whether to include the ideal range shading (0.1/0.2 around the diagonal). Defaults to False.
             reference_line_label (str, optional): Label name for the diagonal ideal line. Defaults to "Reference Line".
             reference_line_style (str, optional): Line style for the reference line. Defaults to "k--".
             x_label (str, optional): y label. Defaults to "Confidence Interval of the Posterior Volume".
