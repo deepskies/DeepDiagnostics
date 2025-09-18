@@ -92,7 +92,7 @@ class CDFParityAreaUnderCurve(Metric):
           #print("x",x," y ", y)
           area_under_ecdf = np.trapezoid(y, x)
           #print(f"Area under the ECDF: {area_under_ecdf:.4f}")
-          auc="Area_Under_Curve"
+          #auc="Area_Under_Curve"
           results[f"Area_Under_Curve_dim{d}"] = area_under_ecdf
         self.output = results#{auc: area_under_ecdf} ##Need to run calculate
         return self.output
