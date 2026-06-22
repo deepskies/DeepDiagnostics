@@ -11,7 +11,8 @@ from deepdiagnostics.plots import (
     LC2ST, 
     PPC,
     PriorPC,
-    Parity
+    Parity,
+    LossPlot
 )
 
 
@@ -144,3 +145,16 @@ def test_rerun_plot(plot_type, plot_config, mock_model, mock_data, mock_run_id):
 
     assert os.path.exists(f"{plot.out_dir}rerun_plot.png")
 
+def test_loss_plot(mock_data):
+    test_input = {"train_loss": [1.0, 0.75, 0.53, 0.43, 0.3, 0.6], "val_loss": [0.8, 0.7, 0.6, 0.5, 0.4, 0.3]}
+    # first test
+    plot1 = LossPlot()
+    figure, axes = plot1.plot(test_input, plot_best_val_loss=True)
+    expected_output = 
+    assert os.path.exists(f"{plot1.out_dir}/{mock_run_id}_{plot1.plot_name}")
+
+    # second test
+    plot2 = LossPlot()
+    figure, axes = plot2.plot(test_input, plot_best_val_loss=False)
+    expected_output = 
+    assert os.path.exists(f"{plot.out_dir}/{mock_run_id}_{plot.plot_name}")

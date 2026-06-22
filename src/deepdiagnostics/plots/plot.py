@@ -125,8 +125,9 @@ class Display:
             plt.show()
 
         if self.save:
+            print("inside saving...")
             plt.savefig(f"{self.out_dir.rstrip('/')}/{self.run_id}_{self.plot_name}")
-            plt.cla()
+            # plt.cla()
 
         if data_display is not None:
             with File(f"{self.out_dir.rstrip('/')}/{self.run_id}_diagnostic_metrics.h5", "w") as f:
